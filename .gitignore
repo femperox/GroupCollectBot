@@ -1,0 +1,16 @@
+*logs/
+*.git/
+*venv/
+*stopLists/
+*.vscode/
+*confings/
+
+**/tmp
+**/__pycache__/
+
+*headers.py
+*test.py
+
+*.json
+*.txt
+*.sql
