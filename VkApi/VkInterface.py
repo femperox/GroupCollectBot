@@ -11,7 +11,7 @@ from vk_api.bot_longpoll import VkBotLongPoll, VkBotEventType
 from Logger import logger, logger_fav
 from SQLS.DB_Operations import addFav, getFav, deleteFav, getFandoms, getTags, addBans
 from YahooApi.yahooApi import getAucInfo
-from confings.Consts import CURRENT_POSRED, BanActionType, MAX_BAN_REASONS
+from confings.Consts import CURRENT_POSRED, BanActionType, MAX_BAN_REASONS, RegexType
 from APIs.utils import getMonitorChats
 
 class VkApi:
@@ -336,9 +336,10 @@ class VkApi:
                     # Личные сообщение
                     if chat not in getMonitorChats():
                         print(event.obj['text'])
-                        regex_track = r'^\d{13,14}$'
-                        track = re.findall(regex_track, event.obj['text'])
+                        
+                        track = re.findall(RegexType.regex_track.value, event.obj['text'])
                         print(track)
+                        
 
                 # Входящие сообщения
                 if event.type == VkBotEventType.MESSAGE_NEW:
@@ -370,18 +371,12 @@ class VkApi:
                                     self.sendMes('В избранное можно добавлять только сообщения с лотами!', chat)
                                     continue
 
-                                regex_id = r'auction/[\w]+'
-                                pprint(re.findall(regex_id , text)) 
-                                pprint(dict.fromkeys(re.findall(regex_id , text)))
-                                pprint(list(set(re.findall(regex_id , text))))
 
-                                fav_item['id'] = dict.fromkeys(re.findall(regex_id , text))
+                                fav_item['id'] = dict.fromkeys(re.findall(RegexType.regex_id.value , text))
                                 fav_item['id'].pop('auction/yauction', None)
                                 fav_item['id'] = list(fav_item['id'])[item_index].replace('auction/', '')
-
-                                print(fav_item['id'])                                
-                                regex_date = r'Конец: [\S]+ [\S]+'
-                                fav_item['date_end'] = re.findall(regex_date, text)[item_index].replace('Конец: ', '')
+                                
+                                fav_item['date_end'] = re.findall(RegexType.regex_date.value, text)[item_index].replace('Конец: ', '')
 
                                 try:
                                     fav_item['attachement'] = event.obj.message['reply_message']['attachments'][item_index]['photo']
@@ -406,10 +401,9 @@ class VkApi:
                         if str(sender) in self.__admins and event.obj.message['text'].lower() in banList:
                             try:
                                 reply = event.obj.message['reply_message']['text']   
-                                regex = r'#[\S]+'
                                 
                                 # в посте с товаров два тега: тег_категории и тег_продавца
-                                category = re.findall(regex, reply)
+                                category = re.findall(RegexType.regex_hashtag.value, reply)
                                 if hashtagList[0] in category or len(category)==1 or hashtagList[1] in category:
                                     continue
                                 seller = category[-1]
@@ -463,8 +457,7 @@ class VkApi:
                     # Удаление из избранного
                     elif event.obj.message['text'].lower().split(' ')[0] in delFavList and event.obj.message['text'].lower().find("#")>=0:
                         
-                        regex = r'#[\S]+'
-                        auc_ids = re.findall(regex, event.obj.message['text'].lower())
+                        auc_ids = re.findall(RegexType.regex_hashtag.value, event.obj.message['text'].lower())
                      
                         mes =  f'#избранное для {user_name}\n' 
                         
@@ -476,8 +469,8 @@ class VkApi:
                         
                     # Ручное добавление в избранное 
                     elif event.obj.message['text'].lower().split(' ')[0] in favList and event.obj.message['text'].lower().find("#")>=0:
-                        regex = r'#[\S]+'
-                        auc_ids = re.findall(regex, event.obj.message['text'].lower())  
+
+                        auc_ids = re.findall(RegexType.regex_hashtag.value, event.obj.message['text'].lower())  
                         
                         try:
                             info = getAucInfo(app_id = self.__yahoo, id= auc_ids[0][1:], tag="custom_fav")
@@ -592,8 +585,7 @@ class VkApi:
                     post['text'] = event.obj['text']
                     post['id'] = event.obj['id']
 
-                    regex = r'#[\S]+'
-                    post['tags'] = re.findall(regex, post['text'])
+                    post['tags'] = re.findall(RegexType.regex_hashtag.value, post['text'])
 
                     allFandoms = getFandoms()
                     mess = 'Автотеги.'
