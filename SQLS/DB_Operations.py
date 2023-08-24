@@ -4,7 +4,7 @@ import json
 from pprint import pprint
 from confings.Consts import DbNames
 
-def getConnection(connection = DbNames.database.value):
+def getConnection(connection = DbNames.database):
     """Получить подключение к базе PostgreSQL
 
     Returns:
@@ -238,7 +238,7 @@ def getCurrentParcel():
         list: список трек-номеров
     """
 
-    conn = getConnection(DbNames.collectDatabase.value)
+    conn = getConnection(DbNames.collectDatabase)
     cursor = conn.cursor()
 
     cursor.execute(f'''SELECT barcode FROM  PARCEL
@@ -261,7 +261,7 @@ def insertUpdateParcel(parcelInfo):
         parcelInfo (dict): словарь с информацией об отправлении
     """
 
-    conn = getConnection(DbNames.collectDatabase.value)
+    conn = getConnection(DbNames.collectDatabase)
     cursor = conn.cursor() 
 
     cursor.execute(f'''Call ParcelInsertUpdate( '{parcelInfo['barcode']}', '{parcelInfo['sndr']}', '{parcelInfo['rcpn']}', 
