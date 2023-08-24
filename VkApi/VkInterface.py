@@ -505,8 +505,6 @@ class VkApi:
             print_exc()
 
 
-
-
     def post_wall_comment(self, mess, post_id, from_group=1):
 
         try:

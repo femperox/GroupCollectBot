@@ -6,6 +6,7 @@ from Logger import logger
 from pprint import pprint
 import json
 from APIs.headers import getHeader
+from confings.Consts import PREFECTURE_CODE, CURRENT_POSRED
 
 def getRep(app_id, id):
     """Получение репутации продавца
@@ -63,8 +64,7 @@ def getShipmentPrice(app_id, id, seller_id , postage_id = 1, item_weight = 0):
     Returns:
         string: стоимость доставки по Японии
     """
-    pref_code = 16 # тояма - самурай, джсм
-    #pref_code = 18 # фукуй - гетжп
+    pref_code = PREFECTURE_CODE[CURRENT_POSRED]
 
     if seller_id == '':
         curl = f'https://auctions.yahooapis.jp/v1/public/items/{id}/shipments?pref_code={pref_code}&appid={app_id}'
