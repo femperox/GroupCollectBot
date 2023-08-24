@@ -6,12 +6,13 @@ import random
 import json
 from pprint import pprint
 import re
-from Logger import logger, logger_fav
 from vk_api.bot_longpoll import VkBotLongPoll, VkBotEventType
+
+from Logger import logger, logger_fav
 from SQLS.DB_Operations import addFav, getFav, deleteFav, getFandoms, getTags, addBans
 from YahooApi.yahooApi import getAucInfo
 from confings.Consts import CURRENT_POSRED, BanActionType, MAX_BAN_REASONS
-#import MessagesFormer as mf
+from APIs.utils import getMonitorChats
 
 class VkApi:
 
@@ -310,6 +311,8 @@ class VkApi:
         return result['items'][0]['attachments'][idx]['photo']
     
     def monitorChats(self):
+       """Мониторинг чатов группы
+       """
 
        banList = ['b', 'ban', 'б', 'бан', r'\ban', r'\b', r'\б', r'\бан']
        favList = ['и', r'\и', '+']
@@ -320,17 +323,31 @@ class VkApi:
        
        vkBotSession = vk_api.VkApi(token=self.__tok)
        longPoll = VkBotLongPoll(vkBotSession, self.__group_id)
-       vk = vkBotSession.get_api()
         
        while True:
         try:
             for event in longPoll.listen():
                 
-                sender = event.obj.message['from_id']
-                chat = event.obj.message['peer_id']
-                user_name = self.get_name(sender)
-                
-                if event.type == VkBotEventType.MESSAGE_NEW and 'reply_message' in event.obj.message and str(event.obj.message['from_id'])[1:] != self.__group_id:
+                # Исходящие сообщения
+                if event.type == VkBotEventType.MESSAGE_REPLY:
+                    sender = event. obj['from_id']
+                    chat = event.obj['peer_id']
+ 
+                    # Личные сообщение
+                    if chat not in getMonitorChats():
+                        print(event.obj['text'])
+                        regex_track = r'^\d{13,14}$'
+                        track = re.findall(regex_track, event.obj['text'])
+                        print(track)
+
+                # Входящие сообщения
+                if event.type == VkBotEventType.MESSAGE_NEW:
+
+                    sender = event.obj.message['from_id']
+                    chat = event.obj.message['peer_id']
+                    user_name = self.get_name(sender)
+                                
+                    if 'reply_message' in event.obj.message and str(event.obj.message['from_id'])[1:] != self.__group_id:
                        
                         # Добавление в избранное
                         if event.obj.message['text'].lower().split(' ')[0] in favList:
@@ -414,10 +431,7 @@ class VkApi:
                             except:
                                 continue
                             
-                elif event.type == VkBotEventType.MESSAGE_NEW:
-                    
-                    # Получение избранного    
-                    if event.obj.message['text'].lower().split(' ')[0] in getFavList:
+                    elif event.obj.message['text'].lower().split(' ')[0] in getFavList:
                             try:
                                 text = event.obj.message['text'].lower()
                                 offset = 0
@@ -483,7 +497,8 @@ class VkApi:
                         
                         
         except Exception as e:
-            print(e)
+            pprint(e)
+            print_exc()
             continue
     
     def edit_group_status(self, mess): 
@@ -503,6 +518,7 @@ class VkApi:
 
         except Exception as e:
             print_exc()
+
 
 
     def post_wall_comment(self, mess, post_id, from_group=1):
@@ -558,6 +574,8 @@ class VkApi:
               
         
     def monitorWall(self):
+       """Мониторинг стены группы
+       """
 
        group_tag = '@hideout_collect'
        whiteList = [int(self.__admins[0])]
@@ -628,3 +646,5 @@ class VkApi:
         except Exception as e:
             pprint(e)   
             continue      
+
+

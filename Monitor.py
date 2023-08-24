@@ -11,12 +11,7 @@ from bs4 import BeautifulSoup
 from Logger import logger
 from traceback import print_exc
 from YahooApi.yahooApi import getAucInfo, getPic, getHeader, getPic
-from confings.Consts import CURRENT_POSRED
-
-CONF_PATH = os.getcwd()+'/confings/monitorConfig.json'
-INFO_MESSAGE_PATH = os.getcwd()+'/info.txt'
-
-
+from confings.Consts import CURRENT_POSRED, MONITOR_CONF_PATH, INFO_MESSAGE_PATH
 
 threads = []
 
@@ -290,7 +285,7 @@ if __name__ == "__main__":
     vk = vk()
     
     
-    with open(CONF_PATH, "r") as f: 
+    with open(MONITOR_CONF_PATH, "r") as f: 
         conf_list = json.load(f)
        
     vkChats = threading.Thread(target=vk.monitorChats)

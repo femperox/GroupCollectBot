@@ -1,4 +1,7 @@
 from datetime import datetime
+import os
+import json
+from confings.Consts import MONITOR_CONF_PATH
 
 def getHeader():
     """Установка заголовков для запросов
@@ -23,3 +26,21 @@ def getCurrentTime():
     """
     
     return datetime.now().strftime('%Y-%m-%d %H:%M')
+
+def getMonitorChats():
+    """Получить список всех чатов, где сообщество занимается рассылкой
+
+    Returns:
+        list: список уникальных чатов сообщества
+    """
+
+    with open(MONITOR_CONF_PATH, "r") as f: 
+        conf_list = json.load(f)
+
+        chat_list = []
+
+        for conf in conf_list[1:]:
+            for rcpn in conf["params"]["rcpns"]:
+                chat_list.append(int(rcpn))
+
+        return list(set(chat_list))
