@@ -1,5 +1,5 @@
 from confings.Consts import CURRENCY_API, CURRENT_POSRED
-from APIs.headers import getHeader
+from APIs.utils import getHeader
 import requests
 import json
 

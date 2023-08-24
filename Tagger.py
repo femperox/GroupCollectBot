@@ -4,9 +4,10 @@ from VkApi.VkInterface import VkApi as vk
 from pprint import pprint
 from time import sleep
 from SQLS.DB_Operations import addTags
+from confings.Consts import HOURS_12
 import threading
 
-TIME_CHECK_SHEET = 43200 # каждые 12 часов
+TIME_CHECK_SHEET = HOURS_12
 TIME_CHECK_COLLECTS = TIME_CHECK_SHEET*2
 
 def addNewUsers():
