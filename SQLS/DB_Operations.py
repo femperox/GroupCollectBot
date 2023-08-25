@@ -246,13 +246,55 @@ def getCurrentParcel():
                        AND RCPN_GOT = FALSE
                        AND operationType NOT IN ('Уничтожение', 'Временное хранение');
                    ''')
-    
+
     result = cursor.fetchall()
 
     cursor.close()
     conn.close()
 
     return [res[0] for res in result]
+
+def getParcelVkRcpn(barcode):
+    """Получить id вк получателя посылки
+
+    Args:
+        barcode (string): трек-номер отправления
+
+    Returns:
+        string: id пользователя вк
+    """
+
+    conn = getConnection(DbNames.collectDatabase)
+    cursor = conn.cursor() 
+
+    cursor.execute(f"SELECT rcpnvkid from parcel where barcode='{barcode}';")
+    result = cursor.fetchone()[0]
+   
+    cursor.close()
+    conn.close()
+    
+    return int(result)
+
+def getParcelExpireDate(barcode):
+    """Получить срок хранения посылки получателя
+
+    Args:
+        barcode (string): трек-номер отправления
+
+    Returns:
+        string: дата последнего срока дня хранения
+    """
+
+    conn = getConnection(DbNames.collectDatabase)
+    cursor = conn.cursor() 
+
+    cursor.execute(f"SELECT expiredate from parcel where barcode='{barcode}';")
+    result = cursor.fetchone()[0]
+   
+    cursor.close()
+    conn.close()
+    
+    return result
 
 def insertUpdateParcel(parcelInfo):
     """Добавить/обновить запись об отправлени
@@ -265,9 +307,9 @@ def insertUpdateParcel(parcelInfo):
     cursor = conn.cursor() 
 
     cursor.execute(f'''Call ParcelInsertUpdate( '{parcelInfo['barcode']}', '{parcelInfo['sndr']}', '{parcelInfo['rcpn']}', 
-                       {parcelInfo['destinationIndex']}, {parcelInfo['operationIndex']}, '{parcelInfo['operationIndex']}', 
-                       '{parcelInfo['operationDate']}', '{parcelInfo['operationType']}', {parcelInfo['operationAttr']}, 
-                       '{parcelInfo['mass']}', {parcelInfo['rcpnVkId']})''')
+                       {parcelInfo['destinationIndex']}, {parcelInfo['operationIndex']}, '{parcelInfo['operationDate']}', 
+                       '{parcelInfo['operationType']}', '{parcelInfo['operationAttr']}', 
+                       {parcelInfo['mass']}, '{parcelInfo['rcpnVkId']}');''')
 
 
     conn.commit() 

@@ -9,10 +9,11 @@ import re
 from vk_api.bot_longpoll import VkBotLongPoll, VkBotEventType
 
 from Logger import logger, logger_fav
-from SQLS.DB_Operations import addFav, getFav, deleteFav, getFandoms, getTags, addBans
+from SQLS.DB_Operations import addFav, getFav, deleteFav, getFandoms, getTags, addBans, insertUpdateParcel
 from YahooApi.yahooApi import getAucInfo
 from confings.Consts import CURRENT_POSRED, BanActionType, MAX_BAN_REASONS, RegexType
 from APIs.utils import getMonitorChats
+from APIs.pochtaApi import getTracking
 
 class VkApi:
 
@@ -335,11 +336,13 @@ class VkApi:
  
                     # Личные сообщение
                     if chat not in getMonitorChats():
-                        print(event.obj['text'])
                         
-                        track = re.findall(RegexType.regex_track, event.obj['text'])
-                        print(track)
-                        
+                        track = re.findall(RegexType.regex_track, event.obj['text'])[0]
+                        tracking_info = getTracking(track)
+                        tracking_info['rcpnVkId'] = chat
+
+                        insertUpdateParcel(tracking_info)                  
+
 
                 # Входящие сообщения
                 if event.type == VkBotEventType.MESSAGE_NEW:
