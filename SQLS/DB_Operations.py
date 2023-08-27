@@ -241,7 +241,7 @@ def getCurrentParcel():
     conn = getConnection(DbNames.collectDatabase)
     cursor = conn.cursor()
 
-    cursor.execute(f'''SELECT barcode FROM  PARCEL
+    cursor.execute(f'''SELECT barcode, rcpnvkid, notified FROM  PARCEL
                        WHERE 1=1
                        AND RCPN_GOT = FALSE
                        AND operationType NOT IN ('Уничтожение', 'Временное хранение');
@@ -252,28 +252,25 @@ def getCurrentParcel():
     cursor.close()
     conn.close()
 
-    return [res[0] for res in result]
+    return result
 
-def getParcelVkRcpn(barcode):
-    """Получить id вк получателя посылки
+def setParcelNotified(barcode):
+    """Установить флажок получения оповещения
 
     Args:
         barcode (string): трек-номер отправления
-
-    Returns:
-        string: id пользователя вк
-    """
+    """    
 
     conn = getConnection(DbNames.collectDatabase)
     cursor = conn.cursor() 
 
-    cursor.execute(f"SELECT rcpnvkid from parcel where barcode='{barcode}';")
-    result = cursor.fetchone()[0]
+    cursor.execute(f"""UPDATE PARCEL
+                         SET notified = TRUE
+                       WHERE BARCODE ='{barcode}';""")
    
+    conn.commit() 
     cursor.close()
     conn.close()
-    
-    return int(result)
 
 def getParcelExpireDate(barcode):
     """Получить срок хранения посылки получателя
