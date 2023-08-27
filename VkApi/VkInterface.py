@@ -7,12 +7,15 @@ import json
 from pprint import pprint
 import re
 from vk_api.bot_longpoll import VkBotLongPoll, VkBotEventType
+from vk_api.keyboard import VkKeyboard, VkKeyboardColor
 
+from confings.Consts import MessageType
+from confings.Messages import Messages
 from Logger import logger, logger_fav
 from SQLS.DB_Operations import addFav, getFav, deleteFav, getFandoms, getTags, addBans, insertUpdateParcel
 from YahooApi.yahooApi import getAucInfo
-from confings.Consts import CURRENT_POSRED, BanActionType, MAX_BAN_REASONS, RegexType
-from APIs.utils import getMonitorChats
+from confings.Consts import CURRENT_POSRED, BanActionType, MAX_BAN_REASONS, RegexType, PayloadType
+from APIs.utils import getMonitorChats, getFavInfo
 from APIs.pochtaApi import getTracking
 
 class VkApi:
@@ -279,25 +282,58 @@ class VkApi:
 
         group = self.vk.groups.getById(group_id = id, lang = self.lang)
         return "@club{0}({1})".format(group[0]['id'], group[0]['name']) 
+    
+    def get_message(self, chat_id, mess_id):
+        """Получить инфо о сообщении в чате
 
-    def sendMes(self, mess, users, tag = '', pic = []):
-        
+        Args:
+            chat_id (int): id чата
+            mess_id (int): id сообщения
+
+        Returns:
+            dict: словарь информации о сообщении
+        """
+
         params = {
-            'group_id': self.__group_id,
-            'peer_ids': users,
-            'message': mess,
-            'random_id': 0,
-        }
+                'group_id': self.__group_id,
+                'peer_id': chat_id,
+                'conversation_message_ids': mess_id,
+            }
+        
+        return self.__vk_message.messages.getByConversationMessageId(**params)
 
-        if pic != []:
-            if pic[0].find('photo')>=0:
-                params.setdefault('attachment', pic[0])
-            else:    
-                attachments = self._form_images_request_signature(pic, self.__group_id, tag)
-                if attachments != ('', []):
-                    params.setdefault('attachment', attachments[0])
+    def sendMes(self, mess, users, tag = '', pic = [], type = ''):
 
-        self.__vk_message.messages.send(**params)
+        try:          
+            
+            params = {
+                'group_id': self.__group_id,
+                'peer_ids': users,
+                'message': mess,
+                'random_id': 0,
+            }
+
+
+            if type == MessageType.monitor_big_category:
+                settings = dict(one_time=False, inline=True)
+                keyboard_1 = VkKeyboard(**settings)
+                keyboard_1.add_callback_button(label='Забанить продавца', color=VkKeyboardColor.NEGATIVE, payload={"type": "show_snackbar", "text": "Это исчезающее сообщение"})
+                keyboard_1.add_callback_button(label='Добавить в избранное', color=VkKeyboardColor.POSITIVE, payload=PayloadType.add_fav)
+
+                params['keyboard'] = keyboard_1.get_keyboard()
+
+            if pic != []:
+                if pic[0].find('photo')>=0:
+                    params.setdefault('attachment', pic[0])
+                else:    
+                    attachments = self._form_images_request_signature(pic, self.__group_id, tag)
+                    if attachments != ('', []):
+                        params.setdefault('attachment', attachments[0])
+
+            self.__vk_message.messages.send(**params) 
+
+        except Exception as e:
+            print_exc()
         
     def get_attachemetns(self, peer_id, conv_id, idx):
         
@@ -328,7 +364,7 @@ class VkApi:
        while True:
         try:
             for event in longPoll.listen():
-                
+                #pprint(event)       
                 # Исходящие сообщения
                 if event.type == VkBotEventType.MESSAGE_REPLY:
                     sender = event. obj['from_id']
@@ -337,15 +373,53 @@ class VkApi:
                     # Личные сообщение
                     if chat not in getMonitorChats():
                         
-                        track = re.findall(RegexType.regex_track, event.obj['text'])[0]
-                        tracking_info = getTracking(track)
-                        tracking_info['rcpnVkId'] = chat
+                        try:
+                            track = re.findall(RegexType.regex_track, event.obj['text'])[0]
+                            tracking_info = getTracking(track)
+                            tracking_info['rcpnVkId'] = chat
 
-                        insertUpdateParcel(tracking_info)                  
+                            insertUpdateParcel(tracking_info)               
+                        except:
+                            continue   
 
+                # Действия с сообщениями - callback кнопицы        
+                elif event.type ==VkBotEventType.MESSAGE_EVENT:
 
+                    pprint(event)
+
+                    chat = event.object['peer_id']
+                    message_id = event.object['conversation_message_id']
+
+                    if event.object['payload'] == PayloadType.add_fav:
+
+                        mes = self.get_message(chat_id = chat, mess_id= message_id)
+
+                        item_index = 0
+                        fav_item = getFavInfo(mes['items'][0]['text'], item_index)
+                        fav_item['usr'] = event.object['user_id']
+                        try:
+                            fav_item['attachement'] = mes['items'][0]['attachments'][item_index]['photo']
+                        except:
+                            fav_item['attachement'] = self.get_attachemetns(peer_id=chat, conv_id=message_id, idx = item_index)
+                            
+                        fav_item['attachement'] = 'photo{}_{}_{}'.format(fav_item['attachement']['owner_id'], fav_item['attachement']['id'], fav_item['attachement']['access_key'])
+                        
+                        mess = Messages.mes_fav(fav_item = fav_item, fav_func = addFav).format(self.get_name(fav_item['usr']), fav_item['id'])
+                        
+                        logger_fav.info(f"[ADD_FAV-{sender}] для пользователя {sender}: {mess}")
+                        self.sendMes(mess = mess, users = chat)   
+                       
+                    params = {
+                        'user_id': event.object.user_id,
+                        'peer_id': event.object.peer_id,
+                        'event_id': event.object.event_id,              
+                    }                 
+
+                    self.__vk_message.messages.sendMessageEventAnswer(**params) 
+
+                    
                 # Входящие сообщения
-                if event.type == VkBotEventType.MESSAGE_NEW:
+                elif event.type == VkBotEventType.MESSAGE_NEW:
 
                     sender = event.obj.message['from_id']
                     chat = event.obj.message['peer_id']
@@ -374,12 +448,7 @@ class VkApi:
                                     self.sendMes('В избранное можно добавлять только сообщения с лотами!', chat)
                                     continue
 
-
-                                fav_item['id'] = dict.fromkeys(re.findall(RegexType.regex_id , text))
-                                fav_item['id'].pop('auction/yauction', None)
-                                fav_item['id'] = list(fav_item['id'])[item_index].replace('auction/', '')
-                                
-                                fav_item['date_end'] = re.findall(RegexType.regex_date, text)[item_index].replace('Конец: ', '')
+                                fav_item.update(getFavInfo(text, item_index))
 
                                 try:
                                     fav_item['attachement'] = event.obj.message['reply_message']['attachments'][item_index]['photo']
@@ -388,12 +457,7 @@ class VkApi:
                                     
                                 fav_item['attachement'] = 'photo{}_{}_{}'.format(fav_item['attachement']['owner_id'], fav_item['attachement']['id'], fav_item['attachement']['access_key'])
                         
-                                mess = f'#избранное для {user_name}\n'
-                                try:
-                                    mess += f"\nЛот #{fav_item['id']} был добавлен в ваше избранное!" if addFav(fav_item) else f"\nЛот #{fav_item['id']} уже есть в вашем избранном!"
-                                except Exception as e:
-                                    print(f'Message formatting: {e}')
-                                    mess += f"\nОшибка добавления лота #{fav_item['id']} в избранное. Попробуйте ещё раз!"
+                                mess = Messages.mes_fav(fav_item = fav_item, fav_func = addFav).format(self.get_name(fav_item['usr']), fav_item['id'])
                                 
                                 logger_fav.info(f"[ADD_FAV-{sender}] для пользователя {sender}: {mess}")
                                 self.sendMes(mess, chat)

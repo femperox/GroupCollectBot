@@ -1,7 +1,8 @@
 from datetime import datetime
 import os
 import json
-from confings.Consts import MONITOR_CONF_PATH
+from confings.Consts import MONITOR_CONF_PATH, RegexType
+import re
 
 def getHeader():
     """Установка заголовков для запросов
@@ -44,3 +45,28 @@ def getMonitorChats():
                 chat_list.append(int(rcpn))
 
         return list(set(chat_list))
+    
+def getFavInfo(text, item_index = 0):
+    """Получить инфо для избранного из сообщения
+
+    Args:
+        text (string): текст сообщения
+        item_index (int): порядковый номер лота в сообщении
+
+    Returns:
+        dict: словарь с инфо
+    """
+    fav_item = {}
+
+    fav_item['id'] = dict.fromkeys(re.findall(RegexType.regex_id , text))
+    fav_item['id'].pop('auction/yauction', None)
+    fav_item['id'] = list(fav_item['id'])[item_index].replace('auction/', '')
+    
+    fav_item['date_end'] = re.findall(RegexType.regex_date, text)[item_index].replace('Конец: ', '')
+
+    return fav_item
+
+def getSellerCategoryInfo(text):
+
+    pass
+

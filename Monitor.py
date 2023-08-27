@@ -11,7 +11,7 @@ from bs4 import BeautifulSoup
 from Logger import logger
 from traceback import print_exc
 from YahooApi.yahooApi import getAucInfo, getPic, getHeader, getPic
-from confings.Consts import CURRENT_POSRED, MONITOR_CONF_PATH, INFO_MESSAGE_PATH
+from confings.Consts import CURRENT_POSRED, MONITOR_CONF_PATH, INFO_MESSAGE_PATH, MessageType
 
 threads = []
 
@@ -176,7 +176,7 @@ def bs4Monitor(curl, params):
                     continue              
                 
                 mes = formMess(item, params['tag'])
-                vk.sendMes(mess = mes, users = params['rcpns'], tag = params['tag'], pic = [item['pic']])
+                vk.sendMes(mess = mes, users = params['rcpns'], tag = params['tag'], pic = [item['pic']], type = MessageType.monitor_big_category)
                 logger.info(f"[MESSAGE-{params['tag']}] Отправлено сообщение о лоте {item['id']}")
             
             if ((not notBreakSeen and i != currentSize) or (notBreakSeen and i == currentSize)) and tmp_seen_aucs:
@@ -292,7 +292,7 @@ if __name__ == "__main__":
     vkChats.start()
     
     
-    for conf in conf_list[1:]:
+    for conf in conf_list[:1]:
         if conf["type"] == "big-category": threads.append(threading.Thread(target=bs4Monitor, args=(conf["curl"], conf["params"])))
         else: 
             threads.append(threading.Thread(target=bs4SellerMonitor, args=(conf["curl"], conf["params"])))
