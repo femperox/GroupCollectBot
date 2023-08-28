@@ -1,7 +1,6 @@
 from SQLS.DB_Operations import getCurrentParcel, insertUpdateParcel, getParcelExpireDate, setParcelNotified
 from APIs.pochtaApi import getTracking
 from APIs.posredApi import getCurrentCurrencyRate
-from APIs.utils import getCurrentTime
 from VkApi.VkInterface import VkApi as vk
 from confings.Messages import Messages as mess
 from confings.Consts import HOURS_12, HOURS_24, PochtaApiStatus

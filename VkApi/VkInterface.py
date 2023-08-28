@@ -9,8 +9,7 @@ import re
 from vk_api.bot_longpoll import VkBotLongPoll, VkBotEventType
 from vk_api.keyboard import VkKeyboard, VkKeyboardColor
 
-from confings.Consts import MessageType
-from confings.Messages import Messages
+from confings.Messages import MessageType, Messages
 from Logger import logger, logger_fav
 from SQLS.DB_Operations import addFav, getFav, deleteFav, getFandoms, getTags, addBans, insertUpdateParcel
 from YahooApi.yahooApi import getAucInfo
@@ -317,7 +316,7 @@ class VkApi:
             if type == MessageType.monitor_big_category:
                 settings = dict(one_time=False, inline=True)
                 keyboard_1 = VkKeyboard(**settings)
-                keyboard_1.add_callback_button(label='Забанить продавца', color=VkKeyboardColor.NEGATIVE, payload={"type": "show_snackbar", "text": "Это исчезающее сообщение"})
+                keyboard_1.add_callback_button(label='Забанить продавца', color=VkKeyboardColor.NEGATIVE, payload=PayloadType.ban_seller)
                 keyboard_1.add_callback_button(label='Добавить в избранное', color=VkKeyboardColor.POSITIVE, payload=PayloadType.add_fav)
 
                 params['keyboard'] = keyboard_1.get_keyboard()
@@ -334,6 +333,7 @@ class VkApi:
 
         except Exception as e:
             print_exc()
+    
         
     def get_attachemetns(self, peer_id, conv_id, idx):
         
@@ -385,14 +385,11 @@ class VkApi:
                 # Действия с сообщениями - callback кнопицы        
                 elif event.type ==VkBotEventType.MESSAGE_EVENT:
 
-                    pprint(event)
-
                     chat = event.object['peer_id']
                     message_id = event.object['conversation_message_id']
+                    mes = self.get_message(chat_id = chat, mess_id= message_id)
 
                     if event.object['payload'] == PayloadType.add_fav:
-
-                        mes = self.get_message(chat_id = chat, mess_id= message_id)
 
                         item_index = 0
                         fav_item = getFavInfo(mes['items'][0]['text'], item_index)
@@ -408,7 +405,28 @@ class VkApi:
                         
                         logger_fav.info(f"[ADD_FAV-{sender}] для пользователя {sender}: {mess}")
                         self.sendMes(mess = mess, users = chat)   
-                       
+                    
+                    elif event.object['payload'] == PayloadType.ban_seller and str(event.object['user_id']) in self.__admins:
+
+                        category = re.findall(RegexType.regex_hashtag, mes['items'][0]['text'])
+
+                        seller = category[-1]
+                        category = category[0]
+
+                        if seller:
+                            path = os.getcwd()+ f'/stopLists/{category.split("_")[-1]}_stop.txt'
+                            with open(path, 'a+') as f:
+                                f.seek(0)
+                                currentStopList = set(f.read().split('\n'))
+                                isBanned = seller[1:] in currentStopList
+
+                                message = Messages.mes_ban(seller = seller, category = category, isBanned = isBanned)
+                                self.sendMes(mess = message, users= chat)
+                                if not isBanned:
+                                    f.write(f'\n{seller[1:]}')
+                                    logger.info(f"\n[BAN-{category.split('_')[-1]}] Забанен продавец {seller[1:]}\n")                      
+
+
                     params = {
                         'user_id': event.object.user_id,
                         'peer_id': event.object.peer_id,
@@ -440,7 +458,6 @@ class VkApi:
                                     item_index = 0
                                 
                                 fav_item['usr'] = sender
-                                print(item_index)
                                 
                                 text = event.obj.message['reply_message']['text']
                                 
@@ -480,14 +497,12 @@ class VkApi:
                                     with open(path, 'a+') as f:
                                         f.seek(0)
                                         currentStopList = set(f.read().split('\n'))
+                                        isBanned = seller[1:] in currentStopList
 
-                                        if seller[1:] in currentStopList:
-                                            message = f"❗️❗️❗️ #инфо\n\nПродавец {seller} уже был забанен в категории: {category}"
-                                            self.sendMes(mess = message, users= chat)
-                                        else:
+                                        message = Messages.mes_ban(seller = seller, category = category, isBanned = isBanned)
+                                        self.sendMes(mess = message, users= chat)
+                                        if not isBanned:
                                             f.write(f'\n{seller[1:]}')
-                                            message = f"❗️❗️❗️ #инфо\n\nПродавец {seller} был забанен!\n\nЛоты от него больше не будут появляться в категории: {category}"
-                                            self.sendMes(mess = message, users= chat)
                                             logger.info(f"\n[BAN-{category.split('_')[-1]}] Забанен продавец {seller[1:]}\n")
                             except:
                                 continue

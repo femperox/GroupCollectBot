@@ -92,3 +92,20 @@ def getTracking(barcode):
         parcel['mass'] = 0
 
     return parcel
+
+def getMass(barcode):
+    """Получить массу отправления
+
+    Args:
+        barcode (string): трек-номер
+
+    Returns:
+        int: масса отправления
+    """
+
+    result = getClient().service.getOperationHistory(__inject={'msg':createMess(barcode).encode()})
+
+    current_stat = result[0][1]
+    mass = current_stat['ItemParameters']['Mass']
+
+    return int(mass)

@@ -19,14 +19,14 @@ def getHeader():
 
     return headers
 
-def getCurrentTime():
-    """Получить текущую дату+время
+def getCurrentDate():
+    """Получить текущую дату
 
     Returns:
-        string: текущая дата+время
+        string: текущая дата
     """
     
-    return datetime.now().strftime('%Y-%m-%d %H:%M')
+    return datetime.now().strftime('%Y-%m-%d')
 
 def getMonitorChats():
     """Получить список всех чатов, где сообщество занимается рассылкой
@@ -45,6 +45,49 @@ def getMonitorChats():
                 chat_list.append(int(rcpn))
 
         return list(set(chat_list))
+    
+def getMonitorChatsTypes():
+    """Получить список всех чатов и категорий, где сообщество занимается рассылкой
+
+    Returns:
+        dict: список чатовы
+    """
+
+    with open(MONITOR_CONF_PATH, "r") as f: 
+        conf_list = json.load(f)
+
+        chat_dict = {}
+
+        for conf in conf_list:
+            for rcpn in conf["params"]["rcpns"]:
+                if int(rcpn) in chat_dict:
+                    chat_dict[int(rcpn)][conf["type"]].append(conf["params"]["tag"])
+                else:
+                    chat_dict[int(rcpn)] = { conf["type"] : [conf["params"]["tag"]]}
+
+        return chat_dict
+    
+def getActiveMonitorChatsTypes(conf_list):
+    """Получить список всех активных чатов и категорий, где сообщество занимается рассылкой
+
+    Args:
+        conf_list (list): список конфигураций
+
+    Returns:
+        dict: список чатовы
+    """
+
+    chat_dict = {}
+
+    for conf in conf_list:
+        for rcpn in conf["params"]["rcpns"]:
+            if int(rcpn) in chat_dict:
+                chat_dict[int(rcpn)][conf["type"]].append(conf["params"]["tag"])
+            else:
+                chat_dict[int(rcpn)] = { conf["type"] : [conf["params"]["tag"]]}
+
+    return chat_dict
+
     
 def getFavInfo(text, item_index = 0):
     """Получить инфо для избранного из сообщения
@@ -65,8 +108,4 @@ def getFavInfo(text, item_index = 0):
     fav_item['date_end'] = re.findall(RegexType.regex_date, text)[item_index].replace('Конец: ', '')
 
     return fav_item
-
-def getSellerCategoryInfo(text):
-
-    pass
 

@@ -315,3 +315,40 @@ def insertUpdateParcel(parcelInfo):
 
     return
 
+def getZeroMassParcel():
+    """Получить отправления с массой равной 0
+
+    Returns:
+        list: список отправлений
+    """
+
+    conn = getConnection(DbNames.collectDatabase)
+    cursor = conn.cursor() 
+
+    cursor.execute(f"SELECT BARCODE FROM PARCEL WHERE MASS_GR = 0;")
+    result = cursor.fetchall()
+   
+    cursor.close()
+    conn.close()
+
+    return [res[0] for res in result]
+
+def setParcelMass(barcode, mass):
+    """Установить массу отправления
+
+    Args:
+        barcode (string): трек-номер отправления
+        mass (int): масса отправления
+    """
+
+    conn = getConnection(DbNames.collectDatabase)
+    cursor = conn.cursor() 
+
+    cursor.execute(f'''Call ParcelUpdateMass( '{barcode}', {mass});''')
+
+    conn.commit() 
+    cursor.close()
+    conn.close()
+
+    return
+

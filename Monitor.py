@@ -11,7 +11,9 @@ from bs4 import BeautifulSoup
 from Logger import logger
 from traceback import print_exc
 from YahooApi.yahooApi import getAucInfo, getPic, getHeader, getPic
-from confings.Consts import CURRENT_POSRED, MONITOR_CONF_PATH, INFO_MESSAGE_PATH, MessageType
+from confings.Consts import CURRENT_POSRED, MONITOR_CONF_PATH, INFO_MESSAGE_PATH
+from confings.Messages import MessageType, Messages
+from APIs.utils import getActiveMonitorChatsTypes
 
 threads = []
 
@@ -74,7 +76,7 @@ def formSellerMess(info):
     
     return mess
 
-def sendHelloMessage(params, type, is_category=False):
+def sendHelloMessage(active_chats):
     """Отправка привественного сообщения
 
     Args:
@@ -82,18 +84,10 @@ def sendHelloMessage(params, type, is_category=False):
         type (string): тип категории
     """
     
-    info = ''
-    with open(INFO_MESSAGE_PATH, 'r+', encoding='utf-8') as f:
-        l = f.readlines()
-        category_letter = ''
-        if len(l):
-            category_letter = 'К_' if is_category else ''
-            info = f"\n\n❗️❗️❗️ #обновления\nНовое за {datetime.datetime.now().date()}:\n\n" + "\n".join(['🆕 '+line for line in l])
-            #f.truncate(0)
-    mes = f'❗️❗️❗️ #инфо\nБот по {type} #{category_letter}{params["tag"]} был перезапущен\nВозможен повтор нескольких лотов.'+info
-    mes += '\n\nПо всем вопросам/багам обращайтесь к @femperox'
-    
-    vk.sendMes(mess = mes, users = params['rcpns'])
+    active_chats_info = getActiveMonitorChatsTypes(active_chats)
+    for active_chat in active_chats_info:
+        mes = Messages.mes_hello(active_chats_info[active_chat])    
+        vk.sendMes(mess = mes, users = active_chat)
     
 
 def sendMessage(items, params):
@@ -128,8 +122,6 @@ def bs4Monitor(curl, params):
     item = {}
     
     firstSeen = True # при первом запуске просматривается только 1 элемент
-
-    sendHelloMessage(params, 'категории', is_category = True)
 
     while True:
         try:
@@ -215,8 +207,6 @@ def bs4SellerMonitor(curl, params):
     
     firstSeen = True # при первом запуске просматривается только 1 элемент
 
-    sendHelloMessage(params, 'продавцу')
-
     while True:
         try:
            
@@ -284,18 +274,24 @@ def bs4SellerMonitor(curl, params):
 if __name__ == "__main__":
     vk = vk()
     
-    
     with open(MONITOR_CONF_PATH, "r") as f: 
         conf_list = json.load(f)
        
     vkChats = threading.Thread(target=vk.monitorChats)
     vkChats.start()
     
-    
-    for conf in conf_list[:1]:
+    active_chats = []
+
+    for conf in conf_list[1:]:
         if conf["type"] == "big-category": threads.append(threading.Thread(target=bs4Monitor, args=(conf["curl"], conf["params"])))
         else: 
             threads.append(threading.Thread(target=bs4SellerMonitor, args=(conf["curl"], conf["params"])))
+        active_chats.append(conf)
 
-        threads[-1].start()
+    sendHelloMessage(active_chats)
+
+    for thread in threads:
+        thread.start()
+
+
     
