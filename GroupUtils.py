@@ -40,6 +40,9 @@ def updateTrackingStatuses():
             for parcel in parcel_list:
                 tracking_info = getTracking(parcel[0])
                 tracking_info['rcpnVkId'] = parcel[1]
+
+                insertUpdateParcel(tracking_info)
+
                 if tracking_info['operationAttr'] == PochtaApiStatus.arrived and not parcel[2]:
                     
                     message = mess.mess_notify_arrival.format(tracking_info['barcode'], tracking_info['operationIndex'], getParcelExpireDate(tracking_info['barcode']))
@@ -49,7 +52,7 @@ def updateTrackingStatuses():
 
                     logger_utils.info(f"""[NOTIFIED-TRACKING-NOTIFY] Пользователь {tracking_info['rcpnVkId']} проинфомирован об отправлении {tracking_info['barcode']}""")
 
-                insertUpdateParcel(tracking_info)
+                
                 logger_utils.info(f"""[UPDATE-TRACKING-NOTIFY] Информация об отправлении {tracking_info['barcode']} обновлена""")
             
             sleep(HOURS_24)

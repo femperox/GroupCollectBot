@@ -13,7 +13,7 @@ from confings.Messages import MessageType, Messages
 from Logger import logger, logger_fav
 from SQLS.DB_Operations import addFav, getFav, deleteFav, getFandoms, getTags, addBans, insertUpdateParcel
 from YahooApi.yahooApi import getAucInfo
-from confings.Consts import CURRENT_POSRED, BanActionType, MAX_BAN_REASONS, RegexType, PayloadType
+from confings.Consts import CURRENT_POSRED, BanActionType, MAX_BAN_REASONS, RegexType, PayloadType, VkCommands
 from APIs.utils import getMonitorChats, getFavInfo
 from APIs.pochtaApi import getTracking
 
@@ -350,13 +350,6 @@ class VkApi:
     def monitorChats(self):
        """Мониторинг чатов группы
        """
-
-       banList = ['b', 'ban', 'б', 'бан', r'\ban', r'\b', r'\б', r'\бан']
-       favList = ['и', r'\и', '+']
-       getFavList = [r'\с', r'\список']
-       delFavList = [r'\у', r'\удалить']
-       
-       hashtagList = ['#инфо', '#избранное']
        
        vkBotSession = vk_api.VkApi(token=self.__tok)
        longPoll = VkBotLongPoll(vkBotSession, self.__group_id)
@@ -446,7 +439,7 @@ class VkApi:
                     if 'reply_message' in event.obj.message and str(event.obj.message['from_id'])[1:] != self.__group_id:
                        
                         # Добавление в избранное
-                        if event.obj.message['text'].lower().split(' ')[0] in favList:
+                        if event.obj.message['text'].lower().split(' ')[0] in VkCommands.favList:
                          
                             try:
                                 fav_item = {}
@@ -482,13 +475,13 @@ class VkApi:
                                 print(e)                      
                         
                         # Бан продавца
-                        if str(sender) in self.__admins and event.obj.message['text'].lower() in banList:
+                        if str(sender) in self.__admins and event.obj.message['text'].lower() in VkCommands.banList:
                             try:
                                 reply = event.obj.message['reply_message']['text']   
                                 
                                 # в посте с товаров два тега: тег_категории и тег_продавца
                                 category = re.findall(RegexType.regex_hashtag, reply)
-                                if hashtagList[0] in category or len(category)==1 or hashtagList[1] in category:
+                                if VkCommands.hashtagList[0] in category or len(category)==1 or VkCommands.hashtagList[1] in category:
                                     continue
                                 seller = category[-1]
                                 category = category[0]
@@ -507,7 +500,7 @@ class VkApi:
                             except:
                                 continue
                             
-                    elif event.obj.message['text'].lower().split(' ')[0] in getFavList:
+                    elif event.obj.message['text'].lower().split(' ')[0] in VkCommands.getFavList:
                             try:
                                 text = event.obj.message['text'].lower()
                                 offset = 0
@@ -537,20 +530,18 @@ class VkApi:
                                 pprint(e)
                     
                     # Удаление из избранного
-                    elif event.obj.message['text'].lower().split(' ')[0] in delFavList and event.obj.message['text'].lower().find("#")>=0:
+                    elif event.obj.message['text'].lower().split(' ')[0] in VkCommands.delFavList and event.obj.message['text'].lower().find("#")>=0:
                         
                         auc_ids = re.findall(RegexType.regex_hashtag, event.obj.message['text'].lower())
                      
-                        mes =  f'#избранное для {user_name}\n' 
+                        mes = Messages.mes_delete_fav(user_name = user_name, user_id = sender, auc_list = auc_ids, delete_func = deleteFav )
                         
-                        for id in auc_ids:
-                            mes += f"\n{id} удалён из вашего избранного!" if deleteFav(sender, id[1:]) else f"\n{id} и так не значился в вашем избранном!"
-                            logger_fav.info(f"[DELETE_FAV-{sender}] для пользователя {sender}: {mes}")
+                        logger_fav.info(f"[DELETE_FAV-{sender}] для пользователя {sender}: {mes}")
                            
                         self.sendMes(mess=mes, users=chat)
                         
                     # Ручное добавление в избранное 
-                    elif event.obj.message['text'].lower().split(' ')[0] in favList and event.obj.message['text'].lower().find("#")>=0:
+                    elif event.obj.message['text'].lower().split(' ')[0] in VkCommands.favList and event.obj.message['text'].lower().find("#")>=0:
 
                         auc_ids = re.findall(RegexType.regex_hashtag, event.obj.message['text'].lower())  
                         
@@ -652,7 +643,6 @@ class VkApi:
        """Мониторинг стены группы
        """
 
-       group_tag = '@hideout_collect'
        whiteList = [int(self.__admins[0])]
 
        vkBotSession = vk_api.VkApi(token=self.__tok)
@@ -675,9 +665,9 @@ class VkApi:
                     isTagPost = False
                     
                     for tag in post['tags']:
-                        if tag.replace('#','').replace(group_tag, '') in allFandoms:
+                        if tag.replace('#','').replace(VkCommands.group_tag, '') in allFandoms:
                             isTagPost = True
-                            users = getTags(tag.replace('#','').replace(group_tag, ''))
+                            users = getTags(tag.replace('#','').replace(VkCommands.group_tag, ''))
                             users = '\n'.join([self.get_name(usr) for usr in users])
                             #users = '\n'.join(str(usr) for usr in users)
                             mess += f'\n\n{tag}:\n{users}'
