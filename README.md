@@ -19,7 +19,9 @@
 
 ❎ Манипуляции представленны в двух видах:  
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;1. Текстовые комманды;  
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;2. Inline-callback кнопки.
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;2. Inline-callback кнопки.  
+
+![Пример сообщения из мониторинга](https://sun9-34.userapi.com/impg/ibZgfGpRtFl-dvB6k9G5RUxGjbUv8fGlYKlBfg/Ek3Hu-XmKR0.jpg?size=493x636&quality=95&sign=6b7dd6080c8e691ee28e75a26f32e8c7&type=album "Пример сообщения из мониторинга")
 
 ### Связка с Гугл таблицами:
 
@@ -31,6 +33,8 @@
 ### Связка с почтой РФ:
 
 ✅ Мониторинг статусов отправлений участников, а в последствии оповещение о прибытии посылки.
+
+![Пример оповещения](https://sun9-67.userapi.com/impg/4kOrsDst5NUVzE0LKkaByBWSiV0uAboGZ0swig/4_ngxWPME4s.jpg?size=473x523&quality=95&sign=21e1829aefd91c7416038e71c9696001&type=album "Пример оповещения")
 
 ### Связка с администрированием сообщества:
 
