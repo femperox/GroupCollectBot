@@ -14,68 +14,10 @@ from YahooApi.yahooApi import getAucInfo, getPic, getHeader, getPic
 from confings.Consts import CURRENT_POSRED, MONITOR_CONF_PATH, INFO_MESSAGE_PATH
 from confings.Messages import MessageType, Messages
 from APIs.utils import getActiveMonitorChatsTypes
+from SQLS.DB_Operations import IsExistBannedSeller
 
 threads = []
-
-def getStopList(tag):
-    
-    """ Выгрузка стоп-листа продавцов
-
-    Returns:
-        set: множество строк без повторений
-    """
-    
-    sellerList = set()
-    path = os.getcwd()+ f'/stopLists/{tag}_stop.txt'
-    with open(path, 'r') as f:
-        sellerList = set(f.read().split('\n'))
-    
-    return sellerList   
-    
         
-def formMess(info, tag):
-    """Формирование сообщения о лоте в категории
-
-    Args:
-        info (dict): словарь с информацией о лоте
-        tag (string): категория
-
-    Returns:
-        string: строка сообщения
-    """
-    
-    tax_inc = f"(с учётом {info['tax']}% налога)" if int(info['tax'])>0 else ''
-    blitz = f"\nБлиц: {info['blitz']}¥ {tax_inc}" if float(info['blitz'])>-1 else ''
-    mess =f''' ===========================\n\nКатегория: #К_{tag}\n\nПродавец: #{info['seller']}\nОтзывы: ✅{info['goodRate']}/❌{info['badRate']}\n\nТекущая цена: {info['price']}¥ {tax_inc}{blitz}\n\nДоставка: {info['shipmentPrice']}\n\nКонец: {info['endTime']}\n\nСсылка Yahoo: {info['url']}\n\nСсылка посреда: {CURRENT_POSRED.format(info['id'])}
-                ===========================
-            '''
-    
-    return mess
-
-def formSellerMess(info):
-    """Формирование сообщения о лотах продавца
-
-    Args:
-        info (dict): список словарей с информацией о лотах
-        tag (string): категория
-
-    Returns:
-        string: строка сообщения
-    """
-
-    mess = f''' ===========================\n\n Продавец: #{info[0]['seller']}\nОтзывы: ✅{info[0]['goodRate']}/❌{info[0]['badRate']}'''
-    
-    for i in range(len(info)):
-
-        tax_inc = f"(с учётом {info[i]['tax']}% налога)" if int(info[i]['tax'])>0 else ''
-        blitz = f"\nБлиц: {info[i]['blitz']}¥ {tax_inc}" if float(info[i]['blitz'])>-1 else ''
-        
-        mess +=f'''\n\n{i+1}. Текущая цена: {info[i]['price']}¥ {tax_inc}{blitz}\nДоставка: {info[i]['shipmentPrice']}\nКонец: {info[i]['endTime']}\nYahoo: {info[i]['url']}\nПосред: {CURRENT_POSRED.format(info[i]['id'])}'''
-
-    mess +=  '\n\n==========================='
-    
-    return mess
-
 def sendHelloMessage(active_chats):
     """Отправка привественного сообщения
 
@@ -98,7 +40,7 @@ def sendMessage(items, params):
         params (dict): словарь с информацией о потоке
     """
 
-    mes = formSellerMess(items)
+    mes = Messages.formSellerMess(items)
     pics = [x['pic'] for x in items]
     vk.sendMes(mess = mes, users = params['rcpns'], tag = params['tag'], pic = pics)
     logger.info(f"[MESSAGE-{params['tag']}] Отправлено сообщение о лотах продавца {items[0]['seller']}")
@@ -143,8 +85,6 @@ def bs4Monitor(curl, params):
             
             for lot in allLots:
 
-                stopSellerList = getStopList(params['tag'])
-
                 item['id'] = lot['data-auction-id']
                 if item['id'] in seen_aucs or item['id'] in prev_seen_aucs:
                     notBreakSeen = False
@@ -155,7 +95,7 @@ def bs4Monitor(curl, params):
                 
                 item['seller'] = lot['data-auction-sellerid']
                 item['price'] = float(lot['data-auction-startprice'])
-                if item['seller'] in stopSellerList or item['price'] > params['maxPrice']-1:
+                if IsExistBannedSeller(seller_id = item['seller'], category = params['tag']) or item['price'] > params['maxPrice']-1:
                     continue
 
                 info = getAucInfo(app_id, item['id'], params['tag'])
@@ -167,7 +107,7 @@ def bs4Monitor(curl, params):
                 if item['pic'] == '' or int(item['goodRate']) < params['minRep']:
                     continue              
                 
-                mes = formMess(item, params['tag'])
+                mes = Messages.formMess(item, params['tag'])
                 vk.sendMes(mess = mes, users = params['rcpns'], tag = params['tag'], pic = [item['pic']], type = MessageType.monitor_big_category)
                 logger.info(f"[MESSAGE-{params['tag']}] Отправлено сообщение о лоте {item['id']}")
             
@@ -203,7 +143,6 @@ def bs4SellerMonitor(curl, params):
     tmp_seen_aucs = []
     item = {}
     items = []
-    pics = []
     
     firstSeen = True # при первом запуске просматривается только 1 элемент
 

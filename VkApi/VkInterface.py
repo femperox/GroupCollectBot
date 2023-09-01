@@ -11,7 +11,7 @@ from vk_api.keyboard import VkKeyboard, VkKeyboardColor
 
 from confings.Messages import MessageType, Messages
 from Logger import logger, logger_fav
-from SQLS.DB_Operations import addFav, getFav, deleteFav, getFandoms, getTags, addBans, insertUpdateParcel
+from SQLS.DB_Operations import addFav, getFav, deleteFav, getFandoms, getTags, addBans, insertUpdateParcel, addBannedSellers
 from YahooApi.yahooApi import getAucInfo
 from confings.Consts import CURRENT_POSRED, BanActionType, MAX_BAN_REASONS, RegexType, PayloadType, VkCommands
 from APIs.utils import getMonitorChats, getFavInfo
@@ -407,17 +407,12 @@ class VkApi:
                         category = category[0]
 
                         if seller:
-                            path = os.getcwd()+ f'/stopLists/{category.split("_")[-1]}_stop.txt'
-                            with open(path, 'a+') as f:
-                                f.seek(0)
-                                currentStopList = set(f.read().split('\n'))
-                                isBanned = seller[1:] in currentStopList
+                            isBanned = addBannedSellers(category = category.split("_")[-1], seller_id = seller[1:])
 
-                                message = Messages.mes_ban(seller = seller, category = category, isBanned = isBanned)
-                                self.sendMes(mess = message, users= chat)
-                                if not isBanned:
-                                    f.write(f'\n{seller[1:]}')
-                                    logger.info(f"\n[BAN-{category.split('_')[-1]}] Забанен продавец {seller[1:]}\n")                      
+                            message = Messages.mes_ban(seller = seller, category = category, isBanned = isBanned)
+                            self.sendMes(mess = message, users= chat)
+                            if not isBanned:
+                                logger.info(f"\n[BAN-{category.split('_')[-1]}] Забанен продавец {seller[1:]}\n")                      
 
 
                     params = {
@@ -486,17 +481,12 @@ class VkApi:
                                 seller = category[-1]
                                 category = category[0]
                                 if seller:
-                                    path = os.getcwd()+ f'/stopLists/{category.split("_")[-1]}_stop.txt'
-                                    with open(path, 'a+') as f:
-                                        f.seek(0)
-                                        currentStopList = set(f.read().split('\n'))
-                                        isBanned = seller[1:] in currentStopList
+                                    isBanned = addBannedSellers(category = category.split("_")[-1], seller_id = seller[1:])
 
-                                        message = Messages.mes_ban(seller = seller, category = category, isBanned = isBanned)
-                                        self.sendMes(mess = message, users= chat)
-                                        if not isBanned:
-                                            f.write(f'\n{seller[1:]}')
-                                            logger.info(f"\n[BAN-{category.split('_')[-1]}] Забанен продавец {seller[1:]}\n")
+                                    message = Messages.mes_ban(seller = seller, category = category, isBanned = isBanned)
+                                    self.sendMes(mess = message, users= chat)
+                                    if not isBanned:
+                                        logger.info(f"\n[BAN-{category.split('_')[-1]}] Забанен продавец {seller[1:]}\n")
                             except:
                                 continue
                             

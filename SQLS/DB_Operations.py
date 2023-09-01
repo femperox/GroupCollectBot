@@ -352,3 +352,70 @@ def setParcelMass(barcode, mass):
 
     return
 
+def getBannedSellersInCategory(category):
+    """Получить список забаненных продавцов в категории
+
+    Args:
+        category (string): категория
+
+    Returns:
+        list: список забаненных продавцов
+    """
+
+    conn = getConnection(DbNames.collectDatabase)
+    cursor = conn.cursor() 
+
+    cursor.execute(f"SELECT DISTINCT SELLER_ID FROM BANNED_SELLERS WHERE CATEGORY = '{category}';")
+    result = cursor.fetchall()
+   
+    cursor.close()
+    conn.close()
+
+    return [res[0] for res in result]
+
+def addBannedSellers(category, seller_id):
+    """Добавить продавца в бан-лист
+
+    Args:
+        category (string): категория
+        seller_id (string): id продавца.
+
+    Returns:
+        int: результат исполнения добавления. 0 - дубль, 1 - успешно.
+    """
+
+    conn = getConnection(DbNames.collectDatabase)
+    cursor = conn.cursor() 
+
+    cursor.execute(f"SELECT INSERT_BANNED_SELLER('{seller_id}', '{category}')")
+    result = cursor.fetchone()[0]
+   
+    conn.commit() 
+    cursor.close()
+    conn.close()
+    
+    return result
+
+def IsExistBannedSeller(category, seller_id):
+    """Проверка сущестования продавца в бан-листе
+
+    Args:
+        category (string): категория
+        seller_id (string): id продавца.
+
+    Returns:
+        int: результат проверки существования. 0 - нет, 1 - да.
+    """
+
+    conn = getConnection(DbNames.collectDatabase)
+    cursor = conn.cursor() 
+
+    cursor.execute(f"SELECT IS_EXISTS_BANNED_SELLER('{seller_id}', '{category}')")
+    result = cursor.fetchone()[0]
+   
+    conn.commit() 
+    cursor.close()
+    conn.close()
+    
+    return result
+
