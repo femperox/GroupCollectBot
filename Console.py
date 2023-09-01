@@ -13,7 +13,7 @@ def setParcelMasses():
     for parcel in parcel_list:
         setParcelMass(parcel, getMass(parcel))
 
-'''
+
 try:
 
     setParcelMasses()
@@ -21,9 +21,5 @@ try:
 except Exception as e:
     pprint(e) 
     print_exc()
-'''
 
-ke = getBannedSellersInCategory('Мику')
-print(ke)
-                
     
