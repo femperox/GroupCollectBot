@@ -2,7 +2,7 @@ from SQLS.DB_Operations import setParcelMass, getZeroMassParcel
 from APIs.pochtaApi import getMass
 from pprint import pprint
 from traceback import print_exc
-
+from VkApi.VkInterface import VkApi as vk
 
 def setParcelMasses():
     """Восстановить нулевые массы отправлений
@@ -16,7 +16,8 @@ def setParcelMasses():
 
 try:
 
-    setParcelMasses()
+    #setParcelMasses()
+    vk = vk()
 
 except Exception as e:
     pprint(e) 

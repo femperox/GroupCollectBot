@@ -575,9 +575,55 @@ class VkApi:
         except Exception as e:
             print_exc()
 
+    def get_wall_post(self, post_owner_id):
+        """получить инфо о посте
 
+        Args:
+            post_owner_id (string): Перечисленные через запятую идентификаторы, которые представляют собой идущие через знак подчеркивания ID владельцев стен и ID самих записей на стене.
+
+        Returns:
+            dict: информация о записи
+        """
+
+        try:
+            params = {
+                'posts': post_owner_id,
+            }
+
+            res = self.vk.wall.getById(**params)
+            return res
+
+        except Exception as e:
+            print_exc()        
+
+    def edit_wall_post(self, mess, post_id):
+        """изменить запись на стене
+
+        Args:
+            mess (string): текст
+            post_id (_type_): id поста
+        """
+        
+        try:
+            params = {
+                'owner_id': f'-{self.__group_id}',
+                'post_id': post_id,
+                'message': mess
+            }
+
+            self.vk.wall.edit(**params)
+
+        except Exception as e:
+            print_exc()
 
     def post_wall_comment(self, mess, post_id, from_group=1):
+        """оставить комментарий под записью
+
+        Args:
+            mess (string): текст
+            post_id (int): id поста
+            from_group (int, optional): от лица группы. Defaults to 1
+        """
 
         try:
             params = {
@@ -594,6 +640,13 @@ class VkApi:
             print_exc()
     
     def post_photo_comment(self, mess, photo_id, from_group=1):
+        """оставить комментарий под фотографией
+
+        Args:
+            mess (string): текст
+            photo_id (int): id фото
+            from_group (int, optional): от лица группы. Defaults to 1.
+        """
 
         try:
             params = {
@@ -641,7 +694,14 @@ class VkApi:
        while True:
         try:
             for event in longPoll.listen():  
-                if event.type == VkBotEventType.WALL_POST_NEW:
+                
+                if event.type == VkBotEventType.WALL_REPOST:
+                    
+                    post_id = event.obj['id']
+                    self.edit_wall_post(VkCommands.repost_tag, post_id = post_id)
+                    
+
+                elif event.type == VkBotEventType.WALL_POST_NEW:
 
                     post = {}
                     post['text'] = event.obj['text']
@@ -675,7 +735,7 @@ class VkApi:
                     if count_bans >= MAX_BAN_REASONS:
                         self.ban_users({'id': deleter_id, 'comment': 'Удаление комментариев.'})
 
-                    mess = f'{self.get_name(deleter_id)}, удаление комментариев запрещено.\n\nПредупреждение {count_bans}/3. На третье будет перманентный бан.'
+                    mess = Messages.mes_ban_user_delete.format(self.get_name(deleter_id),count_bans)
 
                     if event.type == VkBotEventType.WALL_REPLY_DELETE:
                         self.post_wall_comment(mess = mess, post_id = event.object['post_id'])
@@ -690,7 +750,7 @@ class VkApi:
                     if count_bans >= MAX_BAN_REASONS:
                         self.ban_users({'id': deleter_id, 'comment': 'Изменение комментариев.'})
                     
-                    mess = f'{self.get_name(deleter_id)}, изменение комментариев запрещено.\n\nПредупреждение {count_bans}/3. На третье будет перманентный бан.'
+                    mess = Messages.mes_ban_user_edit.format(self.get_name(deleter_id),count_bans)
 
                     if event.type == VkBotEventType.WALL_REPLY_EDIT:
                         self.post_wall_comment(mess = mess, post_id = event.object['post_id'])
