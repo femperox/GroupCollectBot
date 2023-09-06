@@ -258,8 +258,9 @@ class VkApi:
         :param id: ссылка на пользователя в произвольном формате
         :return:
         '''
-
-        return self.vk.users.get(user_ids = id, lang = self.lang)[0]['id']
+        res = self.vk.users.get(user_ids = id, lang = self.lang)
+        pprint(res)
+        return res[0]['id']
 
     def get_group_id(self, id):
         '''
