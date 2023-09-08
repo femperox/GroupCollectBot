@@ -12,19 +12,14 @@ TIME_CHECK_COLLECTS = TIME_CHECK_SHEET*2
 
 def addNewUsers():
     while True:
-        print('ok?')
         list = ts.getSheetListProperties()
-        print('ok')
-        for usr in list:
-            print(usr[0])
-            
+        for usr in list:            
             usr[0] = vk.get_id(usr[0])
 
             for fandom in usr[1]:
                 pprint( f'{addTags(usr[0], fandom)} for {usr[0]}')
         
         ts.updateURLS(list)
-        pprint(list)
         sleep(TIME_CHECK_SHEET)
 
 def checkCollects():
@@ -69,16 +64,14 @@ def checkCollects():
 vk = vk()
 ts = ts()
 cs = cs()
-'''
+
 vkWall = threading.Thread(target=vk.monitorWall)
 vkWall.start()
-
 
 sheetTags = threading.Thread(target=addNewUsers)
 sheetTags.start()
 
 sheetCollects = threading.Thread(target=checkCollects)
 sheetCollects.start()
-'''
 
-addNewUsers()
+

@@ -258,9 +258,8 @@ class VkApi:
         :param id: ссылка на пользователя в произвольном формате
         :return:
         '''
-        res = self.vk.users.get(user_ids = id, lang = self.lang)
-        pprint(res)
-        return res[0]['id']
+
+        return self.vk.users.get(user_ids = id, lang = self.lang)[0]['id']
 
     def get_group_id(self, id):
         '''
@@ -357,9 +356,10 @@ class VkApi:
         
        while True:
         try:
-            for event in longPoll.listen():
-                #pprint(event)       
+            for event in longPoll.listen():    
                 # Исходящие сообщения
+
+                pprint(event)
                 if event.type == VkBotEventType.MESSAGE_REPLY:
                     sender = event. obj['from_id']
                     chat = event.obj['peer_id']
@@ -468,7 +468,7 @@ class VkApi:
                                 logger_fav.info(f"[ADD_FAV-{sender}] для пользователя {sender}: {mess}")
                                 self.sendMes(mess, chat)
                             except Exception as e:
-                                print(e)                      
+                                logger_fav.info(f"[ERROR_FAV-{sender}] для пользователя {sender}: {e}")                     
                         
                         # Бан продавца
                         if str(sender) in self.__admins and event.obj.message['text'].lower() in VkCommands.banList:
@@ -518,7 +518,7 @@ class VkApi:
                                 
                                 self.sendMes(mess=mess, users=chat, pic=pics)
                             except Exception as e:
-                                pprint(e)
+                                logger_fav.info(f"[ERROR_SEL_FAV-{sender}] для пользователя {sender}: {e}") 
                     
                     # Удаление из избранного
                     elif event.obj.message['text'].lower().split(' ')[0] in VkCommands.delFavList and event.obj.message['text'].lower().find("#")>=0:
@@ -696,8 +696,8 @@ class VkApi:
         try:
             for event in longPoll.listen():  
                 
-                if event.type == VkBotEventType.WALL_REPOST:
-                    
+                if event.type == VkBotEventType.WALL_POST_NEW and event.object['copy_history']:
+                   
                     post_id = event.obj['id']
                     self.edit_wall_post(VkCommands.repost_tag, post_id = post_id)
                     
