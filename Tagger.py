@@ -65,8 +65,6 @@ vk = vk()
 ts = ts()
 cs = cs()
 
-vkWall = threading.Thread(target=vk.monitorWall)
-vkWall.start()
 
 sheetTags = threading.Thread(target=addNewUsers)
 sheetTags.start()

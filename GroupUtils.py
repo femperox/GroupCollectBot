@@ -64,11 +64,16 @@ def updateTrackingStatuses():
 try:
     vk = vk()
 
+    vkWall = threading.Thread(target=vk.monitorGroupActivity)
+    vkWall.start()
+
+    '''
     threads.append(threading.Thread(target=updateCurrencyStatus))
     threads[-1].start()
 
     threads.append(threading.Thread(target=updateTrackingStatuses))
     threads[-1].start()
+    '''
     
 except Exception as e:
     logger_utils.info(f"[ERROR_UTILS] {e}")   

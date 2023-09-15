@@ -1,5 +1,5 @@
 from suds.client import Client
-
+from confings.Consts import PRIVATES_PATH
 import os
 import json
 
@@ -23,7 +23,7 @@ def createMess(barcode):
     """    
 
     
-    tmp_dict = json.load(open(os.getcwd()+'/confings/privates.json', encoding='utf-8'))
+    tmp_dict = json.load(open(PRIVATES_PATH, encoding='utf-8'))
     login = tmp_dict['pochta_API_usr']
     psw = tmp_dict['pochta_API_psw']
 

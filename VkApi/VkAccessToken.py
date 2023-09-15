@@ -1,6 +1,6 @@
 import webbrowser
 import json
-import os
+from confings.Consts import PRIVATES_PATH
 
 def get_access_token(client_id: int, scope: int) -> None:
     assert isinstance(client_id, int), 'clinet_id must be positive integer'
@@ -16,5 +16,5 @@ def get_access_token(client_id: int, scope: int) -> None:
     # Работа для Chrome. Можно вызывать и просто браузер по умолчанию
     webbrowser.open_new_tab(url)
 
-tmp_dict = json.load(open(os.getcwd()+'/confings/privates.json', 'r'))
+tmp_dict = json.load(open(PRIVATES_PATH, 'r'))
 get_access_token(tmp_dict['app_id'], tmp_dict['rights'])

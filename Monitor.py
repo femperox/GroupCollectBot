@@ -1,5 +1,3 @@
-import xmltodict
-import requests
 import json
 import os
 import threading
@@ -7,11 +5,11 @@ from VkApi.VkInterface import VkApi as vk
 from time import sleep
 from pprint import pprint
 import datetime
-from bs4 import BeautifulSoup
+from APIs.webUtils import WebUtils
 from Logger import logger
 from traceback import print_exc
-from YahooApi.yahooApi import getAucInfo, getPic, getHeader, getPic
-from confings.Consts import CURRENT_POSRED, MONITOR_CONF_PATH, INFO_MESSAGE_PATH
+from JpStoresApi.yahooApi import getAucInfo
+from confings.Consts import MONITOR_CONF_PATH, PRIVATES_PATH
 from confings.Messages import MessageType, Messages
 from APIs.utils import getActiveMonitorChatsTypes
 from SQLS.DB_Operations import IsExistBannedSeller
@@ -54,8 +52,7 @@ def bs4Monitor(curl, params):
         params (dict): словарь с информацией о потоке
     """
 
-    path = os.getcwd()+'/confings/privates.json'
-    tmp_dict = json.load(open(path, encoding='utf-8'))
+    tmp_dict = json.load(open(PRIVATES_PATH, encoding='utf-8'))
     app_id = tmp_dict['yahoo_jp_app_id']
 
     seen_aucs = []
@@ -68,8 +65,7 @@ def bs4Monitor(curl, params):
     while True:
         try:
             
-            r = requests.get(curl)
-            soup = BeautifulSoup(r.text, "html.parser")
+            soup = WebUtils.getSoup(curl, parser= WebUtils.Bs4Parsers.htmlParser)
 
             allLots = soup.findAll('ul', class_='Products__items')[0]
             allLots = allLots.findAll('div', class_='Product__bonus')
@@ -98,7 +94,7 @@ def bs4Monitor(curl, params):
                 if IsExistBannedSeller(seller_id = item['seller'], category = params['tag']) or item['price'] > params['maxPrice']-1:
                     continue
 
-                info = getAucInfo(app_id, item['id'], params['tag'])
+                info = getAucInfo(app_id, item['id'])
 
                 if len(info) == 0:
                     continue
@@ -134,8 +130,7 @@ def bs4SellerMonitor(curl, params):
         params (dict): словарь с информацией о потоке
     """
 
-    path = os.getcwd()+'/confings/privates.json'
-    tmp_dict = json.load(open(path, encoding='utf-8'))
+    tmp_dict = json.load(open(PRIVATES_PATH, encoding='utf-8'))
     app_id = tmp_dict['yahoo_jp_app_id']
 
     seen_aucs = []
@@ -149,8 +144,7 @@ def bs4SellerMonitor(curl, params):
     while True:
         try:
            
-            r = requests.get(curl)
-            soup = BeautifulSoup(r.text, "html.parser")
+            soup = WebUtils.getSoup(curl, parser= WebUtils.Bs4Parsers.htmlParser)
 
             allLots = soup.findAll('div', class_='Product__bonus')
 
@@ -174,9 +168,8 @@ def bs4SellerMonitor(curl, params):
                 i += 1
                 
                 item['seller'] = lot['data-auction-sellerid']
-                item['price'] = float(lot['data-auction-startprice'])
 
-                info = getAucInfo(app_id, item['id'], params['tag'])
+                info = getAucInfo(app_id, item['id'])
 
                 if len(info) == 0:
                     continue
@@ -215,10 +208,7 @@ if __name__ == "__main__":
     
     with open(MONITOR_CONF_PATH, "r") as f: 
         conf_list = json.load(f)
-       
-    vkChats = threading.Thread(target=vk.monitorChats)
-    vkChats.start()
-    
+          
     active_chats = []
 
     for conf in conf_list[1:]:

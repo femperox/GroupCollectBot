@@ -12,15 +12,15 @@ from vk_api.keyboard import VkKeyboard, VkKeyboardColor
 from confings.Messages import MessageType, Messages
 from Logger import logger, logger_fav
 from SQLS.DB_Operations import addFav, getFav, deleteFav, getFandoms, getTags, addBans, insertUpdateParcel, addBannedSellers
-from YahooApi.yahooApi import getAucInfo
-from confings.Consts import CURRENT_POSRED, BanActionType, MAX_BAN_REASONS, RegexType, PayloadType, VkCommands
+from JpStoresApi.yahooApi import getAucInfo
+from confings.Consts import CURRENT_POSRED, BanActionType, MAX_BAN_REASONS, RegexType, PayloadType, VkCommands, PRIVATES_PATH
 from APIs.utils import getMonitorChats, getFavInfo
 from APIs.pochtaApi import getTracking
 
 class VkApi:
 
     def __init__(self) -> None:
-        tmp_dict = json.load(open(os.getcwd()+'/confings/privates.json', encoding='utf-8'))
+        tmp_dict = json.load(open(PRIVATES_PATH, encoding='utf-8'))
         self.__tok = tmp_dict['access_token']
         self.__group_id = tmp_dict['group_id']
         auth_data = self._login_pass_get(tmp_dict)
@@ -68,7 +68,7 @@ class VkApi:
                 for _ in range(size):
                     key += chr(random.randint(0, 10000))
                 privates.setdefault('secret_key', key)
-                json.dump(privates, open(os.getcwd()+'/confings/privates.json', 'w'))
+                json.dump(privates, open(PRIVATES_PATH, 'w'))
             return privates.get('secret_key', '')
         except:
             print_exc()
@@ -128,7 +128,7 @@ class VkApi:
                 privates.setdefault('login', login)
                 privates.setdefault('password', password)
 
-                json.dump(privates, open(os.getcwd()+'/confings/privates.json', 'w'))
+                json.dump(privates, open(PRIVATES_PATH, 'w'))
                 return new_login, new_pass
             new_login = self._encode_decode_str(key, login, encode=False)
             new_pass = self._encode_decode_str(key, password, encode=False)
@@ -347,19 +347,18 @@ class VkApi:
         
         return result['items'][0]['attachments'][idx]['photo']
     
-    def monitorChats(self):
-       """Мониторинг чатов группы
+    def monitorGroupActivity(self):
+       """Мониторинг активности группы
        """
        
        vkBotSession = vk_api.VkApi(token=self.__tok)
        longPoll = VkBotLongPoll(vkBotSession, self.__group_id)
+       whiteList = [int(self.__admins[0])]
         
        while True:
         try:
             for event in longPoll.listen():    
                 # Исходящие сообщения
-
-                pprint(event)
                 if event.type == VkBotEventType.MESSAGE_REPLY:
                     sender = event. obj['from_id']
                     chat = event.obj['peer_id']
@@ -551,7 +550,63 @@ class VkApi:
                                 
                         logger_fav.info(f"[ADD_FAV-{sender}] для пользователя {sender}: {mess}")
                         self.sendMes(mess, chat)
-                        
+
+                elif event.type == VkBotEventType.WALL_POST_NEW and 'copy_history' in event.object:
+                    
+                    post_id = event.obj['id']
+                    self.edit_wall_post(VkCommands.repost_tag, post_id = post_id)
+                    
+                elif event.type == VkBotEventType.WALL_POST_NEW:
+                    post = {}
+                    post['text'] = event.obj['text']
+                    post['id'] = event.obj['id']
+                    post['tags'] = re.findall(RegexType.regex_hashtag, post['text'])
+
+                    allFandoms = getFandoms()
+                    mess = 'Автотеги.'
+                    
+                    isTagPost = False
+                    
+                    for tag in post['tags']:
+                        if tag.replace('#','').replace(VkCommands.group_tag, '') in allFandoms:
+                            isTagPost = True
+                            users = getTags(tag.replace('#','').replace(VkCommands.group_tag, ''))
+                            users = '\n'.join([self.get_name(usr) for usr in users])
+                            #users = '\n'.join(str(usr) for usr in users)
+                            mess += f'\n\n{tag}:\n{users}'
+                    
+                    pprint(mess)
+                    if isTagPost:
+                        self.post_wall_comment(mess=mess, post_id=post['id'])
+                elif  event.type in [VkBotEventType.PHOTO_COMMENT_DELETE, VkBotEventType.WALL_REPLY_DELETE] and event.object['deleter_id'] not in whiteList:
+                    
+                    deleter_id = event.object['deleter_id'] if event.object['deleter_id'] != 100 else event.object['user_id']
+
+                    count_bans = addBans(deleter_id, BanActionType.deleting.value)
+
+                    if count_bans >= MAX_BAN_REASONS:
+                        self.ban_users({'id': deleter_id, 'comment': 'Удаление комментариев.'})
+
+                    mess = Messages.mes_ban_user_delete.format(self.get_name(deleter_id),count_bans)
+
+                    if event.type == VkBotEventType.WALL_REPLY_DELETE:
+                        self.post_wall_comment(mess = mess, post_id = event.object['post_id'])
+                    else:
+                        self.post_photo_comment(mess = mess, photo_id = event.object['photo_id'])
+
+                elif  event.type in [VkBotEventType.PHOTO_COMMENT_EDIT, VkBotEventType.WALL_REPLY_EDIT] and event.object['from_id'] not in whiteList:
+                    deleter_id = event.object['from_id']
+
+                    count_bans = addBans(deleter_id, BanActionType.editing.value)
+                    if count_bans >= MAX_BAN_REASONS:
+                        self.ban_users({'id': deleter_id, 'comment': 'Изменение комментариев.'})
+                    
+                    mess = Messages.mes_ban_user_edit.format(self.get_name(deleter_id),count_bans)
+
+                    if event.type == VkBotEventType.WALL_REPLY_EDIT:
+                        self.post_wall_comment(mess = mess, post_id = event.object['post_id'])
+                    else:
+                        self.post_photo_comment(mess = mess, photo_id = event.object['photo_id'])            
                         
         except Exception as e:
             pprint(e)
@@ -681,85 +736,3 @@ class VkApi:
         except Exception as e:
             print(e)
             print_exc()        
-              
-        
-    def monitorWall(self):
-       """Мониторинг стены группы
-       """
-
-       whiteList = [int(self.__admins[0])]
-
-       vkBotSession = vk_api.VkApi(token=self.__tok)
-       longPoll = VkBotLongPoll(vkBotSession, self.__group_id)
-    
-       while True:
-        try:
-            for event in longPoll.listen():  
-                
-                if event.type == VkBotEventType.WALL_POST_NEW and event.object['copy_history']:
-                   
-                    post_id = event.obj['id']
-                    self.edit_wall_post(VkCommands.repost_tag, post_id = post_id)
-                    
-
-                elif event.type == VkBotEventType.WALL_POST_NEW:
-
-                    post = {}
-                    post['text'] = event.obj['text']
-                    post['id'] = event.obj['id']
-
-                    post['tags'] = re.findall(RegexType.regex_hashtag, post['text'])
-
-                    allFandoms = getFandoms()
-                    mess = 'Автотеги.'
-                    
-                    isTagPost = False
-                    
-                    for tag in post['tags']:
-                        if tag.replace('#','').replace(VkCommands.group_tag, '') in allFandoms:
-                            isTagPost = True
-                            users = getTags(tag.replace('#','').replace(VkCommands.group_tag, ''))
-                            users = '\n'.join([self.get_name(usr) for usr in users])
-                            #users = '\n'.join(str(usr) for usr in users)
-                            mess += f'\n\n{tag}:\n{users}'
-                    
-                    if isTagPost:
-                        self.post_wall_comment(mess=mess, post_id=post['id'])
-                    
-
-                elif  event.type in [VkBotEventType.PHOTO_COMMENT_DELETE, VkBotEventType.WALL_REPLY_DELETE] and event.object['deleter_id'] not in whiteList:
-                    
-                    deleter_id = event.object['deleter_id'] if event.object['deleter_id'] != 100 else event.object['user_id']
-
-                    count_bans = addBans(deleter_id, BanActionType.deleting.value)
-
-                    if count_bans >= MAX_BAN_REASONS:
-                        self.ban_users({'id': deleter_id, 'comment': 'Удаление комментариев.'})
-
-                    mess = Messages.mes_ban_user_delete.format(self.get_name(deleter_id),count_bans)
-
-                    if event.type == VkBotEventType.WALL_REPLY_DELETE:
-                        self.post_wall_comment(mess = mess, post_id = event.object['post_id'])
-                    else:
-                        self.post_photo_comment(mess = mess, photo_id = event.object['photo_id'])
-                
-                elif  event.type in [VkBotEventType.PHOTO_COMMENT_EDIT, VkBotEventType.WALL_REPLY_EDIT] and event.object['from_id'] not in whiteList:
-
-                    deleter_id = event.object['from_id']
-
-                    count_bans = addBans(deleter_id, BanActionType.editing.value)
-                    if count_bans >= MAX_BAN_REASONS:
-                        self.ban_users({'id': deleter_id, 'comment': 'Изменение комментариев.'})
-                    
-                    mess = Messages.mes_ban_user_edit.format(self.get_name(deleter_id),count_bans)
-
-                    if event.type == VkBotEventType.WALL_REPLY_EDIT:
-                        self.post_wall_comment(mess = mess, post_id = event.object['post_id'])
-                    else:
-                        self.post_photo_comment(mess = mess, photo_id = event.object['photo_id'])        
-
-        except Exception as e:
-            pprint(e)   
-            continue      
-
-

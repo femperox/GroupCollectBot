@@ -6,7 +6,7 @@ from time import sleep
 from SQLS.DB_Operations import getUsers, getAllFavs, deleteFav
 import threading
 from Logger import logger_fav
-from YahooApi.yahooApi import getCurrentPrice
+from JpStoresApi.yahooApi import getCurrentPrice
 import json
 import os
 from confings.Consts import CURRENT_POSRED

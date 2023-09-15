@@ -1,5 +1,5 @@
 from confings.Consts import CURRENCY_API, CURRENT_POSRED
-from APIs.utils import getHeader
+from APIs.webUtils import WebUtils
 import requests
 import json
 
@@ -10,7 +10,7 @@ def getCurrentCurrencyRate():
     Returns:
         float: курс рубля
     """
-    headers = getHeader()
+    headers = WebUtils.getHeader()
     page = requests.get(CURRENCY_API[CURRENT_POSRED], headers=headers)
     js = json.loads(page.text)
 
