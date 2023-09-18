@@ -79,8 +79,6 @@ def getShipmentPrice(app_id, id, seller_id , postage_id = 1, item_weight = 0):
     
     js = json.loads(page.text)
 
-    pprint(js)
-    
     prices = []
     for method in js['methods']:
         if method['shipping_price'][0]['price']!=None:
@@ -89,7 +87,7 @@ def getShipmentPrice(app_id, id, seller_id , postage_id = 1, item_weight = 0):
     if len(prices):
         return float(min(prices))
     else:
-        return 'неизвестно (возможно, присутствует в описании)'
+        return -1
 
 def getCurrentPrice(app_id, id):
     """Получение текущей цены аукциона
@@ -176,9 +174,8 @@ def getAucInfo(app_id, id):
 
         info['itemPrice'] = float(xml['ResultSet']['Result']['Price'])
         info['tax'] = xml['ResultSet']['Result']['TaxRate'] 
-        info['itemPriceWTax'] = float(xml['ResultSet']['Result']['TaxinPrice'])
+        info['itemPriceWTax'] = float(xml['ResultSet']['Result']['TaxinPrice']) if 'itemPriceWTax' in xml['ResultSet']['Result'] else info['itemPrice']
 
-        pprint(info)
         return info
         
     except Exception as e:
