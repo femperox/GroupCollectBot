@@ -114,9 +114,6 @@ class CollectSheet:
         sortedCollectList.sort(key = lambda x:x[0])
         sortedCollectList = [x[1] for x in sortedCollectList]
 
-        pprint(list(collectList.keys()))
-        pprint(sortedCollectList)
-
         for key in sortedCollectList:
                        
             start_row = row 

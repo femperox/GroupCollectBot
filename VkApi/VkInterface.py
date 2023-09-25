@@ -536,7 +536,7 @@ class VkApi:
                         auc_ids = re.findall(RegexType.regex_hashtag, event.obj.message['text'].lower())  
                         
                         try:
-                            info = getAucInfo(app_id = self.__yahoo, id= auc_ids[0][1:], tag="custom_fav")
+                            info = getAucInfo(app_id = self.__yahoo, id= auc_ids[0][1:])
                             info['attachement'] = self._form_images_request_signature([info['pic']], self.__group_id, tag="custom_fav")[0]
                             info['usr'] = sender
                             info['id'] = auc_ids[0][1:]

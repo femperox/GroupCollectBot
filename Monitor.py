@@ -90,7 +90,7 @@ def bs4Monitor(curl, params):
                 i += 1
                 
                 item['seller'] = lot['data-auction-sellerid']
-                item['price'] = float(lot['data-auction-startprice'])
+                item['price'] = int(lot['data-auction-startprice'])
                 if IsExistBannedSeller(seller_id = item['seller'], category = params['tag']) or item['price'] > params['maxPrice']-1:
                     continue
 
