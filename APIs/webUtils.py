@@ -6,6 +6,7 @@ from pyvirtualdisplay import Display
 from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
 from confings.Consts import LINUX_USER_AGENT
+import cfscrape
 
 import requests
 
@@ -89,3 +90,18 @@ class WebUtils:
         """
 
         return Display(visible=0, size=(800, 600))
+    
+    @staticmethod
+    def getSraper(url):
+
+        def getSraperSoup(response):
+
+            return BeautifulSoup(response.text, WebUtils.Bs4Parsers.htmlParser)
+
+        #scraper = cfscrape.create_scraper()  # returns a CloudflareScraper instance
+        session = requests.Session()
+        session.headers = WebUtils.getHeader()
+        scraper = cfscrape.CloudflareScraper()  # CloudflareScraper inherits from requests.Session
+        response = scraper.get(url)
+        pprint(response)
+        return getSraperSoup(response)

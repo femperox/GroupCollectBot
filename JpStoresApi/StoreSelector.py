@@ -58,10 +58,7 @@ class StoreSelector:
         item = {}
 
         if site == self.Stores.mercari:
-
-            tmp_dict = json.load(open(PRIVATES_PATH, encoding='utf-8'))
-            dpop = tmp_dict['mercari_dpop']
-            item = ssa.parseMercariPage(url, self.getItemID(), dpop)
+            item = ssa.parseMercariPage(url, self.getItemID())
 
         elif site == self.Stores.payPay:
             item = ssa.parsePayPay(url, self.getItemID())
@@ -76,10 +73,11 @@ class StoreSelector:
             pprint(self.Stores.amiAmi)
             
             if url.find('/eng/')>0:
-                item = sa.parseAmiAmiEng(url, self.getItemID())
+                pprint(self.getItemID())
+                item = sa.parseAmiAmiEng(url, self.getItemID().split("=")[-1])
             else:
                 item = ''
-                #item = parseAmiAmiJp(url)
+                item = sa.parseAmiAmiJp(url)
             
         elif site == self.Stores.mandarake:
             item = ssa.parseMandarake(url)

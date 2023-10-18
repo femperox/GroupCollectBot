@@ -2,6 +2,10 @@ from APIs.webUtils import WebUtils
 import requests
 from time import sleep
 from pprint import pprint
+import mercari
+from random import randint
+
+
 
 class SecondaryStoreApi:
 
@@ -36,7 +40,7 @@ class SecondaryStoreApi:
         return item
     
     @staticmethod
-    def parseMercariPage(url, item_id, dpop):
+    def parseMercariPage(url, item_id):
         """Получение базовой информации о лоте со вторички mercari
 
         Args:
@@ -52,53 +56,23 @@ class SecondaryStoreApi:
 
         headers = WebUtils.getHeader()
         headers['Content-Type'] = ''
-        #headers[':authority:'] = 'jp.mercari.com'
-        # не робит на линуксе. искать обходняк, либо тупо bs4
+        headers['DPOP'] = mercari.generate_DPOP(uuid=f"{randint(0,100)}{item_id}", method="GET", url=curl)
 
-        
-        ok = WebUtils.getSelenium()
-        
-        ok.get(url)
-        ok.implicitly_wait(30) # seconds
-        pprint(ok.requests)
-   
-        
-        '''
-        ok = requests.get(url, headers)   
-        pprint(ok.status_code)
-        pprint(ok.content)
-        '''
-
-        '''    
-        dpop = ''
-        for request in ok.requests:
-            if request.url.find('get?id=')>0:
-                dpop = request.headers['dpop']
-
-        pprint(dpop)
-        
-
-        headers = WebUtils.getHeader()
-        # Чекнуть когд он просрочится
-        headers['dpop'] = dpop
-        
         page = session.get(curl, headers=headers)
-        js = page.json()
-
-        pprint(js)
+        js = page.json() 
 
         item = {}
         item['itemPrice'] = js['data']['price']
         item['tax'] = 0
-        item['itemPriceWTax'] = 0
-        item['shipmentPrice'] = 0
+        item['itemPriceWTax'] = 0 # Всегда включена в цену
+        item['shipmentPrice'] = 0 if js['data']['shipping_payer']['id'] == 2 else -1
         item['page'] = url
         item['mainPhoto'] = js['data']['photos'][0]
         item['siteName'] = 'mercari'
-        '''
-        item = ''
+
         return item
     
+    @staticmethod
     def parseMandarake(url):
         """Получение базовой информации о лоте со вторички Mandarake
 
@@ -109,6 +83,16 @@ class SecondaryStoreApi:
             dict: словарь с информацией о лоте
         """
 
+        pprint('ok1')
+        session = requests.session()
+        headers = WebUtils.getHeader()
+        page = session.get(url, headers=headers)
+        js = page.json() 
+        pprint('ok2')
+        pprint(page.status_code)
+        pprint(page.content)
+
+        '''
         ok = WebUtils.getSelenium()
 
         # не робит на линуксе. искать обходняк, либо тупо bs4
@@ -123,7 +107,7 @@ class SecondaryStoreApi:
         pos_tax = str(info).find('"price_with_tax":')
         pos_price = str(info).find('"price":')
         pos_segment = str(info).find(',"segment')
-
+        '''
 
         item = {}
         '''
