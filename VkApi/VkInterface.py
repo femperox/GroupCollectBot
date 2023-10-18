@@ -357,7 +357,8 @@ class VkApi:
         
        while True:
         try:
-            for event in longPoll.listen():    
+            for event in longPoll.listen():  
+                
                 # Исходящие сообщения
                 if event.type == VkBotEventType.MESSAGE_REPLY:
                     sender = event. obj['from_id']
@@ -489,7 +490,8 @@ class VkApi:
                                         logger.info(f"\n[BAN-{category.split('_')[-1]}] Забанен продавец {seller[1:]}\n")
                             except:
                                 continue
-                            
+
+                    # получение избранного        
                     elif event.obj.message['text'].lower().split(' ')[0] in VkCommands.getFavList:
                             try:
                                 text = event.obj.message['text'].lower()
@@ -532,7 +534,7 @@ class VkApi:
                         
                     # Ручное добавление в избранное 
                     elif event.obj.message['text'].lower().split(' ')[0] in VkCommands.favList and event.obj.message['text'].lower().find("#")>=0:
-
+                        pprint('ok?')
                         auc_ids = re.findall(RegexType.regex_hashtag, event.obj.message['text'].lower())  
                         
                         try:
@@ -547,15 +549,18 @@ class VkApi:
                         except Exception as e:
                             print(f'Message formatting: {e}')
                             mess += f"\nОшибка добавления лота #{info['id']} в избранное. Попробуйте ещё раз!"
+                            self.sendMes(mess, chat)
                                 
                         logger_fav.info(f"[ADD_FAV-{sender}] для пользователя {sender}: {mess}")
                         self.sendMes(mess, chat)
 
+                # репосты
                 elif event.type == VkBotEventType.WALL_POST_NEW and 'copy_history' in event.object:
                     
                     post_id = event.obj['id']
                     self.edit_wall_post(VkCommands.repost_tag, post_id = post_id)
-                    
+
+                # новые записи (автотеги)    
                 elif event.type == VkBotEventType.WALL_POST_NEW:
                     post = {}
                     post['text'] = event.obj['text']
@@ -578,6 +583,8 @@ class VkApi:
                     pprint(mess)
                     if isTagPost:
                         self.post_wall_comment(mess=mess, post_id=post['id'])
+                
+                # удаление комментариев
                 elif  event.type in [VkBotEventType.PHOTO_COMMENT_DELETE, VkBotEventType.WALL_REPLY_DELETE] and event.object['deleter_id'] not in whiteList:
                     
                     deleter_id = event.object['deleter_id'] if event.object['deleter_id'] != 100 else event.object['user_id']
@@ -594,6 +601,7 @@ class VkApi:
                     else:
                         self.post_photo_comment(mess = mess, photo_id = event.object['photo_id'])
 
+                # изменение комментариев
                 elif  event.type in [VkBotEventType.PHOTO_COMMENT_EDIT, VkBotEventType.WALL_REPLY_EDIT] and event.object['from_id'] not in whiteList:
                     deleter_id = event.object['from_id']
 

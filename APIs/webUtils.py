@@ -2,9 +2,10 @@ from bs4 import BeautifulSoup
 from seleniumwire import webdriver
 from selenium.webdriver.chrome.options import Options
 #import chromedriver_autoinstaller as chromedriver old
-
+from pyvirtualdisplay import Display
 from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
+from confings.Consts import LINUX_USER_AGENT
 
 import requests
 
@@ -21,7 +22,7 @@ class WebUtils:
         """
 
         headers = {
-            'User-Agent': ': Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Safari/537.36 OPR/86.0.4363.64',
+            'User-Agent': LINUX_USER_AGENT,
             'Content-Type': 'application/json, text/plain, */*',
             'x-platform': 'web',
         }
@@ -48,17 +49,16 @@ class WebUtils:
             bs4.BeautifulSoup: bs4 soup
         """
 
-        headers = { 'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/29.0.1547.62 Safari/537.36'}
+        headers = { 'User-Agent': LINUX_USER_AGENT}
 
         page = requests.get(url, headers)
         # где-то таймаут был 20
 
         soup = BeautifulSoup(page.text, parser)
-        pprint(type(soup))
         return soup
 
     @staticmethod
-    def getSelenium():
+    def getSelenium(isDisplayed = False):
         """получить веб-драйвер
 
         Returns:
@@ -67,11 +67,25 @@ class WebUtils:
 
         options = Options()
 
-        options.add_argument('--headless')
         options.add_argument('--no-sandbox')
-        options.add_argument('--disable-dev-shm-usage')
-        
-        #return webdriver.Chrome(chromedriver.install(), options=options) #old
+
+        if isDisplayed:
+            options.add_argument(f'user-agent={LINUX_USER_AGENT}')
+            return webdriver.Chrome(options=options)
+            
+        options.add_argument("--headless=new") 
+        options.add_argument('--disable-dev-shm-usage') 
+        options.add_argument(f'user-agent={LINUX_USER_AGENT}')
+
 
         return webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
  
+    @staticmethod
+    def getDisplay():
+        """получить виртуальное окно браузера
+
+        Returns:
+            pyvirtualdisplay.display.Display: виртуальное окно браузера
+        """
+
+        return Display(visible=0, size=(800, 600))

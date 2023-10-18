@@ -157,7 +157,8 @@ def getTags(fandom):
     cursor = conn.cursor() 
 
     cursor.execute(f'''SELECT DISTINCT USER_ID FROM TAGS
-                       WHERE FANDOM='{fandom}';''')
+                       WHERE FANDOM='{fandom}'
+                       ORDER BY USER_ID;''')
     result = cursor.fetchall()
    
     cursor.close()

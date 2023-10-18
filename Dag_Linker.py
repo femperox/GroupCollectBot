@@ -19,6 +19,7 @@ def addNewUsers():
     list = ts.getSheetListProperties()
     for usr in list:            
         usr[0] = vk.get_id(usr[0])
+        
 
         for fandom in usr[1]:
             addTags(usr[0], fandom)
@@ -85,7 +86,7 @@ def updateTrackingStatuses():
 
             insertUpdateParcel(tracking_info)
 
-            if tracking_info['operationAttr'] == PochtaApiStatus.arrived and not parcel[2]:
+            if tracking_info['operationAttr'] in [PochtaApiStatus.arrived, PochtaApiStatus.notice_arrived] and not parcel[2]:
                 
                 message = mess.mess_notify_arrival.format(tracking_info['barcode'], tracking_info['operationIndex'], getParcelExpireDate(tracking_info['barcode']))
                 

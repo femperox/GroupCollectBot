@@ -175,6 +175,7 @@ def getAucInfo(app_id, id):
         info['itemPrice'] = float(xml['ResultSet']['Result']['Price'])
         info['tax'] = xml['ResultSet']['Result']['TaxRate'] 
         info['itemPriceWTax'] = float(xml['ResultSet']['Result']['TaxinPrice']) if 'itemPriceWTax' in xml['ResultSet']['Result'] else info['itemPrice']
+        info['siteName'] = 'yahooAuctions'
 
         return info
         

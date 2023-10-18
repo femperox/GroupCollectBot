@@ -2,6 +2,9 @@ from pprint import pprint
 import re
 from confings.Consts import RegexType
 from JpStoresApi.yahooApi import getAucInfo
+from JpStoresApi.SecondaryStoresApi import SecondaryStoreApi as ssa
+from JpStoresApi.StoresApi import StoreApi as sa
+
 import json
 from confings.Consts import PRIVATES_PATH
 
@@ -55,32 +58,35 @@ class StoreSelector:
         item = {}
 
         if site == self.Stores.mercari:
-            pprint(self.Stores.mercari)
-            #item = parseMercariPage(url)
+
+            tmp_dict = json.load(open(PRIVATES_PATH, encoding='utf-8'))
+            dpop = tmp_dict['mercari_dpop']
+            item = ssa.parseMercariPage(url, self.getItemID(), dpop)
+
         elif site == self.Stores.payPay:
-            pprint(self.Stores.payPay)
-            #item = parsePayPay(url)
+            item = ssa.parsePayPay(url, self.getItemID())
+
         elif site == self.Stores.yahooAuctions:
             
             tmp_dict = json.load(open(PRIVATES_PATH, encoding='utf-8'))
             app_id = tmp_dict['yahoo_jp_app_id']
-
             item = getAucInfo(app_id= app_id,id = self.getItemID())
 
         elif site == self.Stores.amiAmi:
             pprint(self.Stores.amiAmi)
-            '''
+            
             if url.find('/eng/')>0:
-                item = parseAmiAmiEng(url)
+                item = sa.parseAmiAmiEng(url, self.getItemID())
             else:
-                item = parseAmiAmiJp(url)
-            '''
+                item = ''
+                #item = parseAmiAmiJp(url)
+            
         elif site == self.Stores.mandarake:
-            pprint(self.Stores.mandarake)
-            #item = parseMandarake(url)
+            item = ssa.parseMandarake(url)
+
         elif site == self.Stores.animate:
-            pprint(self.Stores.animate)
-            #item = parseAnimate(url)
+            
+            item = sa.parseAnimate(self.getItemID())
 
 
         return item
