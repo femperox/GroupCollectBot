@@ -6,7 +6,7 @@ from Logger import logger_utils
 from APIs.pochtaApi import getTracking
 from APIs.posredApi import getCurrentCurrencyRate
 from confings.Messages import Messages as mess
-from confings.Consts import PochtaApiStatus
+from confings.Consts import PochtaApiStatus, vkCoverTime
 
 from pprint import pprint
 import sys
@@ -100,12 +100,22 @@ def updateTrackingStatuses():
     except Exception as e:
         logger_utils.info(f"""[ERROR-TRACKING-NOTIFY] {print_exc()}""")
 
+def updateCoverPhoto(daytime):
+    """Обновление шапки сообщества
+
+    Args:
+        daytime (str): время суток
+    """
+
+    vk._cover_image_upload(image_name=vkCoverTime[daytime])
+
 class DagLinkerValues:
 
     addTaggedUsers = 'addNewUsers'
     monitorCollectsList = 'checkCollects'
     updateCurrencyStatus = 'updateCurrencyStatus'
     updateTrackingStatuses = 'updateTrackingStatuses'
+    updateCoverPhoto = 'updateCoverPhoto'
 
 
 if __name__ == "__main__":
@@ -123,3 +133,5 @@ if __name__ == "__main__":
         updateCurrencyStatus()
     elif sys.argv[1] == DagLinkerValues.updateTrackingStatuses:
         updateTrackingStatuses()
+    elif sys.argv[1] == DagLinkerValues.updateCoverPhoto:
+        updateCoverPhoto(sys.argv[2])

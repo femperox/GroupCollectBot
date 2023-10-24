@@ -13,7 +13,7 @@ from confings.Messages import MessageType, Messages
 from Logger import logger, logger_fav
 from SQLS.DB_Operations import addFav, getFav, deleteFav, getFandoms, getTags, addBans, insertUpdateParcel, addBannedSellers
 from JpStoresApi.yahooApi import getAucInfo
-from confings.Consts import CURRENT_POSRED, BanActionType, MAX_BAN_REASONS, RegexType, PayloadType, VkCommands, PRIVATES_PATH
+from confings.Consts import CURRENT_POSRED, BanActionType, MAX_BAN_REASONS, RegexType, PayloadType, VkCommands, PRIVATES_PATH, VkCoverSize
 from APIs.utils import getMonitorChats, getFavInfo
 from APIs.pochtaApi import getTracking
 
@@ -166,7 +166,45 @@ class VkApi:
         except:
             print_exc()
             return ''
-    
+
+    def _cover_image_upload(self, image_name: str) -> dict:
+        """Загружает локальное изображение на сервера Вконтакте
+
+        Args:
+            image_name (str): Имя файла с изображением
+
+        Returns:
+            dict: В случае успешного выполнения запроса вернёт словарь с представлением медиа Вконтакте
+        """
+        if image_name != '':
+            vk_response = self.vk.photos.getOwnerCoverPhotoUploadServer(
+                group_id= self.__group_id,
+                crop_x= VkCoverSize.crop_x,
+                crop_y= VkCoverSize.crop_y,
+                crop_x2= VkCoverSize.crop_x2,
+                crop_y2= VkCoverSize.crop_y2
+            )
+            vk_url = vk_response['upload_url']
+            try:
+                vk_response = requests.post(
+                    vk_url, 
+                    files={'photo': open(os.getcwd()+'/VkApi/covers/{}'.format(image_name), 'rb')}
+                ).json()
+
+                if vk_response['photo']:
+
+                    vk_image = self.vk.photos.saveOwnerCoverPhoto(
+                        photo=vk_response['photo'],
+                        hash=vk_response['hash'],
+                    )
+          
+                    return vk_image
+            except:
+                print_exc()
+                return {}
+        return {}
+
+
     def _vk_image_upload(self, image_name: str, user: str) -> dict:
         """Загружает локальное изображение на сервера Вконтакте
 

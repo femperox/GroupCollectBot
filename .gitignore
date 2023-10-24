@@ -5,6 +5,7 @@
 *.vscode/
 *confings/
 
+**/covers
 **/tmp
 **/__pycache__/
 
