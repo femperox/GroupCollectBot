@@ -48,12 +48,12 @@
 
 ### Связка со вторичками и магазинами: 
 
-Сейчас бот умеет работать с такими сайтами как: 
-🌐 [yahooAuctions](https://auctions.yahoo.co.jp) 
-🌐 [payPayFleamarket](https://paypayfleamarket.yahoo.co.jp) 
-🌐 [amiAmiEng](https://www.amiami.com/eng/) и [amiAmiJp](https://www.amiami.jp) 
-🌐 [animate](https://www.animate-onlineshop.jp)
-🌐 [mercari](https://jp.mercari.com)
+Сейчас бот умеет работать с такими сайтами как:  
+🌐 [yahooAuctions](https://auctions.yahoo.co.jp)  
+🌐 [payPayFleamarket](https://paypayfleamarket.yahoo.co.jp)  
+🌐 [amiAmiEng](https://www.amiami.com/eng/) и [amiAmiJp](https://www.amiami.jp)  
+🌐 [animate](https://www.animate-onlineshop.jp)  
+🌐 [mercari](https://jp.mercari.com) 
 
 
 ## Что будет дорабатываться/добавляться?
