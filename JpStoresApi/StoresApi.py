@@ -2,6 +2,7 @@ from APIs.webUtils import WebUtils
 import requests
 from time import sleep
 from pprint import pprint
+from confings.Consts import ShipmentPriceType as spt
 
 class StoreApi:
 
@@ -28,7 +29,7 @@ class StoreApi:
         item['itemPrice'] = price * qnty
         item['tax'] = 0
         item['itemPriceWTax'] = 0
-        item['shipmentPrice'] = -1
+        item['shipmentPrice'] = spt.undefined
         item['page'] = curl
         item['mainPhoto'] = img
         item['siteName'] = 'Animate'
@@ -62,7 +63,7 @@ class StoreApi:
         item['itemPrice'] = js['item']['price']
         item['tax'] = 0
         item['itemPriceWTax'] = 0
-        item['shipmentPrice'] = -1
+        item['shipmentPrice'] = spt.undefined
         item['page'] = url
         item['mainPhoto'] = 'https://img.amiami.com'+js['item']['main_image_url']
         item['siteName'] = 'AmiAmiEng'
@@ -87,13 +88,11 @@ class StoreApi:
         img = soup.find('img', class_='gallery_item_main ofi')['src']
 
         item = {}
-
-
         
         item['itemPrice'] = price
         item['tax'] = 0
         item['itemPriceWTax'] = 0
-        item['shipmentPrice'] = -1
+        item['shipmentPrice'] = spt.undefined
         item['page'] = url
         item['mainPhoto'] = img
         item['siteName'] = 'AmiAmiJp'

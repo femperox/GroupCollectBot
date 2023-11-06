@@ -3,7 +3,10 @@ import requests
 from time import sleep
 from pprint import pprint
 import mercari
+import json
 from random import randint
+from confings.Consts import ShipmentPriceType as spt
+from selenium.webdriver.common.by import By
 
 
 
@@ -32,7 +35,7 @@ class SecondaryStoreApi:
         item['itemPrice'] = js['price']
         item['tax'] = 0
         item['itemPriceWTax'] = 0 # всегда включено в цену
-        item['shipmentPrice'] = 0 # всегда бесплатная
+        item['shipmentPrice'] = spt.free
         item['page'] = url
         item['mainPhoto'] = js['images'][0]['url']
         item['siteName'] = 'payPayFleamarket'
@@ -65,7 +68,7 @@ class SecondaryStoreApi:
         item['itemPrice'] = js['data']['price']
         item['tax'] = 0
         item['itemPriceWTax'] = 0 # Всегда включена в цену
-        item['shipmentPrice'] = 0 if js['data']['shipping_payer']['id'] == 2 else -1
+        item['shipmentPrice'] = spt.free if js['data']['shipping_payer']['id'] == 2 else spt.undefined
         item['page'] = url
         item['mainPhoto'] = js['data']['photos'][0]
         item['siteName'] = 'mercari'
@@ -82,41 +85,48 @@ class SecondaryStoreApi:
         Returns:
             dict: словарь с информацией о лоте
         """
+        item = ''
+        proxyServers = WebUtils.getProxyServer(country='JP')
+        
+        pprint(proxyServers)
+        for proxyServer in proxyServers:
+            
+            #try:
+                ok = WebUtils.getSelenium(proxyServer=proxyServer)
+                ok.implicitly_wait(30)
+                ok.get(url)
+   
+                try:
+                    img = ok.find_element(By.ID, "elevate_zoom").get_attribute("src")
+                    pprint('ok4')
+                    pprint(img)
+                except:
+                    pprint(f'{proxyServer} cant get img. getting another one proxy')
+                    continue
 
-        pprint('ok1')
-        session = requests.session()
-        headers = WebUtils.getHeader()
-        page = session.get(url, headers=headers)
-        js = page.json() 
-        pprint('ok2')
-        pprint(page.status_code)
-        pprint(page.content)
+                info = ''
+                for request in ok.requests:
+                    if request.url.find('getInfo') > 0:
+                        info = request.response.body
 
-        '''
-        ok = WebUtils.getSelenium()
+                if not info:
+                    pprint(f'{proxyServer} cant get info. getting another one proxy')
+                    continue
 
-        # не робит на линуксе. искать обходняк, либо тупо bs4
-        ok.implicitly_wait(40)
-        ok.get(url)
+                info = json.loads(info.decode('utf8'))
+                pprint(type(info))
+                item = ''
+                item['itemPrice'] = info['price']
+                item['itemPriceWTax'] = info['price_with_tax']
+                item['tax'] = item['itemPriceWTax'] * 100 / item['priceYen']
+                item['shipmentPrice'] = spt.undefined
+                item['page'] = url
+                item['mainPhoto'] = img
+                item['siteName'] = 'Mandarake'
+            
+                break
 
-        for request in ok.requests:
-            if request.url.find('getInfo') > 0:
-                info = request.response.body
-
-        pprint(ok.requests)
-        pos_tax = str(info).find('"price_with_tax":')
-        pos_price = str(info).find('"price":')
-        pos_segment = str(info).find(',"segment')
-        '''
-
-        item = {}
-        '''
-        item['itemPrice'] = int(str(info)[pos_price+len('"price":'):pos_segment])
-        item['itemPriceWTax'] = int(str(info)[pos_tax+len('"price_with_tax":'):-2]) - item['priceYen']
-        item['tax'] = item['itemPriceWTax'] * 100 / item['priceYen']
-        item['shipmentPrice'] = 0
-        item['page'] = url
-        #item['mainPhoto'] = додумать
-        item['siteName'] = 'Mandarake'
-        '''
+            #except Exception as e:
+                pprint(f'{proxyServer} ERROR" {e}. getting another one')
+                continue
         return item
