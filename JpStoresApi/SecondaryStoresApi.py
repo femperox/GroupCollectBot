@@ -91,42 +91,37 @@ class SecondaryStoreApi:
         pprint(proxyServers)
         for proxyServer in proxyServers:
             
-            #try:
-                ok = WebUtils.getSelenium(proxyServer=proxyServer)
-                ok.implicitly_wait(30)
-                ok.get(url)
-   
-                try:
-                    img = ok.find_element(By.ID, "elevate_zoom").get_attribute("src")
-                    pprint('ok4')
-                    pprint(img)
-                except:
-                    pprint(f'{proxyServer} cant get img. getting another one proxy')
-                    continue
+            ok = WebUtils.getSelenium(proxyServer=proxyServer)
+            ok.implicitly_wait(30)
+            ok.get(url)
 
-                info = ''
-                for request in ok.requests:
-                    if request.url.find('getInfo') > 0:
-                        info = request.response.body
-
-                if not info:
-                    pprint(f'{proxyServer} cant get info. getting another one proxy')
-                    continue
-
-                info = json.loads(info.decode('utf8'))
-                pprint(type(info))
-                item = ''
-                item['itemPrice'] = info['price']
-                item['itemPriceWTax'] = info['price_with_tax']
-                item['tax'] = item['itemPriceWTax'] * 100 / item['priceYen']
-                item['shipmentPrice'] = spt.undefined
-                item['page'] = url
-                item['mainPhoto'] = img
-                item['siteName'] = 'Mandarake'
-            
-                break
-
-            #except Exception as e:
-                pprint(f'{proxyServer} ERROR" {e}. getting another one')
+            try:
+                img = ok.find_element(By.ID, "elevate_zoom").get_attribute("src")
+                pprint(img)
+            except:
+                pprint(f'{proxyServer} cant get img. getting another one proxy')
                 continue
+
+            info = ''
+            for request in ok.requests:
+                if request.url.find('getInfo') > 0:
+                    info = request.response.body
+
+            if not info:
+                pprint(f'{proxyServer} cant get info. getting another one proxy')
+                continue
+
+            info = json.loads(info.decode('utf8'))
+            pprint(type(info))
+            item = ''
+            item['itemPrice'] = info['price']
+            item['itemPriceWTax'] = info['price_with_tax']
+            item['tax'] = item['itemPriceWTax'] * 100 / item['priceYen']
+            item['shipmentPrice'] = spt.undefined
+            item['page'] = url
+            item['mainPhoto'] = img
+            item['siteName'] = 'Mandarake'
+        
+            break
+
         return item

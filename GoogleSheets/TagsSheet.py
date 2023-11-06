@@ -5,22 +5,13 @@ from oauth2client.service_account import ServiceAccountCredentials
 import os
 import GoogleSheets.API.Cells_Editor as ce
 import json
+from GoogleSheets.ParentSheetClass import ParentSheetClass
 
-class TagsSheet:
+class TagsSheet(ParentSheetClass):
 
     def __init__(self):
-        # Service-объект, для работы с Google-таблицами
-        CREDENTIALS_FILE = os.getcwd()+ '/GoogleSheets/creds.json'  # имя файла с закрытым ключом
-        credentials = ServiceAccountCredentials.from_json_keyfile_name(CREDENTIALS_FILE,
-                                                                       ['https://www.googleapis.com/auth/spreadsheets',
-                                                                        'https://www.googleapis.com/auth/drive'])
-        httpAuth = credentials.authorize(httplib2.Http())
-        self.__service = discovery.build('sheets', 'v4', http=httpAuth)
 
-        # id гугл таблицы
-        path = os.getcwd()+'/GoogleSheets/sheet_ids.json'
-        tmp_dict = json.load(open(path, encoding='utf-8'))
-        self.__spreadsheet_id = tmp_dict["tagList"]
+        self.__spreadsheet_id = self.get_spreadsheet_id("tagList")
 
         self.lastFree = 1
 
@@ -46,21 +37,18 @@ class TagsSheet:
 
         return fandomList
     
-    #TODO: Класс родитель
-    def getSheets(self):
-        
-        infos = self.__service.spreadsheets().get(spreadsheetId=self.__spreadsheet_id).execute()['sheets']
-        sheetInfo = {}
-        for info in infos:
-            sheetInfo[info['properties']['sheetId']] = info['properties']['title']
-        
-        return sheetInfo
     
     def updateURLS(self, urlList):
+        """Приведение ссылок в id-вид с начала листа
+
+        Args:
+            urlList (list): список ссылок
+        """
+
         vk_preffix = "https://vk.com/"
 
         spId = 405719641
-        sheetTitle = self.getSheets()[spId]
+        sheetTitle = self.get_sheets()[spId]
 
         body = {}
         body["valueInputOption"] = "USER_ENTERED"

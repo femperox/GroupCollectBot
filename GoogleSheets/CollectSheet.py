@@ -7,33 +7,28 @@ from GoogleSheets.API.Styles.Borders import Borders as b
 from GoogleSheets.API.Styles.Colors import Colors as c
 import os
 import json
+from GoogleSheets.ParentSheetClass import ParentSheetClass
 
-class CollectSheet:
+class CollectSheet(ParentSheetClass):
 
     def __init__(self):
-        # Service-объект, для работы с Google-таблицами
-        CREDENTIALS_FILE = os.getcwd()+ '/GoogleSheets/creds.json'  # имя файла с закрытым ключом
-        credentials = ServiceAccountCredentials.from_json_keyfile_name(CREDENTIALS_FILE,
-                                                                       ['https://www.googleapis.com/auth/spreadsheets',
-                                                                        'https://www.googleapis.com/auth/drive'])
-        httpAuth = credentials.authorize(httplib2.Http())
-        self.__service = discovery.build('sheets', 'v4', http=httpAuth)
 
-        # id гугл таблицы
-        path = os.getcwd()+'/GoogleSheets/sheet_ids.json'
-        tmp_dict = json.load(open(path, encoding='utf-8'))
+        self.__spreadsheet_id = self.get_spreadsheet_id("collectList")
 
-        self.__spreadsheet_id = tmp_dict["collectList"]
-
+        self.lastFree = 1
 
     def getSheetListProperties(self, includeGridData = False):
-        '''
+        """Вообще не помню чё длает)
 
-        :return: Возвращает информацию о листах
-        '''
+        Args:
+            includeGridData (bool, optional): _description_. Defaults to False.
+
+        Returns:
+            _type_: _description_
+        """
 
         spId = 1403720531
-        sheetName = self.getSheets()[spId]
+        sheetName = self.get_sheets()[spId]
 
         range = f"'{sheetName}'!B:E"
 
@@ -45,21 +40,17 @@ class CollectSheet:
 
         return collectList
     
-    
-    def getSheets(self):
-        
-        infos = self.__service.spreadsheets().get(spreadsheetId=self.__spreadsheet_id).execute()['sheets']
-        sheetInfo = {}
-        for info in infos:
-            sheetInfo[info['properties']['sheetId']] = info['properties']['title']
-        
-        return sheetInfo
-
     def updateURLS(self, urlList):
+        """Приведение ссылок в id-вид с начала листа
+
+        Args:
+            urlList (list): список ссылок
+        """
+
         vk_preffix = "https://vk.com/"
 
         spId = 1403720531
-        sheetTitle = self.getSheets()[spId]
+        sheetTitle = self.get()[spId]
 
         body = {}
         body["valueInputOption"] = "USER_ENTERED"
@@ -85,6 +76,11 @@ class CollectSheet:
                                                            body=body).execute()
         
     def createCollectView(self, collectList):
+        """ Генерация таблицы коллектов
+
+        Args:
+            collectList (list): список коллектов
+        """
 
         spId = 1928854381
         sheetTitle = self.getSheets()[spId]
