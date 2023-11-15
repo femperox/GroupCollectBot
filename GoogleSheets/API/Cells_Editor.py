@@ -113,7 +113,7 @@ def setCellBorder(spId, range, all_same = True, only_outer = False, bstyleList =
     return request
 
 
-def repeatCells(spId, range, color, hali = "CENTER"):
+def repeatCells(spId, range, color, hali = "CENTER", textFormat = 'True'):
     '''
     подготовка json запроса для оформления диапозона ячеек определённым стилем
 
@@ -125,7 +125,7 @@ def repeatCells(spId, range, color, hali = "CENTER"):
 
     request = { "repeatCell":
                 { "range": toRangeType(spId, range),
-                  "cell": { "userEnteredFormat": toUserEnteredFormat(color, hali = hali) },
+                  "cell": { "userEnteredFormat": toUserEnteredFormat(color, hali = hali, textFormat = textFormat) },
                   "fields": "userEnteredFormat"
                 }
 

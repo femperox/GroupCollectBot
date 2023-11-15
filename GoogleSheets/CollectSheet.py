@@ -1,21 +1,14 @@
-from pprint import pprint
-import httplib2
-from googleapiclient import discovery
-from oauth2client.service_account import ServiceAccountCredentials
 import GoogleSheets.API.Cells_Editor as ce
 from GoogleSheets.API.Styles.Borders import Borders as b
 from GoogleSheets.API.Styles.Colors import Colors as c
-import os
-import json
 from GoogleSheets.ParentSheetClass import ParentSheetClass
 
 class CollectSheet(ParentSheetClass):
 
     def __init__(self):
 
-        self.__spreadsheet_id = self.get_spreadsheet_id("collectList")
-
-        self.lastFree = 1
+        super().__init__()
+        self.setSpreadsheetId("collectList")
 
     def getSheetListProperties(self, includeGridData = False):
         """Вообще не помню чё длает)
@@ -31,8 +24,8 @@ class CollectSheet(ParentSheetClass):
         sheetName = self.get_sheets()[spId]
 
         range = f"'{sheetName}'!B:E"
-
-        collectList = self.__service.spreadsheets().values().get(spreadsheetId = self.__spreadsheet_id, range=range).execute()['values'][1:]
+        
+        collectList = self.service.spreadsheets().values().get(spreadsheetId = self.getSpreadsheetId(), range=range).execute()['values'][1:]
 
         for collect in collectList:
             collect[0] = collect[0].split('@')[-1] if collect[0].find('@')>=0 else collect[0].split('/')[-1]
@@ -50,7 +43,7 @@ class CollectSheet(ParentSheetClass):
         vk_preffix = "https://vk.com/"
 
         spId = 1403720531
-        sheetTitle = self.get()[spId]
+        sheetTitle = self.get_sheets()[spId]
 
         body = {}
         body["valueInputOption"] = "USER_ENTERED"
@@ -72,7 +65,7 @@ class CollectSheet(ParentSheetClass):
 
         body["data"] = data
 
-        self.__service.spreadsheets().values().batchUpdate(spreadsheetId=self.__spreadsheet_id,
+        self.service.spreadsheets().values().batchUpdate(spreadsheetId = self.getSpreadsheetId(),
                                                            body=body).execute()
         
     def createCollectView(self, collectList):
@@ -83,7 +76,7 @@ class CollectSheet(ParentSheetClass):
         """
 
         spId = 1928854381
-        sheetTitle = self.getSheets()[spId]
+        sheetTitle = self.get_sheets()[spId]
 
         body = {}
         body["valueInputOption"] = "USER_ENTERED"
@@ -92,7 +85,7 @@ class CollectSheet(ParentSheetClass):
         request = []
         request_bold = []
         
-        self.__service.spreadsheets().values().clear(spreadsheetId=self.__spreadsheet_id,
+        self.service.spreadsheets().values().clear(spreadsheetId = self.getSpreadsheetId(),
                                                      range = f"'{sheetTitle}'!A2:D").execute()
         
         rowHeightRange = {"start":0, "end": 1000}
@@ -153,10 +146,10 @@ class CollectSheet(ParentSheetClass):
 
         request.extend(request_bold)
         
-        self.__service.spreadsheets().batchUpdate(spreadsheetId=self.__spreadsheet_id,
+        self.service.spreadsheets().batchUpdate(spreadsheetId= self.getSpreadsheetId(),
                                                   body={"requests": request}).execute()
         
-        self.__service.spreadsheets().values().batchUpdate(spreadsheetId=self.__spreadsheet_id,
+        self.service.spreadsheets().values().batchUpdate(spreadsheetId= self.getSpreadsheetId(),
                                                            body=body).execute()
 
 

@@ -1,17 +1,12 @@
-from pprint import pprint
-import httplib2
-from googleapiclient import discovery
-from oauth2client.service_account import ServiceAccountCredentials
-import os
 import GoogleSheets.API.Cells_Editor as ce
-import json
 from GoogleSheets.ParentSheetClass import ParentSheetClass
 
 class TagsSheet(ParentSheetClass):
 
     def __init__(self):
 
-        self.__spreadsheet_id = self.get_spreadsheet_id("tagList")
+        super().__init__()
+        self.setSpreadsheetId("tagList")
 
         self.lastFree = 1
 
@@ -22,11 +17,11 @@ class TagsSheet(ParentSheetClass):
         :return: Возвращает информацию о листах
         '''
 
-        sheetName = self.__service.spreadsheets().get(spreadsheetId=self.__spreadsheet_id).execute()['sheets'][0]['properties']['title']
+        sheetName = self.service.spreadsheets().get(spreadsheetId= self.getSpreadsheetId()).execute()['sheets'][0]['properties']['title']
 
         range = f"'{sheetName}'!B{self.lastFree}:C"
 
-        fandomList = self.__service.spreadsheets().values().get(spreadsheetId = self.__spreadsheet_id, range=range).execute()['values'][1:]
+        fandomList = self.service.spreadsheets().values().get(spreadsheetId = self.getSpreadsheetId(), range=range).execute()['values'][1:]
 
         self.lastFree = len(fandomList)+1
 
@@ -66,7 +61,7 @@ class TagsSheet(ParentSheetClass):
 
         body["data"] = data
 
-        self.__service.spreadsheets().values().batchUpdate(spreadsheetId=self.__spreadsheet_id,
+        self.service.spreadsheets().values().batchUpdate(spreadsheetId = self.getSpreadsheetId(),
                                                            body=body).execute()
 
 

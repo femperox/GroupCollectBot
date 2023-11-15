@@ -2,6 +2,7 @@ import json
 import os
 import threading
 from VkApi.VkInterface import VkApi as vk
+from traceback import print_exc
 from time import sleep
 from pprint import pprint
 import datetime
@@ -120,7 +121,7 @@ def bs4Monitor(curl, params):
                 seen_aucs = tmp_seen_aucs.copy()
             tmp_seen_aucs = []
             logger.info(f"\n[ERROR-{params['tag']}] {e}\n Последние лоты теперь: {seen_aucs}\n")
-            print(f"\n{datetime.datetime.now()} - [ERROR-{params['tag']}]  Упал поток - {e}\n Последние лоты теперь: {seen_aucs}\n")
+            print(f"\n{datetime.datetime.now()} - [ERROR-{params['tag']}]  Упал поток - {e} - {print_exc()}\n Последние лоты теперь: {seen_aucs}\n")
 
 def bs4SellerMonitor(curl, params):
     """Мониторинг продавцов яху с помощью API (с использованием bs4)
