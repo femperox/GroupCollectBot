@@ -1,7 +1,7 @@
 from datetime import datetime
 import os
 import json
-from confings.Consts import MONITOR_CONF_PATH, RegexType
+from confings.Consts import MONITOR_CONF_PATH, RegexType, STORE_MONITOR_CONF_PATH
 import re
 
 def getCurrentDate():
@@ -27,6 +27,19 @@ def getMonitorChats():
 
         for conf in conf_list[1:]:
             for rcpn in conf["params"]["rcpns"]:
+                chat_list.append(int(rcpn))
+
+        return list(set(chat_list))
+    
+def getStoreMonitorChats():
+
+    with open(STORE_MONITOR_CONF_PATH, "r") as f: 
+        conf_list = json.load(f)
+
+        chat_list = []
+
+        for conf in conf_list:
+            for rcpn in conf["rcpns"]:
                 chat_list.append(int(rcpn))
 
         return list(set(chat_list))

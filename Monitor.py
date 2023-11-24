@@ -211,7 +211,7 @@ if __name__ == "__main__":
         conf_list = json.load(f)
           
     active_chats = []
-
+    
     for conf in conf_list[1:]:
         if conf["type"] == "big-category": threads.append(threading.Thread(target=bs4Monitor, args=(conf["curl"], conf["params"])))
         else: 

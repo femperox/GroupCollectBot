@@ -420,3 +420,42 @@ def IsExistBannedSeller(category, seller_id):
     
     return result
 
+def GetNotSeenProducts(items_id, type_id):
+    """Сопоставление новых и увиденных товаров. Возвращает ранее не виданные
+
+    Args:
+        items_id (list of string): список id товаров
+        type_id (string): тип магазина - выборки
+
+    Returns:
+        list of string: список новых товаров
+    """
+
+    conn = getConnection(DbNames.collectDatabase)
+    cursor = conn.cursor()  
+
+    cursor.execute(f"SELECT GET_NOT_SEEN_PRODUCTS(array{items_id}, '{type_id}')")
+    result = cursor.fetchone()  
+
+    conn.commit()
+    cursor.close()
+    conn.close()
+    
+    return result[0]
+
+def insertNewSeenProducts(items_id, type_id):
+    """Добавление новых товаров в просмотренное
+
+    Args:
+        items_id (list of string): список id товаров
+        type_id (string): тип магазина - выборки
+    """
+
+    conn = getConnection(DbNames.collectDatabase)
+    cursor = conn.cursor()  
+
+    cursor.execute(f"CALL INSERT_SEEN_PRODUCTS(array{items_id}, '{type_id}')")
+    
+    conn.commit() 
+    cursor.close()
+    conn.close()

@@ -129,7 +129,7 @@ class WebUtils:
 
         return getSraperSoup(response)
     
-
+    @staticmethod
     def getProxyServer(country = 'US'):
             
             pprint('getting proxy servers')
@@ -145,7 +145,7 @@ class WebUtils:
 
             return [f'{result_list_hosts[i].text}:{result_list_ports[i].get_text()}' for i in range(len(result_list_hosts))]
 
-    
+    @staticmethod
     def getProxyRequest(url, country = 'US'):
 
         def make_proxy_entry(proxy_ip_port):  

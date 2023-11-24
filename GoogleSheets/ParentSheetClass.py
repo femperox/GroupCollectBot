@@ -1,16 +1,13 @@
-from pprint import pprint
 import httplib2
 from googleapiclient import discovery
 from oauth2client.service_account import ServiceAccountCredentials
-import os
-import GoogleSheets.API.Cells_Editor as ce
 import json
+from confings.Consts import CREDENTIALS_FILE, SHEETS_ID_FILE
 
 class ParentSheetClass:
 
     def __init__(self):
         # Service-объект, для работы с Google-таблицами
-        CREDENTIALS_FILE = os.getcwd()+ '/GoogleSheets/creds.json'  # имя файла с закрытым ключом
         credentials = ServiceAccountCredentials.from_json_keyfile_name(CREDENTIALS_FILE,
                                                                        ['https://www.googleapis.com/auth/spreadsheets',
                                                                         'https://www.googleapis.com/auth/drive'])
@@ -20,8 +17,7 @@ class ParentSheetClass:
 
     def setSpreadsheetId(self, sp_name):
 
-        path = os.getcwd()+'/GoogleSheets/sheet_ids.json'
-        tmp_dict = json.load(open(path, encoding='utf-8'))
+        tmp_dict = json.load(open(SHEETS_ID_FILE, encoding='utf-8'))
 
         self.__spreadsheet_id = tmp_dict[sp_name]
 

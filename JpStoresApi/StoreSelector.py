@@ -4,6 +4,7 @@ from confings.Consts import RegexType
 from JpStoresApi.yahooApi import getAucInfo
 from JpStoresApi.SecondaryStoresApi import SecondaryStoreApi as ssa
 from JpStoresApi.StoresApi import StoreApi as sa
+from JpStoresApi.AmiAmiApi import AmiAmiApi
 
 import json
 from confings.Consts import PRIVATES_PATH
@@ -50,7 +51,7 @@ class StoreSelector:
             url (string): ссылка на тоавр в магазине
 
         Returns:
-            _type_: _description_
+            dict: информация о товаре по заданной ссылке
         """
 
         self.url = url
@@ -73,11 +74,10 @@ class StoreSelector:
             pprint(self.Stores.amiAmi)
             
             if url.find('/eng/')>0:
-                pprint(self.getItemID())
-                item = sa.parseAmiAmiEng(url, self.getItemID().split("=")[-1])
+                item = AmiAmiApi.parseAmiAmiEng(url, self.getItemID().split("=")[-1])
             else:
                 item = ''
-                item = sa.parseAmiAmiJp(url)
+                item = AmiAmiApi.parseAmiAmiJp(url)
             
         elif site == self.Stores.mandarake:
             item = ssa.parseMandarake(url)

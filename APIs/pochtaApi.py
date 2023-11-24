@@ -4,6 +4,11 @@ import os
 import json
 
 def getClient():
+    """Получение suds-клиента для работы с API ПР
+
+    Returns:
+        Client: suds-клиент
+    """
 
     url = 'https://tracking.russianpost.ru/rtm34?wsdl'
     client = Client(url, headers={'Content-Type': 'application/soap+xml; charset=UTF-8'},

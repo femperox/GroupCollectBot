@@ -2,6 +2,7 @@ from confings.Consts import CURRENCY_API, CURRENT_POSRED
 from APIs.webUtils import WebUtils
 import requests
 import json
+from pprint import pprint
 
 
 def getCurrentCurrencyRate():
@@ -18,3 +19,4 @@ def getCurrentCurrencyRate():
     for json_item in js:
         if json_item['codeTo'] == 'RUB':
             return float(json_item['rate'])
+        

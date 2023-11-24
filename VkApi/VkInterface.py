@@ -14,7 +14,7 @@ from Logger import logger, logger_fav
 from SQLS.DB_Operations import addFav, getFav, deleteFav, getFandoms, getTags, addBans, insertUpdateParcel, addBannedSellers
 from JpStoresApi.yahooApi import getAucInfo
 from confings.Consts import CURRENT_POSRED, BanActionType, MAX_BAN_REASONS, RegexType, PayloadType, VkCommands, PRIVATES_PATH, VkCoverSize
-from APIs.utils import getMonitorChats, getFavInfo
+from APIs.utils import getMonitorChats, getFavInfo, getStoreMonitorChats
 from APIs.pochtaApi import getTracking
 
 class VkApi:
@@ -44,10 +44,17 @@ class VkApi:
         self.lang = 100
     
     def _init_tmp_dir(self) -> None:
+        """Создание директории для сгрузки изображений
+        """
         if not os.path.isdir(os.getcwd()+'/tmp'):
             os.mkdir(os.getcwd()+'/tmp')
 
     def _two_factor_auth(self):
+        """Двухфакторная аутентификация
+
+        Returns:
+            string, bool: ключ и запоминание устройства
+        """
         key = input("Enter authentication code: ")
         remember_device = True
         return key, remember_device
@@ -138,6 +145,14 @@ class VkApi:
             return None, None
         
     def _get_image_extension(self, url):
+        """Получить формат файла изображения
+
+        Args:
+            url (string): путь до файла
+
+        Returns:
+            string: формат файла
+        """
         extensions = ['.png', '.jpg', '.jpeg', '.gif']
         for ext in extensions:
             if ext in url:
@@ -269,6 +284,11 @@ class VkApi:
             return '', []
 
     def _get_albums(self):
+        """Получить альбомы сообщества
+
+        Returns:
+            list of dict: список альбомов и инфа о них
+        """
 
         albums = self.vk.photos.getAlbums(owner_id = f'-{self.__group_id}', need_system=1)
 
@@ -277,7 +297,6 @@ class VkApi:
         return albums
 
         
-
     def get_name(self, id):
         '''
         Получить имя, фамилию и числовой айди пользователя
@@ -338,8 +357,32 @@ class VkApi:
             }
         
         return self.__vk_message.messages.getByConversationMessageId(**params)
+    
+    def removeChatUser(self, chat, user):
+        """удалить пользователя из чата
 
-    def sendMes(self, mess, users, tag = '', pic = [], type = ''):
+        Args:
+            chat (int): id чата
+            user (int): id пользователя
+        """
+           
+        params = { 'chat_id': chat % 2000000000,
+                   'user': user, 
+                   'member_id': user
+                 }
+        self.__vk_message.messages.removeChatUser(**params)
+        
+
+    def sendMes(self, mess, users, tag = '', pic = [], type = MessageType.monitor_store):
+        """Отправка сообщения
+
+        Args:
+            mess (string): сообщение для отправки
+            users (list of string): получатели сообщения
+            tag (str, optional): тэг для сохранения пикч. Defaults to ''.
+            pic (list, optional): список пикч для сообщения. Defaults to [].
+            type (MessageType, optional): тип сообщения. Для inline-кнопок. Defaults to MessageType.monitor_store.
+        """
 
         try:          
             
@@ -349,7 +392,6 @@ class VkApi:
                 'message': mess,
                 'random_id': 0,
             }
-
 
             if type == MessageType.monitor_big_category:
                 settings = dict(one_time=False, inline=True)
@@ -374,6 +416,16 @@ class VkApi:
     
         
     def get_attachemetns(self, peer_id, conv_id, idx):
+        """Получение вложения из сообщения
+
+        Args:
+            peer_id (int): id отправителя сообщения
+            conv_id (int): id сообщения
+            idx (int): индекс искомой фотографии
+
+        Returns:
+            string: ссылка на фото на сервере вк
+        """
         
         params = {
             'group_id': self.__group_id,
@@ -403,14 +455,15 @@ class VkApi:
                     chat = event.obj['peer_id']
  
                     # Личные сообщение
-                    if chat not in getMonitorChats():
-                        
+                    not_dm_chats = getMonitorChats()
+                    not_dm_chats.append(getStoreMonitorChats())
+                    if chat not in not_dm_chats:
                         try:
                             track = re.findall(RegexType.regex_track, event.obj['text'])[0]
                             tracking_info = getTracking(track)
                             tracking_info['rcpnVkId'] = chat
 
-                            insertUpdateParcel(tracking_info)               
+                            insertUpdateParcel(tracking_info)          
                         except:
                             continue   
 
@@ -469,8 +522,14 @@ class VkApi:
                     sender = event.obj.message['from_id']
                     chat = event.obj.message['peer_id']
                     user_name = self.get_name(sender)
-                                
-                    if 'reply_message' in event.obj.message and str(event.obj.message['from_id'])[1:] != self.__group_id:
+                    
+                    # Удаление спамера из чата по магазинам
+                    if chat in getStoreMonitorChats() and sender not in whiteList:
+                        
+                        self.sendMes(mess = Messages.userCharRemovalMess(user = self.get_name(sender)), users= [chat])
+                        self.removeChatUser(user = sender, chat = chat)
+                               
+                    elif 'reply_message' in event.obj.message and str(event.obj.message['from_id'])[1:] != self.__group_id:
                        
                         # Добавление в избранное
                         if event.obj.message['text'].lower().split(' ')[0] in VkCommands.favList:
@@ -767,6 +826,11 @@ class VkApi:
 
     
     def ban_users(self, userBanReason):
+        """Бан пользователей
+
+        Args:
+            userBanReason (dict): словарь с инфой о забаненных людей
+        """
 
         try:
             params = {

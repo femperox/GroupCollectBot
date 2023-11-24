@@ -30,3 +30,4 @@ def create_logger(name=''):
 logger = create_logger()
 logger_fav = create_logger('_fav')
 logger_utils = create_logger('_utils')
+logger_stores = create_logger('_stores')

@@ -32,6 +32,7 @@ def checkCollects():
 
     collectList = cs.getSheetListProperties()
 
+
     for collect in collectList:
     
         collect[0] = vk.get_name(collect[0]).split('(')
@@ -49,15 +50,21 @@ def checkCollects():
     new_list = {}
     # сортировка по коллеткам
     for collect in distinct_collects:
+
+        # cList вида - [ [ id, name, role ], ...  ]
         cList = []
         full_list = {}
         for rawCollect in collectList:
-            if collect == rawCollect[1][0]:
-                cList.append([rawCollect[0][0], rawCollect[0][1], rawCollect[-2]])
+            admin_info = [rawCollect[0][0], rawCollect[0][1], rawCollect[-2]]
+            if collect == rawCollect[1][0] and admin_info not in cList:
+                cList.append(admin_info)
                 full_list["samurai"] = rawCollect[-1]
                 full_list["group_name"] = rawCollect[1][1]
+
             full_list["admins"] = cList.copy()
-            
+
+        
+
         new_list[collect] = full_list.copy()
         
     cs.createCollectView(new_list)
