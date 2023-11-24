@@ -23,11 +23,41 @@ class AmiAmiApi():
             boolean: принадлженость к неинтересующим категориям
         """
 
-        wrongCategories = ['CARD', 'TOY-SCL3-55241', 'RAIL']
+        wrongCategories = ['CARD', 'TC-IDL',
+                           'TOY-SCL', 'RAIL', 
+                           'MED', 'JIGS', 
+                           'TOY-RBT', 'TOL']
+        
         for wrongCategory in wrongCategories:
             if item_id.find(wrongCategory) > -1:
                 return True
         return False
+    
+    @staticmethod
+    def curlManyPages(curl, length, proxy):
+        """Запарсить несколько страниц
+
+        Args:
+            curl (string): строка запроса API
+            length (int): количество необходимых страниц
+            proxy (string): прокси
+
+        Returns:
+            dict: словарь с инфой о товарах
+        """
+        
+        js = {}
+        for i in range(0, length):
+
+            js_raw = AmiAmiApi.curlAmiAmiEng(curl.format(i+1), proxy)
+            if i == 0:
+                js = js_raw
+            else:
+                js['items'].extend(js_raw['items'])
+        
+        return js
+
+
 
     @staticmethod
     def curlAmiAmiEng(curl, proxy = ''):
@@ -40,8 +70,7 @@ class AmiAmiApi():
             dict: словарь с результатом запроса
         """
 
-        headers = WebUtils.getHeader()
-        headers['x-user-key'] = 'amiami_dev'
+        headers = WebUtils.getHeader(isAmiAmi = True)
 
         session = requests.session()
         page = session.get(curl, headers = headers, proxies = {'http': f'http://{proxy}'} if proxy else None)
@@ -104,6 +133,8 @@ class AmiAmiApi():
         item['name'] = name
         
         return item
+    
+
         
     @staticmethod
     def getFullPreownedName(item_id, proxy=''):
@@ -135,27 +166,27 @@ class AmiAmiApi():
             list of dict: список товаров и инфо о них
         """
         if type_id == MonitorStoresType.amiAmiEngSale:
-            curl = 'https://api.amiami.com/api/v1.0/items?pagemax=50&lang=eng&mcode=7001216802&ransu=vM4sX7Eyhya2Bj6bBa0jahnlpEFaqi57&age_confirm=&s_st_saleitem=1'
+            curl = 'https://api.amiami.com/api/v1.0/items?pagemax=50&pagecnt={}&lang=eng&mcode=7001216802&ransu=vM4sX7Eyhya2Bj6bBa0jahnlpEFaqi57&age_confirm=&s_st_saleitem=1'
         else:
-            curl = 'https://api.amiami.com/api/v1.0/items?pagemax=50&lang=eng&mcode=&ransu=&age_confirm=&s_st_list_newitem_available=1'
+            curl = 'https://api.amiami.com/api/v1.0/items?pagemax=50&pagecnt={}&lang=eng&mcode=&ransu=&age_confirm=&s_st_list_newitem_available=1'
 
-        js = AmiAmiApi.curlAmiAmiEng(curl, proxy)
+        js = AmiAmiApi.curlManyPages(curl, 2, proxy)
 
         item_list = []
-        for sale in js['items']:
+        for product in js['items']:
             
             item = {}
-            item['itemPrice'] = sale['min_price']
+            item['itemPrice'] = product['min_price']
             item['tax'] = 0
             item['itemPriceWTax'] = 0
             item['shipmentPrice'] = spt.undefined
-            item['page'] = f"https://www.amiami.com/eng/detail?gcode={sale['gcode']}"
-            item['mainPhoto'] = 'https://img.amiami.com'+sale['thumb_url']
+            item['page'] = f"https://www.amiami.com/eng/detail?gcode={product['gcode']}"
+            item['mainPhoto'] = 'https://img.amiami.com'+product['thumb_url']
             item['siteName'] = 'AmiAmiEng'
-            item['itemId'] = sale['gcode']
-            item['name'] = sale['gname']
+            item['itemId'] = product['gcode']
+            item['name'] = product['gname']
 
-            if AmiAmiApi.isWrongCategory(sale['gcode']):
+            if AmiAmiApi.isWrongCategory(product['gcode']) or product['image_on'] == 0:
                 continue
             item_list.append(item.copy())
 
@@ -169,9 +200,9 @@ class AmiAmiApi():
 
         locale.setlocale(locale.LC_TIME, 'ru_RU.UTF-8')
         
-        curl = 'https://api.amiami.com/api/v1.0/items?pagemax=50&lang=eng&mcode=&ransu=&age_confirm=&s_st_list_preorder_available=1'
+        curl = 'https://api.amiami.com/api/v1.0/items?pagemax=50&pagecnt={}&lang=eng&mcode=&ransu=&age_confirm=&s_st_list_preorder_available=1'
 
-        js = AmiAmiApi.curlAmiAmiEng(curl, proxy)
+        js = AmiAmiApi.curlManyPages(curl, 2, proxy)
 
         item_list = []
         for preOrder in js['items']:
@@ -188,7 +219,7 @@ class AmiAmiApi():
             item['name'] = preOrder['gname']
             item['releaseDate'] = datetime.strptime(preOrder['releasedate'] , '%Y-%m-%d %H:%M:%S').strftime("%b %Y")
 
-            if AmiAmiApi.isWrongCategory(preOrder['gcode']):
+            if AmiAmiApi.isWrongCategory(preOrder['gcode']) or preOrder['image_on'] == 0:
                 continue
 
             item_list.append(item.copy())
@@ -227,7 +258,7 @@ class AmiAmiApi():
             item['siteName'] = 'AmiAmiEng'
             item['itemId'] = preowned['gcode']
 
-            if AmiAmiApi.isWrongCategory(preowned['gcode']):
+            if AmiAmiApi.isWrongCategory(preowned['gcode']) or preowned['image_on'] == 0:
                 continue
 
             item_list.append(item.copy())
@@ -240,5 +271,29 @@ class AmiAmiApi():
             item['name'] = AmiAmiApi.getFullPreownedName(item['itemId'], proxy = proxy)
         
         return item_list
+    
+
+    @staticmethod
+    def packageDamageAmiAmiEng(type_id, proxy = ''):
+        """Получение списка товаров из package damage категории AmiAmiEng
+
+        Args:
+            url (string): ссылка на лот
+
+        Returns:
+            dict: словарь с информацией о лоте
+        """
+        # TODO. Подумать
         
+        curl = 'https://www.amiami.com/eng/c/sale/'
+        curl2 = 'https://www.amiami.com/_nuxt/pages__lang_c_sale.7b456c13cfd19f570716.js'
+
+        headers = WebUtils.getHeader(isAmiAmi = True)
+
+        session = requests.session()
+        page = session.get(curl2, headers = headers, proxies = {'http': f'http://{proxy}'} if proxy else None)        
+
+        return page.content
+
+        # TODO
         

@@ -443,7 +443,7 @@ class VkApi:
        
        vkBotSession = vk_api.VkApi(token=self.__tok)
        longPoll = VkBotLongPoll(vkBotSession, self.__group_id)
-       whiteList = [int(self.__admins[0])]
+       whiteList = [int(x) for x in self.__admins]
         
        while True:
         try:

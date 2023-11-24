@@ -16,8 +16,11 @@ from pprint import pprint
 class WebUtils:
 
     @staticmethod
-    def getHeader():
+    def getHeader(isAmiAmi = False):
         """Установка заголовков для запросов
+
+        Args:
+            isAmiAmi (boolean): проверка на амиами. Defaults to False
 
         Returns:
             dict: основные настройки заголовков
@@ -28,6 +31,9 @@ class WebUtils:
             'Content-Type': 'application/json, text/plain, */*',
             'x-platform': 'web',
         }
+
+        if isAmiAmi:
+            headers['x-user-key'] = 'amiami_dev'
 
         return headers
     
@@ -107,11 +113,12 @@ class WebUtils:
         return Display(visible=0, size=(800, 600))
     
     @staticmethod
-    def getSraper(url):
+    def getSraper(url, isAmiAmi = False):
         """Получить bs4 soup по заданной ссылке в обход CloudflareScraper
 
         Args:
             url (string): ссылка на страницу
+            isAmiAmi (boolean): проверка на амиами. Defaults to False
 
         Returns:
              bs4.BeautifulSoup: bs4 soup
@@ -123,7 +130,7 @@ class WebUtils:
 
         #scraper = cfscrape.create_scraper()  # returns a CloudflareScraper instance
         session = requests.Session()
-        session.headers = WebUtils.getHeader()
+        session.headers = WebUtils.getHeader(isAmiAmi = isAmiAmi)
         scraper = cfscrape.CloudflareScraper() 
         response = scraper.get(url)
 
