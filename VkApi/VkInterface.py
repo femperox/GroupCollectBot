@@ -574,7 +574,7 @@ class VkApi:
                     user_name = self.get_name(sender)
 
                     # Если человек вступил в чат, но не состоит в обществе:
-                    if event.object.message['action']['type'] in ['chat_invite_user', 'chat_invite_user_by_link']:
+                    if 'action' in event.obj.message and event.object.message['action']['type'] in ['chat_invite_user', 'chat_invite_user_by_link']:
        
                         invited_user = event.object.message['action']['member_id']
 
@@ -649,6 +649,7 @@ class VkApi:
 
                     # получение избранного        
                     elif event.obj.message['text'].lower().split(' ')[0] in VkCommands.getFavList:
+                            
                             try:
                                 text = event.obj.message['text'].lower()
                                 offset = 0

@@ -2,15 +2,20 @@ from APIs.webUtils import WebUtils
 import requests
 from confings.Consts import ShipmentPriceType as spt
 from datetime import datetime
+from dateutil.relativedelta import relativedelta
 import locale
 import json
 import time 
 from SQLS.DB_Operations import GetNotSeenProducts
 from confings.Consts import MonitorStoresType
+from pprint import pprint
 
 class AmiAmiApi():
 
     AMI_API_ITEM_INFO = 'https://api.amiami.com/api/v1.0/item?gcode={}'
+
+    # 9882 - Fashion
+    wrongCategoriesNumbers = [9882]
 
     @staticmethod
     def isWrongCategory(item_id):
@@ -31,6 +36,25 @@ class AmiAmiApi():
         for wrongCategory in wrongCategories:
             if item_id.find(wrongCategory) > -1:
                 return True
+
+        return False
+    
+    @staticmethod
+    def isWrongCategoryNumber(item_id, proxy = ''):
+        """Определить неинтересующие категории числовые
+
+        Args:
+            item_id (string): айди лота
+            proxy (str, optional): прокси. Defaults to ''.
+
+        Returns:
+            boolean: принадлженость к неинтересующим категориям
+        """
+        
+        time.sleep(1)
+        if AmiAmiApi.getAdditionalProductInfo(item_id = item_id, proxy = proxy)['cate1'] in AmiAmiApi.wrongCategoriesNumbers:
+            return True   
+
         return False
     
     @staticmethod
@@ -54,6 +78,8 @@ class AmiAmiApi():
                 js = js_raw
             else:
                 js['items'].extend(js_raw['items'])
+            
+            time.sleep(0.2)
         
         return js
 
@@ -137,22 +163,30 @@ class AmiAmiApi():
 
         
     @staticmethod
-    def getFullPreownedName(item_id, proxy=''):
-        """Получить полное название preOwned товара с АмиАми
+    def getAdditionalProductInfo(item_id, proxy=''):
+        """Получить доп инфо по товару
 
         Args:
             item_id (string): айди лота
             proxy (str, optional): прокси. Defaults to ''.
 
         Returns:
-            string: полное название айтема
+            dict: словарь с доп инфой о товаре
         """
 
         curl = AmiAmiApi.AMI_API_ITEM_INFO.format(item_id)
 
         js = AmiAmiApi.curlAmiAmiEng(curl, proxy)
 
-        return js['item']['sname'].replace('(Released)', '').replace('Pre-owned ','')
+        item_info = {}
+        item_info['sname'] = js['item']['sname'].replace('(Released)', '').replace('Pre-owned ','')
+        item_info['cate1'] =  js['item']['cate1'][0]
+        
+        locale.setlocale(locale.LC_TIME, 'en_US.UTF-8')
+        item_info['releasedate'] =  js['item']['releasedate'].split(' ')[-1] if js['item']['releasedate'].find(' ') > -1 else js['item']['releasedate']
+        item_info['releasedate'] =  datetime.strptime(item_info['releasedate'], '%b-%Y')
+
+        return item_info
 
     @staticmethod
     def productsAmiAmiEng(type_id, proxy = ''):
@@ -191,7 +225,7 @@ class AmiAmiApi():
             item_list.append(item.copy())
 
         item_list_ids = GetNotSeenProducts([item['itemId'] for item in item_list], type_id= type_id)
-        item_list = [item for item in item_list if item['itemId'] in item_list_ids]
+        item_list = [item for item in item_list if item['itemId'] in item_list_ids and not AmiAmiApi.isWrongCategoryNumber(item['itemId'], proxy)]
         
         return item_list
     
@@ -204,7 +238,7 @@ class AmiAmiApi():
 
         js = AmiAmiApi.curlManyPages(curl, 2, proxy)
 
-        item_list = []
+        item_list_raw = []
         for preOrder in js['items']:
             
             item = {}
@@ -222,11 +256,28 @@ class AmiAmiApi():
             if AmiAmiApi.isWrongCategory(preOrder['gcode']) or preOrder['image_on'] == 0:
                 continue
 
+            item_list_raw.append(item.copy())
+
+        item_list_ids = GetNotSeenProducts([item['itemId'] for item in item_list_raw], type_id= type_id)
+        item_list = []
+
+        for item in item_list_raw:
+            
+            if not item['itemId'] in item_list_ids:
+                continue
+            
+            additionalInfo = AmiAmiApi.getAdditionalProductInfo(item['itemId'], proxy)
+            
+            if additionalInfo['cate1'] in AmiAmiApi.wrongCategoriesNumbers:
+                continue
+
+            locale.setlocale(locale.LC_TIME, 'ru_RU.UTF-8')
+            if datetime.strptime(item['releaseDate'] , "%b %Y") < datetime.now() - relativedelta(months=1):
+                
+                item['releaseDate'] =  additionalInfo['releasedate'].strftime("%b %Y")
+
             item_list.append(item.copy())
 
-        item_list_ids = GetNotSeenProducts([item['itemId'] for item in item_list], type_id= type_id)
-        item_list = [item for item in item_list if item['itemId'] in item_list_ids]
-        
         return item_list        
     
     @staticmethod
@@ -264,11 +315,16 @@ class AmiAmiApi():
             item_list.append(item.copy())
 
         item_list_ids = GetNotSeenProducts([item['itemId'] for item in item_list], type_id= type_id)
-        item_list = [item for item in item_list if item['itemId'] in item_list_ids]
+        item_list_raw = [item for item in item_list if item['itemId'] in item_list_ids]
+        item_list = []
 
-        for item in item_list:
+        for item in item_list_raw:
             time.sleep(1)
-            item['name'] = AmiAmiApi.getFullPreownedName(item['itemId'], proxy = proxy)
+            additionalInfo = AmiAmiApi.getAdditionalProductInfo(item['itemId'], proxy = proxy)
+            if additionalInfo['cate1'] in AmiAmiApi.wrongCategoriesNumbers:
+                continue
+            item['name'] = additionalInfo['sname']
+            item_list.append(item.copy())
         
         return item_list
     
