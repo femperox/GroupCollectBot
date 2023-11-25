@@ -3,6 +3,7 @@ import os
 import json
 from confings.Consts import MONITOR_CONF_PATH, RegexType, STORE_MONITOR_CONF_PATH
 import re
+from itertools import chain
 
 def getCurrentDate():
     """Получить текущую дату
@@ -106,4 +107,16 @@ def getFavInfo(text, item_index = 0):
     fav_item['date_end'] = re.findall(RegexType.regex_date, text)[item_index].replace('Конец: ', '')
 
     return fav_item
+
+def flattenList(matrix):
+    """сконвертировать матрицу в массив
+
+    Args:
+        list_of_lists (list of list): матрица
+
+    Returns:
+        list: одномерный массив
+    """
+
+    return list(chain.from_iterable(matrix))
 

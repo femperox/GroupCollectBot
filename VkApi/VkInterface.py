@@ -8,13 +8,12 @@ from pprint import pprint
 import re
 from vk_api.bot_longpoll import VkBotLongPoll, VkBotEventType
 from vk_api.keyboard import VkKeyboard, VkKeyboardColor
-
 from confings.Messages import MessageType, Messages
 from Logger import logger, logger_fav
 from SQLS.DB_Operations import addFav, getFav, deleteFav, getFandoms, getTags, addBans, insertUpdateParcel, addBannedSellers
 from JpStoresApi.yahooApi import getAucInfo
 from confings.Consts import CURRENT_POSRED, BanActionType, MAX_BAN_REASONS, RegexType, PayloadType, VkCommands, PRIVATES_PATH, VkCoverSize
-from APIs.utils import getMonitorChats, getFavInfo, getStoreMonitorChats
+from APIs.utils import getMonitorChats, getFavInfo, getStoreMonitorChats, flattenList
 from APIs.pochtaApi import getTracking
 
 class VkApi:
@@ -437,6 +436,42 @@ class VkApi:
         
         return result['items'][0]['attachments'][idx]['photo']
     
+    def get_chat_members(self, chat_id):
+        """Получить список пользователей чата
+
+        Args:
+            chat_id (int): id чата
+
+        Returns:
+            list of int: список id участников беседы
+        """
+
+        params = {
+            'peer_id': chat_id,
+        }
+        
+        result = self.__vk_message.messages.getConversationMembers(**params)
+        result = [profile['id'] for profile in result['profiles']]
+
+        return result
+
+    def is_group_members(self, user_id):
+        """Получить список пользователей сообщества
+
+        Returns:
+            list of int: список id участников сообщества
+        """
+
+        params = {
+            'group_id': self.__group_id,
+            'user_id': user_id
+        }
+        
+        result = self.vk.groups.isMember(**params)
+    
+        return result
+
+    
     def monitorGroupActivity(self):
        """Мониторинг активности группы
        """
@@ -448,9 +483,21 @@ class VkApi:
        while True:
         try:
             for event in longPoll.listen():  
+
+                # Выход из сообщества - кик из бесед
+                if event.type == VkBotEventType.GROUP_LEAVE:
+                    leave_user = event.obj['user_id']
+                    
+                    chat_members_list = {}
+                    [ chat_members_list.update({x: self.get_chat_members(chat_id = x)}) for x in getStoreMonitorChats()]
+
+                    for chat in chat_members_list.keys():
+                        if leave_user in chat_members_list[chat]:
+                            self.sendMes(mess = Messages.userChatRemovalLeaveMess(user = self.get_name(leave_user)), users= [chat])
+                            self.removeChatUser(user = leave_user, chat = chat)
                 
                 # Исходящие сообщения
-                if event.type == VkBotEventType.MESSAGE_REPLY:
+                elif event.type == VkBotEventType.MESSAGE_REPLY:
                     sender = event. obj['from_id']
                     chat = event.obj['peer_id']
  
@@ -467,53 +514,56 @@ class VkApi:
                         except:
                             continue   
 
-                # Действия с сообщениями - callback кнопицы        
+                       
                 elif event.type ==VkBotEventType.MESSAGE_EVENT:
 
-                    chat = event.object['peer_id']
-                    message_id = event.object['conversation_message_id']
-                    mes = self.get_message(chat_id = chat, mess_id= message_id)
+                    # Действия с сообщениями - callback кнопицы 
+                    if 'payload' in event.object.keys():
 
-                    if event.object['payload'] == PayloadType.add_fav:
+                        chat = event.object['peer_id']
+                        message_id = event.object['conversation_message_id']                    
+                        mes = self.get_message(chat_id = chat, mess_id= message_id)
 
-                        item_index = 0
-                        fav_item = getFavInfo(mes['items'][0]['text'], item_index)
-                        fav_item['usr'] = event.object['user_id']
-                        try:
-                            fav_item['attachement'] = mes['items'][0]['attachments'][item_index]['photo']
-                        except:
-                            fav_item['attachement'] = self.get_attachemetns(peer_id=chat, conv_id=message_id, idx = item_index)
+                        if event.object['payload'] == PayloadType.add_fav:
+
+                            item_index = 0
+                            fav_item = getFavInfo(mes['items'][0]['text'], item_index)
+                            fav_item['usr'] = event.object['user_id']
+                            try:
+                                fav_item['attachement'] = mes['items'][0]['attachments'][item_index]['photo']
+                            except:
+                                fav_item['attachement'] = self.get_attachemetns(peer_id=chat, conv_id=message_id, idx = item_index)
+                                
+                            fav_item['attachement'] = 'photo{}_{}_{}'.format(fav_item['attachement']['owner_id'], fav_item['attachement']['id'], fav_item['attachement']['access_key'])
                             
-                        fav_item['attachement'] = 'photo{}_{}_{}'.format(fav_item['attachement']['owner_id'], fav_item['attachement']['id'], fav_item['attachement']['access_key'])
+                            mess = Messages.mes_fav(fav_item = fav_item, fav_func = addFav).format(self.get_name(fav_item['usr']), fav_item['id'])
+                            
+                            logger_fav.info(f"[ADD_FAV-{sender}] для пользователя {sender}: {mess}")
+                            self.sendMes(mess = mess, users = chat)   
                         
-                        mess = Messages.mes_fav(fav_item = fav_item, fav_func = addFav).format(self.get_name(fav_item['usr']), fav_item['id'])
-                        
-                        logger_fav.info(f"[ADD_FAV-{sender}] для пользователя {sender}: {mess}")
-                        self.sendMes(mess = mess, users = chat)   
-                    
-                    elif event.object['payload'] == PayloadType.ban_seller and str(event.object['user_id']) in self.__admins:
+                        elif event.object['payload'] == PayloadType.ban_seller and str(event.object['user_id']) in self.__admins:
 
-                        category = re.findall(RegexType.regex_hashtag, mes['items'][0]['text'])
+                            category = re.findall(RegexType.regex_hashtag, mes['items'][0]['text'])
 
-                        seller = category[-1]
-                        category = category[0]
+                            seller = category[-1]
+                            category = category[0]
 
-                        if seller:
-                            isBanned = addBannedSellers(category = category.split("_")[-1], seller_id = seller[1:])
+                            if seller:
+                                isBanned = addBannedSellers(category = category.split("_")[-1], seller_id = seller[1:])
 
-                            message = Messages.mes_ban(seller = seller, category = category, isBanned = isBanned)
-                            self.sendMes(mess = message, users= chat)
-                            if not isBanned:
-                                logger.info(f"\n[BAN-{category.split('_')[-1]}] Забанен продавец {seller[1:]}\n")                      
+                                message = Messages.mes_ban(seller = seller, category = category, isBanned = isBanned)
+                                self.sendMes(mess = message, users= chat)
+                                if not isBanned:
+                                    logger.info(f"\n[BAN-{category.split('_')[-1]}] Забанен продавец {seller[1:]}\n")                      
 
 
-                    params = {
-                        'user_id': event.object.user_id,
-                        'peer_id': event.object.peer_id,
-                        'event_id': event.object.event_id,              
-                    }                 
+                        params = {
+                            'user_id': event.object.user_id,
+                            'peer_id': event.object.peer_id,
+                            'event_id': event.object.event_id,              
+                        }                 
 
-                    self.__vk_message.messages.sendMessageEventAnswer(**params) 
+                        self.__vk_message.messages.sendMessageEventAnswer(**params) 
 
                     
                 # Входящие сообщения
@@ -522,11 +572,20 @@ class VkApi:
                     sender = event.obj.message['from_id']
                     chat = event.obj.message['peer_id']
                     user_name = self.get_name(sender)
+
+                    # Если человек вступил в чат, но не состоит в обществе:
+                    if event.object.message['action']['type'] in ['chat_invite_user', 'chat_invite_user_by_link']:
+       
+                        invited_user = event.object.message['action']['member_id']
+
+                        if not self.is_group_members(user_id = invited_user):
+                            self.sendMes(mess = Messages.userChatRemovalLeaveMess(user = self.get_name(invited_user)), users= [chat])
+                            self.removeChatUser(user = invited_user, chat = chat)
                     
                     # Удаление спамера из чата по магазинам
-                    if chat in getStoreMonitorChats() and sender not in whiteList:
+                    elif chat in getStoreMonitorChats() and sender not in whiteList:
                         
-                        self.sendMes(mess = Messages.userCharRemovalMess(user = self.get_name(sender)), users= [chat])
+                        self.sendMes(mess = Messages.userCharRemovalMess(user = user_name), users= [chat])
                         self.removeChatUser(user = sender, chat = chat)
                                
                     elif 'reply_message' in event.obj.message and str(event.obj.message['from_id'])[1:] != self.__group_id:

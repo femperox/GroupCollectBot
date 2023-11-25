@@ -118,7 +118,7 @@ if __name__ == "__main__":
     
     threads = []
 
-    for conf in conf_list:
+    for conf in conf_list[1:]:
 
         if conf["type"] == MessageType.monitor_amiAmi.value:
             threads.append(threading.Thread(target=monitorAmiProduct, args=( conf["rcpns"], MonitorStoresType.amiAmiEngPreOwned, maxProxyTick)))

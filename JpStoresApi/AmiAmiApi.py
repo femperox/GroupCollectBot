@@ -241,9 +241,9 @@ class AmiAmiApi():
             list of dict: список товаров и инфо о них
         """
         
-        curl = 'https://api.amiami.com/api/v1.0/items?pagemax=50&pagecnt=1&lang=eng&mcode=&ransu=&age_confirm=&s_sortkey=preowned&s_st_condition_flg=1'
+        curl = 'https://api.amiami.com/api/v1.0/items?pagemax=50&pagecnt={}&lang=eng&mcode=&ransu=&age_confirm=&s_sortkey=preowned&s_st_condition_flg=1'
 
-        js = AmiAmiApi.curlAmiAmiEng(curl, proxy)
+        js = AmiAmiApi.curlManyPages(curl, 2, proxy)
 
         item_list = []
         for preowned in js['items']:
