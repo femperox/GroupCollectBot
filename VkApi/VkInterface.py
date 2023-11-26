@@ -401,7 +401,7 @@ class VkApi:
                 params['keyboard'] = keyboard_1.get_keyboard()
 
             if pic != []:
-                if pic[0].find('photo')>=0:
+                if pic[0].find('photo-')>=0:
                     params.setdefault('attachment', pic[0])
                 else:    
                     attachments = self._form_images_request_signature(pic, self.__group_id, tag)

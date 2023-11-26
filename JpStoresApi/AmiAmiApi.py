@@ -96,7 +96,8 @@ class AmiAmiApi():
             dict: словарь с результатом запроса
         """
 
-        headers = WebUtils.getHeader(isAmiAmi = True)
+        headers = WebUtils.getHeader()
+        headers['x-user-key'] = 'amiami_dev'
 
         session = requests.session()
         page = session.get(curl, headers = headers, proxies = {'http': f'http://{proxy}'} if proxy else None)
@@ -344,7 +345,8 @@ class AmiAmiApi():
         curl = 'https://www.amiami.com/eng/c/sale/'
         curl2 = 'https://www.amiami.com/_nuxt/pages__lang_c_sale.7b456c13cfd19f570716.js'
 
-        headers = WebUtils.getHeader(isAmiAmi = True)
+        headers = WebUtils.getHeader()
+        headers['x-user-key'] = 'amiami_dev'
 
         session = requests.session()
         page = session.get(curl2, headers = headers, proxies = {'http': f'http://{proxy}'} if proxy else None)        

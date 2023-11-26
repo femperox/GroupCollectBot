@@ -8,7 +8,7 @@ from webdriver_manager.chrome import ChromeDriverManager
 from confings.Consts import LINUX_USER_AGENT
 import cfscrape
 import pprint
-
+import json
 import requests
 
 from pprint import pprint
@@ -16,11 +16,8 @@ from pprint import pprint
 class WebUtils:
 
     @staticmethod
-    def getHeader(isAmiAmi = False):
+    def getHeader():
         """Установка заголовков для запросов
-
-        Args:
-            isAmiAmi (boolean): проверка на амиами. Defaults to False
 
         Returns:
             dict: основные настройки заголовков
@@ -31,9 +28,6 @@ class WebUtils:
             'Content-Type': 'application/json, text/plain, */*',
             'x-platform': 'web',
         }
-
-        if isAmiAmi:
-            headers['x-user-key'] = 'amiami_dev'
 
         return headers
     
@@ -113,12 +107,11 @@ class WebUtils:
         return Display(visible=0, size=(800, 600))
     
     @staticmethod
-    def getSraper(url, isAmiAmi = False):
+    def getSraper(url):
         """Получить bs4 soup по заданной ссылке в обход CloudflareScraper
 
         Args:
             url (string): ссылка на страницу
-            isAmiAmi (boolean): проверка на амиами. Defaults to False
 
         Returns:
              bs4.BeautifulSoup: bs4 soup
@@ -130,7 +123,7 @@ class WebUtils:
 
         #scraper = cfscrape.create_scraper()  # returns a CloudflareScraper instance
         session = requests.Session()
-        session.headers = WebUtils.getHeader(isAmiAmi = isAmiAmi)
+        session.headers = WebUtils.getHeader()
         scraper = cfscrape.CloudflareScraper() 
         response = scraper.get(url)
 
@@ -138,44 +131,52 @@ class WebUtils:
     
     @staticmethod
     def getProxyServer(country = 'US'):
+        """_summary_
+
+        Args:
+            country (str, optional): Страна. Defaults to 'US'.
+
+        Returns:
+            list of string: список прокси
+        """
             
-            pprint('getting proxy servers')
+        pprint('getting proxy servers')
 
-            proxy_site = 'https://proxyservers.pro/proxy/list/protocol/http%2Chttps/country/{}/order/updated/order_dir/desc/page/1'
+        proxy_site = 'https://proxyservers.pro/proxy/list/protocol/http%2Chttps/country/{}/order/updated/order_dir/desc/page/1'
 
-            soup = WebUtils.getSoup(url = proxy_site.format(country), isSeleniumNeeded= True)
-            
-            result_list_hosts = soup.find_all('a', class_='ajax1 action-dialog-ajax-inact action-modal-ajax-inact')
-            result_list_ports = soup.find_all('span', class_='port')
-
-            pprint('got proxy servers')
-
-            return [f'{result_list_hosts[i].text}:{result_list_ports[i].get_text()}' for i in range(len(result_list_hosts))]
-
-    @staticmethod
-    def getProxyRequest(url, country = 'US'):
-
-        def make_proxy_entry(proxy_ip_port):  
-            return {'http': f'http://{proxy_ip_port}'}
-
+        soup = WebUtils.getSoup(url = proxy_site.format(country), isSeleniumNeeded= True)
         
-        ip_opts = WebUtils.getProxyServer(country = country)
+        result_list_hosts = soup.find_all('a', class_='ajax1 action-dialog-ajax-inact action-modal-ajax-inact')
+        result_list_ports = soup.find_all('span', class_='port')
 
-        search_result = None
-        for ip_port in ip_opts:
-            pprint(ip_port)
-            proxy_entry = make_proxy_entry(ip_port)
-            try:
-                search_result = requests.get(url, headers=WebUtils.getHeader(),
-                                            proxies=proxy_entry)
-                print('Successfully gathered results')
-                pprint(search_result.content)
-                break
-            except Exception as e:
-                print(f'Failed to connect to endpoint, with proxy {ip_port}.\n'
-                            f'Details: {e}')
-        else:
-            print('Never made successful connection to end-point!')
-            search_result = None
+        pprint('got proxy servers')
+
+        return [f'{result_list_hosts[i].text}:{result_list_ports[i].get_text()}' for i in range(len(result_list_hosts))]
+
+    def getProxyServerNoSelenium(type_needed = ['http', 'https']):
+        """_summary_
+
+        Args:
+            type_needed (list, optional): _description_. Defaults to ['http', 'https'].
+
+        Returns:
+            _type_: _description_
+        """
+
+        print('getting proxies')
+     
+        curl = f'https://raw.githubusercontent.com/jetkai/proxy-list/main/online-proxies/json/proxies.json'
         
-        return 'search_result'
+        page = requests.get(curl, headers = WebUtils.getHeader())
+
+        proxy_list_raw = json.loads(page.content)    
+         
+        proxy_list = [] 
+        for type in type_needed:
+            proxy_list.extend(proxy_list_raw[type])
+
+        proxy_list = list(set(proxy_list))   
+
+        print(f'got {len(proxy_list)} proxies') 
+
+        return proxy_list

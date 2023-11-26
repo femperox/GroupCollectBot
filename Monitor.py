@@ -10,10 +10,11 @@ from APIs.webUtils import WebUtils
 from Logger import logger
 from traceback import print_exc
 from JpStoresApi.yahooApi import getAucInfo
-from confings.Consts import MONITOR_CONF_PATH, PRIVATES_PATH
+from JpStoresApi.MercariApi import MercariApi
+from confings.Consts import MONITOR_CONF_PATH, PRIVATES_PATH, Stores
 from confings.Messages import MessageType, Messages
-from APIs.utils import getActiveMonitorChatsTypes
-from SQLS.DB_Operations import IsExistBannedSeller
+from APIs.utils import getActiveMonitorChatsTypes, createItemPairs
+from SQLS.DB_Operations import IsExistBannedSeller, insertNewSeenProducts
 
 threads = []
         
@@ -26,6 +27,7 @@ def sendHelloMessage(active_chats):
     """
     
     active_chats_info = getActiveMonitorChatsTypes(active_chats)
+
     for active_chat in active_chats_info:
         mes = Messages.mes_hello(active_chats_info[active_chat])    
         vk.sendMes(mess = mes, users = active_chat)
@@ -45,7 +47,7 @@ def sendMessage(items, params):
     logger.info(f"[MESSAGE-{params['tag']}] Отправлено сообщение о лотах продавца {items[0]['seller']}")
  
 
-def bs4Monitor(curl, params):
+def bs4MonitorYahoo(curl, params):
     """Мониторинг яху с помощью API (с использованием bs4)
 
     Args:
@@ -123,7 +125,7 @@ def bs4Monitor(curl, params):
             logger.info(f"\n[ERROR-{params['tag']}] {e}\n Последние лоты теперь: {seen_aucs}\n")
             print(f"\n{datetime.datetime.now()} - [ERROR-{params['tag']}]  Упал поток - {e} - {print_exc()}\n Последние лоты теперь: {seen_aucs}\n")
 
-def bs4SellerMonitor(curl, params):
+def bs4SellerMonitorYahoo(curl, params):
     """Мониторинг продавцов яху с помощью API (с использованием bs4)
 
     Args:
@@ -204,6 +206,36 @@ def bs4SellerMonitor(curl, params):
             print(f"\n{datetime.datetime.now()} - [ERROR-{params['tag']}]  Упал поток - {e}\n Последние лоты теперь: {seen_aucs}\n")
             print_exc()
 
+# To do: Сделать бан продаванов и добавление в избранное
+def monitorMercari(key_word, params):
+    items = []
+
+    while True:
+            try:
+                items = MercariApi.monitorMercariCategory(key_word = key_word, type_id = params['tag'])
+                logger.info(f"[SEEN-{params['tag']}] Просмотренные аукционы: {[x['itemId'] for x in items]}")
+
+                if items: 
+                    items_parts = createItemPairs(items = items)
+
+                    for part in items_parts:
+                                
+                        mes = Messages.formMercariMess(part, params['tag'])
+                        pics = [x['mainPhoto'] for x in part]
+
+                        vk.sendMes(mess = mes, users = params['rcpns'], tag = params['tag'], pic = pics)
+
+                        seen_ids = [x['itemId'] for x in part]
+                        logger.info(f"[MESSAGE-{params['tag']}] Отправлено сообщение {seen_ids}")
+                        insertNewSeenProducts(items_id = seen_ids, type_id = params['tag'])
+
+                sleep(60)
+            except Exception as e:
+
+                logger.info(f"\n[ERROR-{params['tag']}] {e}\n Последние лоты теперь: {[x['itemId'] for x in items]}\n")
+                print(f"\n{datetime.datetime.now()} - [ERROR-{params['tag']}]  Упал поток - {e} - {print_exc()}\n Последние лоты теперь: {items}\n")
+
+
 if __name__ == "__main__":
     vk = vk()
     
@@ -211,11 +243,15 @@ if __name__ == "__main__":
         conf_list = json.load(f)
           
     active_chats = []
-    
     for conf in conf_list[1:]:
-        if conf["type"] == "big-category": threads.append(threading.Thread(target=bs4Monitor, args=(conf["curl"], conf["params"])))
-        else: 
-            threads.append(threading.Thread(target=bs4SellerMonitor, args=(conf["curl"], conf["params"])))
+        if conf["store"] == Stores.yahooAuctions:
+            if conf["type"] == "big-category": threads.append(threading.Thread(target=bs4MonitorYahoo, args=(conf["curl"], conf["params"])))
+            else: 
+                threads.append(threading.Thread(target=bs4SellerMonitorYahoo, args=(conf["curl"], conf["params"])))
+        
+        elif conf["store"] == Stores.mercari:
+            threads.append(threading.Thread(target=monitorMercari, args=(conf["curl"], conf["params"])))
+        
         active_chats.append(conf)
 
     sendHelloMessage(active_chats)

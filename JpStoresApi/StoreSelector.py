@@ -1,6 +1,6 @@
 from pprint import pprint
 import re
-from confings.Consts import RegexType
+from confings.Consts import RegexType, Stores
 from JpStoresApi.yahooApi import getAucInfo
 from JpStoresApi.SecondaryStoresApi import SecondaryStoreApi as ssa
 from JpStoresApi.StoresApi import StoreApi as sa
@@ -10,16 +10,6 @@ import json
 from confings.Consts import PRIVATES_PATH
 
 class StoreSelector:
-
-    class Stores:
-
-        mercari = 'mercari'
-        payPay = 'paypayfleamarketyahoo'
-        yahooAuctions = 'pageauctionsyahoo'
-        amiAmi = 'amiami'
-        mandarake = 'mandarake'
-        animate = 'animate-onlineshop'
-
 
     url = ''
 
@@ -58,20 +48,20 @@ class StoreSelector:
         site = self.getStoreName()
         item = {}
 
-        if site == self.Stores.mercari:
+        if site == Stores.mercari:
             item = ssa.parseMercariPage(url, self.getItemID())
 
-        elif site == self.Stores.payPay:
+        elif site == Stores.payPay:
             item = ssa.parsePayPay(url, self.getItemID())
 
-        elif site == self.Stores.yahooAuctions:
+        elif site == Stores.yahooAuctions:
             
             tmp_dict = json.load(open(PRIVATES_PATH, encoding='utf-8'))
             app_id = tmp_dict['yahoo_jp_app_id']
             item = getAucInfo(app_id= app_id,id = self.getItemID())
 
-        elif site == self.Stores.amiAmi:
-            pprint(self.Stores.amiAmi)
+        elif site == Stores.amiAmi:
+            pprint(Stores.amiAmi)
             
             if url.find('/eng/')>0:
                 item = AmiAmiApi.parseAmiAmiEng(url, self.getItemID().split("=")[-1])
@@ -79,10 +69,10 @@ class StoreSelector:
                 item = ''
                 item = AmiAmiApi.parseAmiAmiJp(url)
             
-        elif site == self.Stores.mandarake:
+        elif site == Stores.mandarake:
             item = ssa.parseMandarake(url)
 
-        elif site == self.Stores.animate:
+        elif site == Stores.animate:
             
             item = sa.parseAnimate(self.getItemID())
 

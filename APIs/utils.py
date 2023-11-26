@@ -4,6 +4,7 @@ import json
 from confings.Consts import MONITOR_CONF_PATH, RegexType, STORE_MONITOR_CONF_PATH
 import re
 from itertools import chain
+from pprint import pprint
 
 def getCurrentDate():
     """Получить текущую дату
@@ -59,8 +60,14 @@ def getMonitorChatsTypes():
 
         for conf in conf_list:
             for rcpn in conf["params"]["rcpns"]:
-                if int(rcpn) in chat_dict:
-                    chat_dict[int(rcpn)][conf["type"]].append(conf["params"]["tag"])
+
+                if int(rcpn) in chat_dict: 
+
+                    if conf['type'] in chat_dict[int(rcpn)]:
+                        chat_dict[int(rcpn)][conf["type"]].append(conf["params"]["tag"])
+
+                    else:
+                        chat_dict[int(rcpn)].update({ conf["type"] : [conf["params"]["tag"]]})
                 else:
                     chat_dict[int(rcpn)] = { conf["type"] : [conf["params"]["tag"]]}
 
@@ -79,9 +86,16 @@ def getActiveMonitorChatsTypes(conf_list):
     chat_dict = {}
 
     for conf in conf_list:
+
         for rcpn in conf["params"]["rcpns"]:
-            if int(rcpn) in chat_dict:
-                chat_dict[int(rcpn)][conf["type"]].append(conf["params"]["tag"])
+
+            if int(rcpn) in chat_dict: 
+
+                if conf['type'] in chat_dict[int(rcpn)]:
+                    chat_dict[int(rcpn)][conf["type"]].append(conf["params"]["tag"])
+
+                else:
+                    chat_dict[int(rcpn)].update({ conf["type"] : [conf["params"]["tag"]]})
             else:
                 chat_dict[int(rcpn)] = { conf["type"] : [conf["params"]["tag"]]}
 
@@ -119,4 +133,28 @@ def flattenList(matrix):
     """
 
     return list(chain.from_iterable(matrix))
+
+def createItemPairs(items):
+    """Сгруппировать товары в группы по 10шт
+
+    Args:
+        items (list of dict): список товаров
+
+    Returns:
+        list of list of dict: сгруппированный список товаров
+    """
+
+    items_parts = []
+    message_img_limit = 10
+    
+    i = 0
+    for i in range(0, len(items) // message_img_limit):
+        items_parts.append(items[(i) * message_img_limit : (i+1)* message_img_limit])
+
+    if len(items) % message_img_limit != 0 and len(items_parts):
+        items_parts.append(items[(i+1) * message_img_limit : len(items)])
+    elif len(items) % message_img_limit != 0 and i == 0:
+        items_parts.append(items[(i) * message_img_limit : len(items)])    
+
+    return items_parts
 

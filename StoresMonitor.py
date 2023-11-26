@@ -11,32 +11,9 @@ import random
 from SQLS.DB_Operations import insertNewSeenProducts
 from confings.Consts import STORE_MONITOR_CONF_PATH
 import json
+from APIs.utils import createItemPairs
 
-maxProxyTick = 25
-
-def createItemPairs(items):
-    """Сгруппировать товары в группы по 10шт
-
-    Args:
-        items (list of dict): список товаров
-
-    Returns:
-        list of list of dict: сгруппированный список товаров
-    """
-
-    items_parts = []
-    message_img_limit = 10
-    
-    i = 0
-    for i in range(0, len(items) // message_img_limit):
-        items_parts.append(items[(i) * message_img_limit : (i+1)* message_img_limit])
-
-    if len(items) % message_img_limit != 0 and len(items_parts):
-        items_parts.append(items[(i+1) * message_img_limit : len(items)])
-    elif len(items) % message_img_limit != 0 and i == 0:
-        items_parts.append(items[(i) * message_img_limit : len(items)])    
-
-    return items_parts
+maxProxyTick = 180
 
 def checkNewProxies(oldProxies, oldProxyTick):
     """Обновление списка прокси
@@ -52,7 +29,7 @@ def checkNewProxies(oldProxies, oldProxyTick):
 
     if oldProxyTick == maxProxyTick:
 
-        proxies = WebUtils.getProxyServer()
+        proxies = WebUtils.getProxyServerNoSelenium()
         sleep(2)
 
         return proxies, 0

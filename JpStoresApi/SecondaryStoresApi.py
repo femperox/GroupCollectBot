@@ -43,39 +43,6 @@ class SecondaryStoreApi:
         return item
     
     @staticmethod
-    def parseMercariPage(url, item_id):
-        """Получение базовой информации о лоте со вторички mercari
-
-        Args:
-            url (string): ссылка на лот
-            item_id (string): айди лота
-
-        Returns:
-            dict: словарь с информацией о лоте
-        """
-
-        session = requests.session()
-        curl = f'https://api.mercari.jp/items/get?id={item_id}'
-
-        headers = WebUtils.getHeader()
-        headers['Content-Type'] = ''
-        headers['DPOP'] = mercari.generate_DPOP(uuid=f"{randint(0,100)}{item_id}", method="GET", url=curl)
-
-        page = session.get(curl, headers=headers)
-        js = page.json() 
-
-        item = {}
-        item['itemPrice'] = js['data']['price']
-        item['tax'] = 0
-        item['itemPriceWTax'] = 0 # Всегда включена в цену
-        item['shipmentPrice'] = spt.free if js['data']['shipping_payer']['id'] == 2 else spt.undefined
-        item['page'] = url
-        item['mainPhoto'] = js['data']['photos'][0]
-        item['siteName'] = 'mercari'
-
-        return item
-    
-    @staticmethod
     def parseMandarake(url):
         """Получение базовой информации о лоте со вторички Mandarake
 

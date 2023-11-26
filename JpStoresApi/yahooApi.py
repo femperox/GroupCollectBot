@@ -158,7 +158,7 @@ def getAucInfo(app_id, id):
             info['blitz'] = -1
         
         if 'FreeshippingIcon' in xml['ResultSet']['Result']['Option'].keys():
-            info['shipmentPrice'] = '0¥'
+            info['shipmentPrice'] = '0'
         else:
             try: 
                 info['ShoppingSellerId'] = xml['ResultSet']['Result']['Seller']['ShoppingSellerId']
