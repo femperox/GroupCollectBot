@@ -5,6 +5,9 @@ from confings.Consts import MONITOR_CONF_PATH, RegexType, STORE_MONITOR_CONF_PAT
 import re
 from itertools import chain
 from pprint import pprint
+from JpStoresApi.StoreSelector import StoreSelector
+from confings.Consts import Stores
+from dateutil.relativedelta import relativedelta
 
 def getCurrentDate():
     """Получить текущую дату
@@ -114,11 +117,16 @@ def getFavInfo(text, item_index = 0):
     """
     fav_item = {}
 
-    fav_item['id'] = dict.fromkeys(re.findall(RegexType.regex_id , text))
-    fav_item['id'].pop('auction/yauction', None)
-    fav_item['id'] = list(fav_item['id'])[item_index].replace('auction/', '')
+    storeSelector = StoreSelector()
+    storeSelector.url = re.findall(RegexType.regex_store_item_id_url, text)[item_index]
+
+    fav_item['id'] = storeSelector.getItemID()
+    fav_item['store_id'] = storeSelector.getStoreName()
     
-    fav_item['date_end'] = re.findall(RegexType.regex_date, text)[item_index].replace('Конец: ', '')
+    if fav_item['store_id'] == Stores.yahooAuctions:
+        fav_item['date_end'] = re.findall(RegexType.regex_date, text)[item_index].replace('Конец: ', '')
+    else:
+        fav_item['date_end'] = datetime.now() + relativedelta(years=3)
 
     return fav_item
 

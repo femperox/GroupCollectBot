@@ -153,11 +153,12 @@ class WebUtils:
 
         return [f'{result_list_hosts[i].text}:{result_list_ports[i].get_text()}' for i in range(len(result_list_hosts))]
 
-    def getProxyServerNoSelenium(type_needed = ['http', 'https']):
+    
+    def getProxyServerNoSelenium(type_needed = ['http']):
         """_summary_
 
         Args:
-            type_needed (list, optional): _description_. Defaults to ['http', 'https'].
+            type_needed (list, optional): _description_. Defaults to ['http'].
 
         Returns:
             _type_: _description_
@@ -165,15 +166,17 @@ class WebUtils:
 
         print('getting proxies')
      
-        curl = f'https://raw.githubusercontent.com/jetkai/proxy-list/main/online-proxies/json/proxies.json'
+        #curl = f'https://raw.githubusercontent.com/jetkai/proxy-list/main/online-proxies/json/proxies.json' ['http', 'https']
+        curl = 'https://raw.githubusercontent.com/MuRongPIG/Proxy-Master/main/{}.txt'
         
-        page = requests.get(curl, headers = WebUtils.getHeader())
 
-        proxy_list_raw = json.loads(page.content)    
-         
+
         proxy_list = [] 
         for type in type_needed:
-            proxy_list.extend(proxy_list_raw[type])
+           
+            page = requests.get(curl.format(type), headers = WebUtils.getHeader())
+            proxy_list_raw = page.text.split('\n')
+            proxy_list.extend(proxy_list_raw)
 
         proxy_list = list(set(proxy_list))   
 

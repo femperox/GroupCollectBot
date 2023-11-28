@@ -138,9 +138,9 @@ def getAucInfo(app_id, id):
         info['endTime'] = xml['ResultSet']['Result']['EndTime'].split('+')[0].replace('T', ' ')
         info['endTime'] = datetime.datetime.strptime(info['endTime'], '%Y-%m-%d %H:%M:%S') - datetime.timedelta(hours=6)
         try: 
-            info['pic'] = xml['ResultSet']['Result']['Img']['Image1']['#text']
+            info['mainPhoto'] = xml['ResultSet']['Result']['Img']['Image1']['#text']
         except:
-            info['pic'] = ''
+            info['mainPhoto'] = ''
             
         try:
             info['goodRate'] = xml['ResultSet']['Result']['Seller']['Rating']['TotalGoodRating']

@@ -7,6 +7,7 @@ import locale
 import json
 import time 
 from SQLS.DB_Operations import GetNotSeenProducts
+from random import choice
 from confings.Consts import MonitorStoresType
 from pprint import pprint
 
@@ -31,7 +32,7 @@ class AmiAmiApi():
         wrongCategories = ['CARD', 'TC-IDL',
                            'TOY-SCL', 'RAIL', 
                            'MED', 'JIGS', 
-                           'TOY-RBT', 'TOL']
+                           'TOY-RBT', 'TOL', 'TOY']
         
         for wrongCategory in wrongCategories:
             if item_id.find(wrongCategory) > -1:
@@ -72,14 +73,14 @@ class AmiAmiApi():
         
         js = {}
         for i in range(0, length):
-
+            time.sleep(3)
             js_raw = AmiAmiApi.curlAmiAmiEng(curl.format(i+1), proxy)
             if i == 0:
                 js = js_raw
             else:
                 js['items'].extend(js_raw['items'])
             
-            time.sleep(0.2)
+            
         
         return js
 
@@ -185,7 +186,7 @@ class AmiAmiApi():
         
         locale.setlocale(locale.LC_TIME, 'en_US.UTF-8')
         item_info['releasedate'] =  js['item']['releasedate'].split(' ')[-1] if js['item']['releasedate'].find(' ') > -1 else js['item']['releasedate']
-        item_info['releasedate'] =  datetime.strptime(item_info['releasedate'], '%b-%Y')
+        item_info['releasedate'] =  datetime.strptime(item_info['releasedate'], '%b-%Y') if item_info['releasedate'] else 'Неизвестно'
 
         return item_info
 
@@ -200,15 +201,22 @@ class AmiAmiApi():
         Returns:
             list of dict: список товаров и инфо о них
         """
+
+        pages_to_see = 7
+
         if type_id == MonitorStoresType.amiAmiEngSale:
-            curl = 'https://api.amiami.com/api/v1.0/items?pagemax=50&pagecnt={}&lang=eng&mcode=7001216802&ransu=vM4sX7Eyhya2Bj6bBa0jahnlpEFaqi57&age_confirm=&s_st_saleitem=1'
+            curl = 'https://api.amiami.com/api/v1.0/items?pagemax=50&pagecnt={}&lang=eng&mcode=7001216802&ransu=vM4sX7Eyhya2Bj6bBa0jahnlpEFaqi57&age_confirm=&s_st_saleitem=1&s_st_list_newitem_available=1'
+            pages_to_see = 5
         else:
             curl = 'https://api.amiami.com/api/v1.0/items?pagemax=50&pagecnt={}&lang=eng&mcode=&ransu=&age_confirm=&s_st_list_newitem_available=1'
 
-        js = AmiAmiApi.curlManyPages(curl, 2, proxy)
+        js = AmiAmiApi.curlManyPages(curl, pages_to_see, proxy)
 
         item_list = []
         for product in js['items']:
+
+            if type_id == MonitorStoresType.amiAmiEngInStock and (product['preorderitem'] or product['saleitem']):
+                continue
             
             item = {}
             item['itemPrice'] = product['min_price']
@@ -226,7 +234,11 @@ class AmiAmiApi():
             item_list.append(item.copy())
 
         item_list_ids = GetNotSeenProducts([item['itemId'] for item in item_list], type_id= type_id)
-        item_list = [item for item in item_list if item['itemId'] in item_list_ids and not AmiAmiApi.isWrongCategoryNumber(item['itemId'], proxy)]
+        
+        if item_list_ids: 
+            proxies = WebUtils.getProxyServerNoSelenium(type_needed = ['socks4', 'socks5'])
+
+        item_list = [item for item in item_list if item['itemId'] in item_list_ids and not AmiAmiApi.isWrongCategoryNumber(item['itemId'], choice(proxies))]
         
         return item_list
     
@@ -235,13 +247,16 @@ class AmiAmiApi():
 
         locale.setlocale(locale.LC_TIME, 'ru_RU.UTF-8')
         
-        curl = 'https://api.amiami.com/api/v1.0/items?pagemax=50&pagecnt={}&lang=eng&mcode=&ransu=&age_confirm=&s_st_list_preorder_available=1'
+        curl = 'https://api.amiami.com/api/v1.0/items?pagemax=50&pagecnt={}&lang=eng&mcode=&ransu=&age_confirm=&s_st_list_preorder_available=1&s_st_list_newitem_available=1'
 
-        js = AmiAmiApi.curlManyPages(curl, 2, proxy)
+        js = AmiAmiApi.curlManyPages(curl, 7, proxy)
 
         item_list_raw = []
         for preOrder in js['items']:
             
+            if not preOrder['preorderitem']:
+                continue 
+
             item = {}
             item['itemPrice'] = preOrder['min_price']
             item['tax'] = 0
@@ -252,33 +267,46 @@ class AmiAmiApi():
             item['siteName'] = 'AmiAmiEng'
             item['itemId'] = preOrder['gcode']
             item['name'] = preOrder['gname']
-            item['releaseDate'] = datetime.strptime(preOrder['releasedate'] , '%Y-%m-%d %H:%M:%S').strftime("%b %Y")
+            item['releaseDate'] = datetime.strptime(preOrder['releasedate'] , '%Y-%m-%d %H:%M:%S')
+            
+            if item['releaseDate'].month == datetime.now().month:
+                continue
 
             if AmiAmiApi.isWrongCategory(preOrder['gcode']) or preOrder['image_on'] == 0:
                 continue
 
             item_list_raw.append(item.copy())
 
-        item_list_ids = GetNotSeenProducts([item['itemId'] for item in item_list_raw], type_id= type_id)
+        
+        if item_list_raw:
+            item_list_ids = GetNotSeenProducts([item['itemId'] for item in item_list_raw], type_id= type_id)
         item_list = []
 
+        if item_list_ids: 
+            proxies = WebUtils.getProxyServerNoSelenium(type_needed = ['socks4', 'socks5'])
+
         for item in item_list_raw:
-            
+            time.sleep(1)
             if not item['itemId'] in item_list_ids:
                 continue
             
-            additionalInfo = AmiAmiApi.getAdditionalProductInfo(item['itemId'], proxy)
+            additionalInfo = AmiAmiApi.getAdditionalProductInfo(item['itemId'], choice(proxies))
             
             if additionalInfo['cate1'] in AmiAmiApi.wrongCategoriesNumbers:
                 continue
 
             locale.setlocale(locale.LC_TIME, 'ru_RU.UTF-8')
-            if datetime.strptime(item['releaseDate'] , "%b %Y") < datetime.now() - relativedelta(months=1):
+
+            if item['releaseDate']  < datetime.now() - relativedelta(months=1):
                 
                 item['releaseDate'] =  additionalInfo['releasedate'].strftime("%b %Y")
 
+            else:
+                item['releaseDate'] = item['releaseDate'].strftime("%b %Y")
+
             item_list.append(item.copy())
 
+ 
         return item_list        
     
     @staticmethod
@@ -293,13 +321,16 @@ class AmiAmiApi():
             list of dict: список товаров и инфо о них
         """
         
-        curl = 'https://api.amiami.com/api/v1.0/items?pagemax=50&pagecnt={}&lang=eng&mcode=&ransu=&age_confirm=&s_sortkey=preowned&s_st_condition_flg=1'
+        curl = 'https://api.amiami.com/api/v1.0/items?pagemax=50&pagecnt={}&lang=eng&mcode=&ransu=&age_confirm=&s_sortkey=preowned&s_st_condition_flg=1&s_st_list_newitem_available=1'
 
-        js = AmiAmiApi.curlManyPages(curl, 2, proxy)
+        js = AmiAmiApi.curlManyPages(curl, 4, proxy)
 
         item_list = []
         for preowned in js['items']:
             
+            if not preowned['instock_flg']:
+                continue 
+
             item = {}
             item['itemPrice'] = preowned['min_price']
             item['tax'] = 0
@@ -319,9 +350,12 @@ class AmiAmiApi():
         item_list_raw = [item for item in item_list if item['itemId'] in item_list_ids]
         item_list = []
 
+        if item_list_ids: 
+            proxies = WebUtils.getProxyServerNoSelenium(type_needed = ['socks4', 'socks5'])
+
         for item in item_list_raw:
             time.sleep(1)
-            additionalInfo = AmiAmiApi.getAdditionalProductInfo(item['itemId'], proxy = proxy)
+            additionalInfo = AmiAmiApi.getAdditionalProductInfo(item['itemId'], proxy = choice(proxies))
             if additionalInfo['cate1'] in AmiAmiApi.wrongCategoriesNumbers:
                 continue
             item['name'] = additionalInfo['sname']

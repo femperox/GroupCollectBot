@@ -42,8 +42,9 @@ def sendMessage(items, params):
     """
 
     mes = Messages.formSellerMess(items)
-    pics = [x['pic'] for x in items]
-    vk.sendMes(mess = mes, users = params['rcpns'], tag = params['tag'], pic = pics)
+    pics = [x['mainPhoto'] for x in items]
+    keyboard = vk.form_inline_buttons(type = MessageType.monitor_seller, items = pics)
+    vk.sendMes(mess = mes, users = params['rcpns'], tag = params['tag'], pic = pics, keyboard = keyboard)
     logger.info(f"[MESSAGE-{params['tag']}] Отправлено сообщение о лотах продавца {items[0]['seller']}")
  
 
@@ -94,7 +95,7 @@ def bs4MonitorYahoo(curl, params):
                 
                 item['seller'] = lot['data-auction-sellerid']
                 item['price'] = int(lot['data-auction-startprice'])
-                if IsExistBannedSeller(seller_id = item['seller'], category = params['tag']) or item['price'] > params['maxPrice']-1:
+                if IsExistBannedSeller(seller_id = item['seller'], category = params['tag'], store_id= Stores.yahooAuctions) or item['price'] > params['maxPrice']-1:
                     continue
 
                 info = getAucInfo(app_id, item['id'])
@@ -103,11 +104,12 @@ def bs4MonitorYahoo(curl, params):
                     continue
                 item.update(info)
                 
-                if item['pic'] == '' or int(item['goodRate']) < params['minRep']:
+                if item['mainPhoto'] == '' or int(item['goodRate']) < params['minRep']:
                     continue              
                 
                 mes = Messages.formMess(item, params['tag'])
-                vk.sendMes(mess = mes, users = params['rcpns'], tag = params['tag'], pic = [item['pic']], type = MessageType.monitor_big_category)
+                keyboard = vk.form_inline_buttons(type = MessageType.monitor_big_category)
+                vk.sendMes(mess = mes, users = params['rcpns'], tag = params['tag'], pic = [item['mainPhoto']], keyboard = keyboard )
                 logger.info(f"[MESSAGE-{params['tag']}] Отправлено сообщение о лоте {item['id']}")
             
             if ((not notBreakSeen and i != currentSize) or (notBreakSeen and i == currentSize)) and tmp_seen_aucs:
@@ -179,7 +181,7 @@ def bs4SellerMonitorYahoo(curl, params):
                 
                 item.update(info)
                 
-                if item['pic'] == '':
+                if item['mainPhoto'] == '':
                     continue
 
                 items.append(item.copy())
@@ -223,7 +225,9 @@ def monitorMercari(key_word, params):
                         mes = Messages.formMercariMess(part, params['tag'])
                         pics = [x['mainPhoto'] for x in part]
 
-                        vk.sendMes(mess = mes, users = params['rcpns'], tag = params['tag'], pic = pics)
+                        keyboard = vk.form_inline_buttons(type = MessageType.monitor_big_category_other, items = part)
+                        vk.sendMes(mess = mes, users = params['rcpns'], tag = params['tag'], pic = pics, keyboard = keyboard)
+                        
 
                         seen_ids = [x['itemId'] for x in part]
                         logger.info(f"[MESSAGE-{params['tag']}] Отправлено сообщение {seen_ids}")
@@ -231,9 +235,9 @@ def monitorMercari(key_word, params):
 
                 sleep(60)
             except Exception as e:
-
-                logger.info(f"\n[ERROR-{params['tag']}] {e}\n Последние лоты теперь: {[x['itemId'] for x in items]}\n")
-                print(f"\n{datetime.datetime.now()} - [ERROR-{params['tag']}]  Упал поток - {e} - {print_exc()}\n Последние лоты теперь: {items}\n")
+                
+                logger.info(f"\n[ERROR-{params['tag']}] {e} - {print_exc()}\n Последние лоты теперь: {[x['itemId'] for x in items]}\n")
+                print(f"\n{datetime.datetime.now()} - [ERROR-{params['tag']}]  Упал поток - {e} - {print_exc()}\n Последние лоты теперь: {[x['itemId'] for x in items]}\n")
 
 
 if __name__ == "__main__":

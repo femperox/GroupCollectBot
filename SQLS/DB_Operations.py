@@ -31,11 +31,11 @@ def addFav(item):
     Returns:
         int: результат исполнения добавления. 0 - дубль, 1 - успешно.
     """
-    
+
     conn = getConnection()
     cursor = conn.cursor()
     
-    cursor.execute(f"SELECT ADD_FAV({item['usr']}, '{item['id']}', '{item['attachement']}', '{item['date_end']}')")
+    cursor.execute(f"SELECT ADD_FAV({item['usr']}, '{item['id']}', '{item['attachement']}', '{item['date_end']}', '{item['store_id']}')")
     result = cursor.fetchone()[0]
    
     conn.commit() 
@@ -76,7 +76,7 @@ def getFav(usr_id, offset = 0):
     
     return [result, totalCount]
     
-def deleteFav(usr_id, auc_id):
+def deleteFav(usr_id, auc_id, store_id):
     """Удаление лота из избранного пользователя
 
     Args:
@@ -90,7 +90,7 @@ def deleteFav(usr_id, auc_id):
     conn = getConnection()
     cursor = conn.cursor()
 
-    cursor.execute(f"SELECT DEL_FAV({usr_id}, '{auc_id}')")
+    cursor.execute(f"SELECT DEL_FAV({usr_id}, '{auc_id}', '{store_id}')")
     result = cursor.fetchone()[0]
     
     conn.commit() 
@@ -353,11 +353,12 @@ def setParcelMass(barcode, mass):
 
     return
 
-def getBannedSellersInCategory(category):
+def getBannedSellersInCategory(category, store_id):
     """Получить список забаненных продавцов в категории
 
     Args:
         category (string): категория
+        store_id (string): id магазина
 
     Returns:
         list: список забаненных продавцов
@@ -366,7 +367,7 @@ def getBannedSellersInCategory(category):
     conn = getConnection(DbNames.collectDatabase)
     cursor = conn.cursor() 
 
-    cursor.execute(f"SELECT DISTINCT SELLER_ID FROM BANNED_SELLERS WHERE CATEGORY = '{category}';")
+    cursor.execute(f"SELECT DISTINCT SELLER_ID FROM BANNED_SELLERS WHERE CATEGORY = '{category}' AND STORE_ID = '{store_id}';")
     result = cursor.fetchall()
    
     cursor.close()
@@ -374,12 +375,13 @@ def getBannedSellersInCategory(category):
 
     return [res[0] for res in result]
 
-def addBannedSellers(category, seller_id):
+def addBannedSellers(category, seller_id, store_id):
     """Добавить продавца в бан-лист
 
     Args:
         category (string): категория
         seller_id (string): id продавца.
+        store_id (string): id магазина
 
     Returns:
         int: результат исполнения добавления. 0 - дубль, 1 - успешно.
@@ -388,7 +390,7 @@ def addBannedSellers(category, seller_id):
     conn = getConnection(DbNames.collectDatabase)
     cursor = conn.cursor() 
 
-    cursor.execute(f"SELECT INSERT_BANNED_SELLER('{seller_id}', '{category}')")
+    cursor.execute(f"SELECT INSERT_BANNED_SELLER('{seller_id}', '{category}', '{store_id}')")
     result = cursor.fetchone()[0]
    
     conn.commit() 
@@ -397,12 +399,13 @@ def addBannedSellers(category, seller_id):
     
     return result
 
-def IsExistBannedSeller(category, seller_id):
+def IsExistBannedSeller(category, seller_id, store_id):
     """Проверка сущестования продавца в бан-листе
 
     Args:
         category (string): категория
         seller_id (string): id продавца.
+        store_id (string): id магазина
 
     Returns:
         int: результат проверки существования. 0 - нет, 1 - да.
@@ -411,7 +414,7 @@ def IsExistBannedSeller(category, seller_id):
     conn = getConnection(DbNames.collectDatabase)
     cursor = conn.cursor() 
 
-    cursor.execute(f"SELECT IS_EXISTS_BANNED_SELLER('{seller_id}', '{category}')")
+    cursor.execute(f"SELECT IS_EXISTS_BANNED_SELLER('{seller_id}', '{category}', '{store_id}')")
     result = cursor.fetchone()[0]
    
     conn.commit() 

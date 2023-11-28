@@ -13,7 +13,7 @@ from confings.Consts import STORE_MONITOR_CONF_PATH
 import json
 from APIs.utils import createItemPairs
 
-maxProxyTick = 180
+maxProxyTick = 80
 
 def checkNewProxies(oldProxies, oldProxyTick):
     """Обновление списка прокси
@@ -29,12 +29,11 @@ def checkNewProxies(oldProxies, oldProxyTick):
 
     if oldProxyTick == maxProxyTick:
 
-        proxies = WebUtils.getProxyServerNoSelenium()
-        sleep(2)
+        proxies = WebUtils.getProxyServerNoSelenium(type_needed = ['socks4', 'socks5'])
 
         return proxies, 0
     else:
-        sleep(60)
+        
         return oldProxies, oldProxyTick
 
 def monitorAmiProduct(rcpns, typeRRS, newProxyTick):
@@ -49,7 +48,7 @@ def monitorAmiProduct(rcpns, typeRRS, newProxyTick):
     proxies = []
     
     while True:
-
+        sleep(60)
         proxies, newProxyTick = checkNewProxies(oldProxies = proxies, oldProxyTick = newProxyTick)
 
         if not proxies:
@@ -67,11 +66,12 @@ def monitorAmiProduct(rcpns, typeRRS, newProxyTick):
             logger_stores.info(f"[SEEN-{typeRRS}] len {len(items)} :{[x['itemId'] for x in items]}")
 
             if items:
+                print(items)
                 # сбор в сообщения по 10шт
                 items_parts = createItemPairs(items = items)
 
                 for part in items_parts:
-                            
+                    sleep(0.2)
                     mes = Messages.formAmiAmiMess(part, typeRRS)
                     pics = [x['mainPhoto'] for x in part]
                     vk.sendMes(mess = mes, users = rcpns, tag = typeRRS, pic = pics)

@@ -5,12 +5,22 @@ import mercari
 import json
 from SQLS.DB_Operations import GetNotSeenProducts
 from random import randint, choice
-from confings.Consts import ShipmentPriceType as spt
+from confings.Consts import ShipmentPriceType as spt, Stores
 import uuid
 import time
+from datetime import datetime
+from dateutil.relativedelta import relativedelta
+from SQLS.DB_Operations import IsExistBannedSeller
+
 
 
 class MercariApi:
+
+    class MercariItemStatus:
+
+        on_sale = 'on_sale'
+        trading = 'trading'
+        sold = 'sold_out'
 
     FREE_SHIPPING = 2
 
@@ -51,6 +61,9 @@ class MercariApi:
         
         for product in js['items']:
 
+            if IsExistBannedSeller(seller_id = product['sellerId'], category = type_id, store_id= Stores.mercari):
+                    continue            
+
             item['itemPrice'] = product['price']
             item['tax'] = 0
             item['itemPriceWTax'] = 0 # Всегда включена в цену
@@ -58,7 +71,7 @@ class MercariApi:
             item['page'] = f'https://jp.mercari.com/item/{product["id"]}'
             item['sellerId'] = product['sellerId']
             item['itemId'] = product["id"]
-            item['siteName'] = 'mercari'
+            item['siteName'] = Stores.mercari
             item_list_raw.append(item.copy())
 
         item_list_ids = GetNotSeenProducts([item['itemId'] for item in item_list_raw], type_id= type_id)
@@ -77,7 +90,7 @@ class MercariApi:
             seller = MercariApi.getSelerInfo(seller_id =item['sellerId'], proxy = proxy)
             item['goodRate'] = seller['goodRate']
             item['badRate'] = seller['badRate']
-            item['seller']  = seller['seller']
+            item['seller']  = f"{seller['seller']} ({item['sellerId']})"
 
             item_list.append(item.copy())
         
@@ -141,5 +154,7 @@ class MercariApi:
         item['page'] = url
         item['mainPhoto'] = js['data']['photos'][0]
         item['siteName'] = 'mercari'
+        item['itemStatus'] = js['data']['status']
+        item['endTime'] = datetime.now() + relativedelta(years=3)
 
         return item

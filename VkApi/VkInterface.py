@@ -12,9 +12,10 @@ from confings.Messages import MessageType, Messages
 from Logger import logger, logger_fav
 from SQLS.DB_Operations import addFav, getFav, deleteFav, getFandoms, getTags, addBans, insertUpdateParcel, addBannedSellers
 from JpStoresApi.yahooApi import getAucInfo
-from confings.Consts import CURRENT_POSRED, BanActionType, MAX_BAN_REASONS, RegexType, PayloadType, VkCommands, PRIVATES_PATH, VkCoverSize
+from confings.Consts import CURRENT_POSRED, BanActionType, MAX_BAN_REASONS, RegexType, PayloadType, VkCommands, PRIVATES_PATH, VkCoverSize, Stores
 from APIs.utils import getMonitorChats, getFavInfo, getStoreMonitorChats, flattenList
 from APIs.pochtaApi import getTracking
+from JpStoresApi.StoreSelector import StoreSelector
 
 class VkApi:
 
@@ -34,7 +35,6 @@ class VkApi:
         
         self._init_tmp_dir()
         self.__admins = tmp_dict['admins']
-        self.__yahoo = tmp_dict['yahoo_jp_app_id']
         
         vk_session = vk_api.VkApi(token=self.__tok)
         self.__vk_message = vk_session.get_api()
@@ -229,16 +229,19 @@ class VkApi:
             dict: В случае успешного выполнения запроса вернёт словарь с представлением медиа Вконтакте
         """
         if image_name != '':
+
             vk_response = self.vk.photos.getMessagesUploadServer(
-                peer_id=user
+                peer_id= user
             )
             vk_url = vk_response['upload_url']
+       
             try:
                 vk_response = requests.post(
                     vk_url, 
                     files={'photo': open(os.getcwd()+'/VkApi/tmp/{}'.format(image_name), 'rb')}
                 ).json()
                 os.remove(os.getcwd()+'/VkApi/tmp/' + image_name)
+
                 if vk_response['photo']:
 
                     vk_image = self.vk.photos.saveMessagesPhoto(
@@ -270,13 +273,14 @@ class VkApi:
                 new_image = self._local_image_upload(image_urls[i], tag)
                 if new_image != '':
                     vk_image = self._vk_image_upload(new_image, user)
-
+               
                     if vk_image != {}:
                         result += 'photo{}_{}_{}'.format(vk_image['owner_id'], vk_image['id'], vk_image['access_key']) + ('' if i == urls_count - 1 else ',')
                         result_urls.append(vk_image['sizes'][-1]['url'])
             if result != '':
                 if result[len(result) - 1] == ',':
                     result[:len(result) - 1:]
+
             return result, result_urls
         except:
             print_exc()
@@ -290,8 +294,6 @@ class VkApi:
         """
 
         albums = self.vk.photos.getAlbums(owner_id = f'-{self.__group_id}', need_system=1)
-
-        pprint(self.vk.photos.getAlbumsCount(group_id = self.__group_id))
         
         return albums
 
@@ -370,9 +372,45 @@ class VkApi:
                    'member_id': user
                  }
         self.__vk_message.messages.removeChatUser(**params)
-        
 
-    def sendMes(self, mess, users, tag = '', pic = [], type = MessageType.monitor_store):
+
+    def form_inline_buttons(self, type, items = ''):
+
+            settings = dict(one_time=False, inline=True)
+            
+            keyboard = ''
+
+            if type == MessageType.monitor_big_category:  
+                      
+                keyboard = VkKeyboard(**settings)
+                keyboard.add_callback_button(label='Забанить продавца', color=VkKeyboardColor.NEGATIVE, payload=PayloadType.ban_seller)
+                keyboard.add_callback_button(label='Добавить в избранное', color=VkKeyboardColor.POSITIVE, payload=PayloadType.add_fav)
+            
+            elif type in [MessageType.monitor_big_category_other, MessageType.monitor_seller, MessageType.fav_list]:
+        
+                keyboard = VkKeyboard(**settings)
+                j = 0
+                columnn_count = 2
+                for i in range(len(items)):
+                    
+                    if j % columnn_count == 0 and j!=0:
+                        keyboard.add_line()
+
+                    if type in [MessageType.monitor_big_category_other, MessageType.monitor_seller]:
+                        payload = {"type": PayloadType.add_fav_num["type"], "text": PayloadType.add_fav_num["text"].format(i)}
+                        keyboard.add_callback_button(label=f'Избранное {i+1}', color=VkKeyboardColor.POSITIVE, payload=payload)
+                    
+                    elif type in [MessageType.fav_list]:
+                        payload = {"type": PayloadType.delete_fav_num["type"], "text": PayloadType.delete_fav_num["text"].format(i)}
+                        keyboard.add_callback_button(label=f'Удалить {i+1}', color=VkKeyboardColor.NEGATIVE, payload=payload)
+
+                    j += 1
+
+
+
+            return keyboard
+
+    def sendMes(self, mess, users, tag = '', pic = [], keyboard = False):
         """Отправка сообщения
 
         Args:
@@ -392,16 +430,10 @@ class VkApi:
                 'random_id': 0,
             }
 
-            if type == MessageType.monitor_big_category:
-                settings = dict(one_time=False, inline=True)
-                keyboard_1 = VkKeyboard(**settings)
-                keyboard_1.add_callback_button(label='Забанить продавца', color=VkKeyboardColor.NEGATIVE, payload=PayloadType.ban_seller)
-                keyboard_1.add_callback_button(label='Добавить в избранное', color=VkKeyboardColor.POSITIVE, payload=PayloadType.add_fav)
-
-                params['keyboard'] = keyboard_1.get_keyboard()
+            if keyboard: params['keyboard'] = keyboard.get_keyboard()
 
             if pic != []:
-                if pic[0].find('photo-')>=0:
+                if re.search(RegexType.regex_vk_photo_scheme, pic[0]):
                     params.setdefault('attachment', pic[0])
                 else:    
                     attachments = self._form_images_request_signature(pic, self.__group_id, tag)
@@ -479,6 +511,8 @@ class VkApi:
        vkBotSession = vk_api.VkApi(token=self.__tok)
        longPoll = VkBotLongPoll(vkBotSession, self.__group_id)
        whiteList = [int(x) for x in self.__admins]
+
+       storeSelector = StoreSelector()
         
        while True:
         try:
@@ -524,10 +558,12 @@ class VkApi:
                         message_id = event.object['conversation_message_id']                    
                         mes = self.get_message(chat_id = chat, mess_id= message_id)
 
-                        if event.object['payload'] == PayloadType.add_fav:
+                        # добавление в избранное
+                        if event.object['payload']['type'] == PayloadType.add_fav['type']:
 
-                            item_index = 0
+                            item_index = int(event.object['payload']['text'])
                             fav_item = getFavInfo(mes['items'][0]['text'], item_index)
+
                             fav_item['usr'] = event.object['user_id']
                             try:
                                 fav_item['attachement'] = mes['items'][0]['attachments'][item_index]['photo']
@@ -536,25 +572,42 @@ class VkApi:
                                 
                             fav_item['attachement'] = 'photo{}_{}_{}'.format(fav_item['attachement']['owner_id'], fav_item['attachement']['id'], fav_item['attachement']['access_key'])
                             
-                            mess = Messages.mes_fav(fav_item = fav_item, fav_func = addFav).format(self.get_name(fav_item['usr']), fav_item['id'])
+                            mess = Messages.mes_fav(fav_item = fav_item, fav_func = addFav).format(self.get_name(fav_item['usr']), f"{fav_item['store_id']}_{fav_item['id']}")
                             
-                            logger_fav.info(f"[ADD_FAV-{sender}] для пользователя {sender}: {mess}")
-                            self.sendMes(mess = mess, users = chat)   
+                            logger_fav.info(f"[ADD_FAV-{fav_item['usr']}] для пользователя {fav_item['usr']}: {mess}")
+                            self.sendMes(mess = mess, users = chat)
+
+                        # удаление избранного
+                        elif event.object['payload']['type'] == PayloadType.delete_fav_num['type']:
+
+                            item_index = int(event.object['payload']['text'])
+                            auc_id = re.findall(RegexType.regex_hashtag, mes['items'][0]['text'])
+                            auc_id = [auc for auc in auc_id if auc not in VkCommands.hashtagList][item_index].replace('#', '')  
+                                             
+                            mes = Messages.mes_delete_fav(user_name = self.get_name(event.object['user_id']), user_id = event.object['user_id'], auc_id = auc_id, delete_func = deleteFav )
+                            
+                            logger_fav.info(f"[DELETE_FAV-{event.object['user_id']}] для пользователя {event.object['user_id']}: {mes}")
+                            
+                            self.sendMes(mess=mes, users=chat)                       
                         
+                        # бан продавана
                         elif event.object['payload'] == PayloadType.ban_seller and str(event.object['user_id']) in self.__admins:
 
                             category = re.findall(RegexType.regex_hashtag, mes['items'][0]['text'])
 
-                            seller = category[-1]
-                            category = category[0]
+                            seller = category[-1].replace('#', '')
+                            category = category[0].replace('#', '')
 
                             if seller:
-                                isBanned = addBannedSellers(category = category.split("_")[-1], seller_id = seller[1:])
+
+                                storeSelector.url = re.findall(RegexType.regex_store_item_id_url, mes['items'][0]['text'])[0]
+
+                                isBanned = addBannedSellers(category = category.split("_")[-1], seller_id = seller, store_id = storeSelector.getStoreName())
 
                                 message = Messages.mes_ban(seller = seller, category = category, isBanned = isBanned)
                                 self.sendMes(mess = message, users= chat)
                                 if not isBanned:
-                                    logger.info(f"\n[BAN-{category.split('_')[-1]}] Забанен продавец {seller[1:]}\n")                      
+                                    logger.info(f"\n[BAN-{category.split('_')[-1]}] Забанен продавец {seller}\n")                      
 
 
                         params = {
@@ -589,61 +642,39 @@ class VkApi:
                         self.removeChatUser(user = sender, chat = chat)
                                
                     elif 'reply_message' in event.obj.message and str(event.obj.message['from_id'])[1:] != self.__group_id:
-                       
-                        # Добавление в избранное
-                        if event.obj.message['text'].lower().split(' ')[0] in VkCommands.favList:
-                         
-                            try:
-                                fav_item = {}
-                                sender_text = event.obj.message['text']
-                            
-                                try: 
-                                    item_index = int(sender_text.split(' ')[1])-1 if sender_text.split(' ')[1].isdigit() else 0
-                                except:
-                                    item_index = 0
-                                
-                                fav_item['usr'] = sender
-                                
-                                text = event.obj.message['reply_message']['text']
-                                
-                                if text.find('#избранное')>=0: 
-                                    self.sendMes('В избранное можно добавлять только сообщения с лотами!', chat)
-                                    continue
-
-                                fav_item.update(getFavInfo(text, item_index))
-
-                                try:
-                                    fav_item['attachement'] = event.obj.message['reply_message']['attachments'][item_index]['photo']
-                                except:
-                                    fav_item['attachement'] = self.get_attachemetns(peer_id=chat, conv_id=event.obj.message['reply_message']['conversation_message_id'], idx = item_index)
-                                    
-                                fav_item['attachement'] = 'photo{}_{}_{}'.format(fav_item['attachement']['owner_id'], fav_item['attachement']['id'], fav_item['attachement']['access_key'])
-                        
-                                mess = Messages.mes_fav(fav_item = fav_item, fav_func = addFav).format(self.get_name(fav_item['usr']), fav_item['id'])
-                                
-                                logger_fav.info(f"[ADD_FAV-{sender}] для пользователя {sender}: {mess}")
-                                self.sendMes(mess, chat)
-                            except Exception as e:
-                                logger_fav.info(f"[ERROR_FAV-{sender}] для пользователя {sender}: {e}")                     
-                        
+                                              
                         # Бан продавца
                         if str(sender) in self.__admins and event.obj.message['text'].lower() in VkCommands.banList:
+
                             try:
                                 reply = event.obj.message['reply_message']['text']   
-                                
+                                store_id = ''
+                                seller = ''
                                 # в посте с товаров два тега: тег_категории и тег_продавца
                                 category = re.findall(RegexType.regex_hashtag, reply)
+
+
                                 if VkCommands.hashtagList[0] in category or len(category)==1 or VkCommands.hashtagList[1] in category:
                                     continue
-                                seller = category[-1]
-                                category = category[0]
+
+                                if category[0].split('_')[0].lower()[1:] == Stores.mercari_rus:
+
+                                    seller = re.findall(RegexType.regex_hard_seller_name, reply)[0].split(' ')[-1].replace('(','').replace(')','')
+                                    category = category[0][1:]
+                                    store_id = Stores.mercari
+                                else:
+
+                                    seller = category[-1][1:]
+                                    category = category[0].split("_")[-1]
+                                    store_id = Stores.yahooAuctions
+
                                 if seller:
-                                    isBanned = addBannedSellers(category = category.split("_")[-1], seller_id = seller[1:])
+                                    isBanned = addBannedSellers(category = category, seller_id = seller, store_id=store_id)
 
                                     message = Messages.mes_ban(seller = seller, category = category, isBanned = isBanned)
                                     self.sendMes(mess = message, users= chat)
                                     if not isBanned:
-                                        logger.info(f"\n[BAN-{category.split('_')[-1]}] Забанен продавец {seller[1:]}\n")
+                                        logger.info(f"\n[BAN-{category}] Забанен продавец {seller}\n")
                             except:
                                 continue
 
@@ -659,57 +690,39 @@ class VkApi:
                                 favListing = getFav(sender, offset)
                                 
                                 pics = []
-                                picStr = ''
-                                mess = f'#избранное для {user_name}'
-                                if len(favListing[0]) == 0:
-                                    mess += f"\n\nВаше избранное пусто для {offset+1} десятки!"
-                                else:
-                                    for i in range(len(favListing[0])):
-                                        picStr += favListing[0][i][2] +','
-                                        mess += f'\n\n{i+1}. #{favListing[0][i][1]}\nКонец: {favListing[0][i][-1]}\nПосред: {CURRENT_POSRED.format(favListing[0][i][1])}'
-                                    
+                                keyboard = self.form_inline_buttons(type = MessageType.fav_list, items = favListing[0])
+                                mess, picStr = Messages.formFavMes(user_name=user_name, favListing= favListing, offset= offset)
+                               
                                 if picStr != '': pics.append(picStr)
-                                
-                                mess += f'\n\nОтобаржено {len(favListing[0])}/{favListing[1]} лотов в избранном' 
                                 
                                 logger_fav.info(f"[SEL_FAV-{sender}] для пользователя {sender} выведен список избранного: {','.join([item[1] for item in favListing[0]])}")
                                 
-                                self.sendMes(mess=mess, users=chat, pic=pics)
+                                self.sendMes(mess=mess, users=chat, pic=pics, keyboard = keyboard)
                             except Exception as e:
+                                pprint(e)
                                 logger_fav.info(f"[ERROR_SEL_FAV-{sender}] для пользователя {sender}: {e}") 
-                    
-                    # Удаление из избранного
-                    elif event.obj.message['text'].lower().split(' ')[0] in VkCommands.delFavList and event.obj.message['text'].lower().find("#")>=0:
-                        
-                        auc_ids = re.findall(RegexType.regex_hashtag, event.obj.message['text'].lower())
-                     
-                        mes = Messages.mes_delete_fav(user_name = user_name, user_id = sender, auc_list = auc_ids, delete_func = deleteFav )
-                        
-                        logger_fav.info(f"[DELETE_FAV-{sender}] для пользователя {sender}: {mes}")
-                           
-                        self.sendMes(mess=mes, users=chat)
-                        
+                                            
                     # Ручное добавление в избранное 
-                    elif event.obj.message['text'].lower().split(' ')[0] in VkCommands.favList and event.obj.message['text'].lower().find("#")>=0:
-                        pprint('ok?')
-                        auc_ids = re.findall(RegexType.regex_hashtag, event.obj.message['text'].lower())  
+                    elif event.obj.message['text'].lower().split(' ')[0] in VkCommands.favList and event.obj.message['text'].lower().find("https://")>=0:
                         
-                        try:
-                            info = getAucInfo(app_id = self.__yahoo, id= auc_ids[0][1:])
-                            info['attachement'] = self._form_images_request_signature([info['pic']], self.__group_id, tag="custom_fav")[0]
+                        auc_ids = re.findall(RegexType.regex_store_item_id_url, event.obj.message['text'].lower())  
+                        
+                        items = []
+                        for id in auc_ids:
+                            info = {}
+                            info = storeSelector.selectStore(id)
+                            storeSelector.url =id
+                            info['attachement'] = self._form_images_request_signature([info['mainPhoto']], self.__group_id, tag="custom_fav")[0]
                             info['usr'] = sender
-                            info['id'] = auc_ids[0][1:]
+                            info['id'] = storeSelector.getItemID() 
                             info['date_end'] = info['endTime']
-                            
-                            mess =  f'#избранное для {user_name}\n'
-                            mess += f"\nЛот #{info['id']} был добавлен в ваше избранное!" if addFav(info) else f"\nЛот #{info['id']} уже есть в вашем избранном!"
-                        except Exception as e:
-                            print(f'Message formatting: {e}')
-                            mess += f"\nОшибка добавления лота #{info['id']} в избранное. Попробуйте ещё раз!"
-                            self.sendMes(mess, chat)
-                                
-                        logger_fav.info(f"[ADD_FAV-{sender}] для пользователя {sender}: {mess}")
+                            info['store_id'] = storeSelector.getStoreName()
+
+                            items.append(info.copy())
+
+                        mess = Messages.mes_add_fav(user_name=user_name, auc_list=items, add_func=addFav)
                         self.sendMes(mess, chat)
+
 
                 # репосты
                 elif event.type == VkBotEventType.WALL_POST_NEW and 'copy_history' in event.object:
@@ -737,7 +750,6 @@ class VkApi:
                             #users = '\n'.join(str(usr) for usr in users)
                             mess += f'\n\n{tag}:\n{users}'
                     
-                    pprint(mess)
                     if isTagPost:
                         self.post_wall_comment(mess=mess, post_id=post['id'])
                 

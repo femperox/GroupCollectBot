@@ -5,6 +5,8 @@ from JpStoresApi.yahooApi import getAucInfo
 from JpStoresApi.SecondaryStoresApi import SecondaryStoreApi as ssa
 from JpStoresApi.StoresApi import StoreApi as sa
 from JpStoresApi.AmiAmiApi import AmiAmiApi
+from JpStoresApi.MercariApi import MercariApi
+
 
 import json
 from confings.Consts import PRIVATES_PATH
@@ -33,6 +35,13 @@ class StoreSelector:
 
         id = self.url.split('/')[-1]
         return id
+    
+    def getStoreUrlByItemId(self, item_id, store_type):
+
+        if store_type == Stores.mercari:
+            return f'https://jp.mercari.com/item/{item_id}'
+        elif store_type == Stores.yahooAuctions:
+            return f'https://page.auctions.yahoo.co.jp/jp/auction/{item_id}'
 
     def selectStore(self, url):
         """Определение магазина по заданной ссылке
@@ -49,7 +58,7 @@ class StoreSelector:
         item = {}
 
         if site == Stores.mercari:
-            item = ssa.parseMercariPage(url, self.getItemID())
+            item = MercariApi.parseMercariPage(url, self.getItemID())
 
         elif site == Stores.payPay:
             item = ssa.parsePayPay(url, self.getItemID())
