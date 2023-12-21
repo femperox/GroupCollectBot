@@ -29,7 +29,7 @@ def checkNewProxies(oldProxies, oldProxyTick):
 
     if oldProxyTick == maxProxyTick:
 
-        proxies = WebUtils.getProxyServerNoSelenium(type_needed = ['socks4', 'socks5'])
+        proxies = WebUtils.getProxyServerNoSelenium(type_needed = ['socks4', 'socks5', 'http'])
 
         return proxies, 0
     else:
@@ -48,25 +48,28 @@ def monitorAmiProduct(rcpns, typeRRS, newProxyTick):
     proxies = []
     
     while True:
-        sleep(60)
+        #sleep(120)
         proxies, newProxyTick = checkNewProxies(oldProxies = proxies, oldProxyTick = newProxyTick)
 
         if not proxies:
             newProxyTick += 1
             continue
 
+        if not newProxyTick:
+            logger_stores.info(f"[PROXY-{typeRRS}] len {len(proxies)}")
+
         try:
 
             if typeRRS == MonitorStoresType.amiAmiEngPreOwned:
-                items = AmiAmiApi.preownedAmiAmiEng(type_id = typeRRS, proxy = random.choice(proxies))
+                items = AmiAmiApi.preownedAmiAmiEng(type_id = typeRRS, proxy = random.choice(proxies), logger = logger_stores)
             elif typeRRS == MonitorStoresType.amiAmiEngPreOrder:
-                items = AmiAmiApi.preOrderAmiAmiEng(type_id = typeRRS, proxy = random.choice(proxies))
+                items = AmiAmiApi.preOrderAmiAmiEng(type_id = typeRRS, proxy = random.choice(proxies), logger = logger_stores)
             else:
-                items = AmiAmiApi.productsAmiAmiEng(type_id = typeRRS, proxy = random.choice(proxies))
+                items = AmiAmiApi.productsAmiAmiEng(type_id = typeRRS, proxy = random.choice(proxies), logger = logger_stores)
             logger_stores.info(f"[SEEN-{typeRRS}] len {len(items)} :{[x['itemId'] for x in items]}")
 
             if items:
-                print(items)
+
                 # сбор в сообщения по 10шт
                 items_parts = createItemPairs(items = items)
 
@@ -85,6 +88,7 @@ def monitorAmiProduct(rcpns, typeRRS, newProxyTick):
         except Exception as e:
             logger_stores.info(f"\n[ERROR-{typeRRS}] {e} - {print_exc()}\n Последние айтемы теперь: {seen_ids}\n")
             newProxyTick += 1    
+            continue
 
      
 if __name__ == "__main__":
@@ -99,9 +103,9 @@ if __name__ == "__main__":
 
         if conf["type"] == MessageType.monitor_amiAmi.value:
             threads.append(threading.Thread(target=monitorAmiProduct, args=( conf["rcpns"], MonitorStoresType.amiAmiEngPreOwned, maxProxyTick)))
-            threads.append(threading.Thread(target=monitorAmiProduct, args=( conf["rcpns"], MonitorStoresType.amiAmiEngSale,     maxProxyTick - 1)))
-            threads.append(threading.Thread(target=monitorAmiProduct, args=( conf["rcpns"], MonitorStoresType.amiAmiEngInStock,  maxProxyTick - 2)))
-            threads.append(threading.Thread(target=monitorAmiProduct, args=( conf["rcpns"], MonitorStoresType.amiAmiEngPreOrder, maxProxyTick - 4)))
+            #threads.append(threading.Thread(target=monitorAmiProduct, args=( conf["rcpns"], MonitorStoresType.amiAmiEngSale,     maxProxyTick - 1)))
+            #threads.append(threading.Thread(target=monitorAmiProduct, args=( conf["rcpns"], MonitorStoresType.amiAmiEngInStock,  maxProxyTick - 2)))
+            #threads.append(threading.Thread(target=monitorAmiProduct, args=( conf["rcpns"], MonitorStoresType.amiAmiEngPreOrder, maxProxyTick - 4)))
 
 
     for thread in threads:

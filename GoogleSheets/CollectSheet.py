@@ -2,6 +2,7 @@ import GoogleSheets.API.Cells_Editor as ce
 from GoogleSheets.API.Styles.Borders import Borders as b
 from GoogleSheets.API.Styles.Colors import Colors as c
 from GoogleSheets.ParentSheetClass import ParentSheetClass
+from pprint import pprint
 
 class CollectSheet(ParentSheetClass):
 
@@ -27,11 +28,15 @@ class CollectSheet(ParentSheetClass):
         
         collectList = self.service.spreadsheets().values().get(spreadsheetId = self.getSpreadsheetId(), range=range).execute()['values'][1:]
 
-        for collect in collectList:
-            collect[0] = collect[0].split('@')[-1] if collect[0].find('@')>=0 else collect[0].split('/')[-1]
-            collect[1] = collect[1].split('@')[-1] if collect[1].find('@')>=0 else collect[1].split('/')[-1]
+        newCollectList = []
 
-        return collectList
+        for collect in collectList:
+            if collect:
+                collect_first = collect[0].split('@')[-1] if collect[0].find('@')>=0 else collect[0].split('/')[-1]
+                collect_second = collect[1].split('@')[-1] if collect[1].find('@')>=0 else collect[1].split('/')[-1]
+                newCollectList.append([collect_first, collect_second, collect[2], collect[3]])
+
+        return newCollectList
     
     def updateURLS(self, urlList):
         """Приведение ссылок в id-вид с начала листа
@@ -53,17 +58,29 @@ class CollectSheet(ParentSheetClass):
         row = 2
         for url in urlList:
 
-            ran = f"'{sheetTitle}'!B{row}"
-            info = f"{vk_preffix}id{url[0][0]}"
-            data.append(ce.insertValue(spId, ran, info))
+            if url:
+                ran = f"'{sheetTitle}'!B{row}"
+                info = f"{vk_preffix}id{url[0][0]}"
+                data.append(ce.insertValue(spId, ran, info))
 
-            ran = ran.replace('!B', '!C')
-            info = f"{vk_preffix}club{url[1][0]}"
-            data.append(ce.insertValue(spId, ran, info))
+                ran = ran.replace('!B', '!C')
+                info = f"{vk_preffix}club{url[1][0]}"
+                data.append(ce.insertValue(spId, ran, info))
+
+                ran = ran.replace('!C', '!D')
+                info = url[2]
+                data.append(ce.insertValue(spId, ran, info))
+
+                ran = ran.replace('!D', '!E')
+                info = url[3]
+                data.append(ce.insertValue(spId, ran, info))
 
             row += 1
 
         body["data"] = data
+
+        self.service.spreadsheets().values().clear(spreadsheetId = self.getSpreadsheetId(),
+                                                     range = f"'{sheetTitle}'!A2:E").execute()        
 
         self.service.spreadsheets().values().batchUpdate(spreadsheetId = self.getSpreadsheetId(),
                                                            body=body).execute()

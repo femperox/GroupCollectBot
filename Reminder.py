@@ -39,12 +39,11 @@ def checkTime(usr_id):
     storesApi = StoreSelector()
     checked_lots = []
     while True:
-        
+        sleep(60) 
         allFavs = getAllFavs(usr_id)
 
         for fav in allFavs:
-            pprint(fav)
-            pprint('======')
+
             try:
                 now = datetime.now()
      
@@ -92,7 +91,8 @@ def checkTime(usr_id):
                         logger_fav.info(f"[NOTIFY_FAV-{fav[0]}] для пользователя {fav[0]} отправлено уведомление о {fav[-1]}_{fav[1]}")
             except Exception as e:
                     logger_fav.info(f"[ERROR_FAV-{fav[0]}] для пользователя {fav[0]} {e}")
-        sleep(60)    
+                    continue
+           
 
 try:
     vk = vk()

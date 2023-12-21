@@ -131,7 +131,7 @@ class WebUtils:
     
     @staticmethod
     def getProxyServer(country = 'US'):
-        """_summary_
+        """Получить список прокси с proxyservers.pro
 
         Args:
             country (str, optional): Страна. Defaults to 'US'.
@@ -155,13 +155,13 @@ class WebUtils:
 
     
     def getProxyServerNoSelenium(type_needed = ['http']):
-        """_summary_
+        """Получить список прокси с гита
 
         Args:
-            type_needed (list, optional): _description_. Defaults to ['http'].
+            type_needed (list, optional): нужный тип прокси. Defaults to ['http'].
 
         Returns:
-            _type_: _description_
+            list: список прокси
         """
 
         print('getting proxies')

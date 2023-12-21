@@ -6,7 +6,9 @@ import random
 import json
 from pprint import pprint
 import re
+from random import randint
 from vk_api.bot_longpoll import VkBotLongPoll, VkBotEventType
+from vk_api.longpoll import VkLongPoll, VkChatEventType, VkEventType, VkLongpollMode
 from vk_api.keyboard import VkKeyboard, VkKeyboardColor
 from confings.Messages import MessageType, Messages
 from Logger import logger, logger_fav
@@ -171,7 +173,7 @@ class VkApi:
             extention = self._get_image_extension(url)
             filename = ''
             if extention != '':
-                filename = 'new_image'+ tag + extention
+                filename = f'new_image{randint(0,1500)}_{tag}' + extention
                 response = requests.get(url)
                 image = open(os.getcwd()+'/VkApi/tmp/' + filename, 'wb')
                 image.write(response.content)
@@ -383,14 +385,14 @@ class VkApi:
             if type == MessageType.monitor_big_category:  
                       
                 keyboard = VkKeyboard(**settings)
-                keyboard.add_callback_button(label='Забанить продавца', color=VkKeyboardColor.NEGATIVE, payload=PayloadType.ban_seller)
-                keyboard.add_callback_button(label='Добавить в избранное', color=VkKeyboardColor.POSITIVE, payload=PayloadType.add_fav)
+                keyboard.add_callback_button(label='🚫', color=VkKeyboardColor.NEGATIVE, payload=PayloadType.ban_seller)
+                keyboard.add_callback_button(label='⭐️', color=VkKeyboardColor.POSITIVE, payload=PayloadType.add_fav)
             
             elif type in [MessageType.monitor_big_category_other, MessageType.monitor_seller, MessageType.fav_list]:
         
                 keyboard = VkKeyboard(**settings)
                 j = 0
-                columnn_count = 2
+                columnn_count = 5
                 for i in range(len(items)):
                     
                     if j % columnn_count == 0 and j!=0:
@@ -398,15 +400,26 @@ class VkApi:
 
                     if type in [MessageType.monitor_big_category_other, MessageType.monitor_seller]:
                         payload = {"type": PayloadType.add_fav_num["type"], "text": PayloadType.add_fav_num["text"].format(i)}
-                        keyboard.add_callback_button(label=f'Избранное {i+1}', color=VkKeyboardColor.POSITIVE, payload=payload)
+                        keyboard.add_callback_button(label=f'⭐️ {i+1}', color=VkKeyboardColor.POSITIVE, payload=payload)
                     
                     elif type in [MessageType.fav_list]:
                         payload = {"type": PayloadType.delete_fav_num["type"], "text": PayloadType.delete_fav_num["text"].format(i)}
-                        keyboard.add_callback_button(label=f'Удалить {i+1}', color=VkKeyboardColor.NEGATIVE, payload=payload)
+                        keyboard.add_callback_button(label=f'🗑 {i+1}', color=VkKeyboardColor.SECONDARY, payload=payload)
 
                     j += 1
 
+            if type in [MessageType.monitor_big_category_other]:
+                j = 0
+                columnn_count = 5
+                for i in range(len(items)):
+                    
+                    if j % columnn_count == 0:
+                        keyboard.add_line()
 
+                    payload = {"type": PayloadType.ban_seller_num["type"], "text": PayloadType.ban_seller_num["text"].format(i)}
+                    keyboard.add_callback_button(label=f'🚫 {i+1}', color=VkKeyboardColor.NEGATIVE, payload=payload)
+                    
+                    j += 1
 
             return keyboard
 
@@ -503,12 +516,45 @@ class VkApi:
     
         return result
 
-    
+    def monitorChatActivity(self, logger):
+        """_summary_
+        """
+
+        vkBotSession = vk_api.VkApi(token=self.__tok)
+        longPoll = VkLongPoll(vkBotSession,mode= VkLongpollMode.GET_EXTENDED, group_id = self.__group_id)
+        whiteList = [int(x) for x in self.__admins]
+
+        while True:
+            try:
+                for event in longPoll.listen():
+
+                    if event.type == VkEventType.CHAT_UPDATE:
+                        logger.info(f'[{event.type}] - {event.raw}')
+                        
+                        if event.update_type == VkChatEventType.USER_JOINED:
+                        
+                            invited_user = event.info['user_id']
+                            chat = event.peer_id
+
+                            logger.info(f'[JOINED] - {invited_user}({self.get_name(invited_user)}) joined {chat}')
+
+                            if not self.is_group_members(user_id = invited_user):
+                                logger.info(f'[KICKED] - {invited_user}({self.get_name(invited_user)}) from {chat}')
+                                self.sendMes(mess = Messages.userChatRemovalLeaveMess(user = self.get_name(invited_user)), users= [chat])
+                                self.removeChatUser(user = invited_user, chat = chat)                        
+
+                    
+            except Exception as e:
+                pprint(e)
+                print_exc()
+                continue
+
     def monitorGroupActivity(self):
        """Мониторинг активности группы
        """
        
        vkBotSession = vk_api.VkApi(token=self.__tok)
+
        longPoll = VkBotLongPoll(vkBotSession, self.__group_id)
        whiteList = [int(x) for x in self.__admins]
 
@@ -591,18 +637,22 @@ class VkApi:
                             self.sendMes(mess=mes, users=chat)                       
                         
                         # бан продавана
-                        elif event.object['payload'] == PayloadType.ban_seller and str(event.object['user_id']) in self.__admins:
+                        elif event.object['payload']['type'] == PayloadType.ban_seller_num['type'] and str(event.object['user_id']) in self.__admins:
 
+                            item_index = int(event.object['payload']['text'])
                             category = re.findall(RegexType.regex_hashtag, mes['items'][0]['text'])
 
-                            seller = category[-1].replace('#', '')
+                            seller = category[1:][item_index].replace('#', '').replace(')', '')
                             category = category[0].replace('#', '')
+
+                            if category.split('_')[0].lower() == Stores.mercari_rus:
+                                store_id = Stores.mercari
+                            else:
+                                store_id = Stores.yahooAuctions
 
                             if seller:
 
-                                storeSelector.url = re.findall(RegexType.regex_store_item_id_url, mes['items'][0]['text'])[0]
-
-                                isBanned = addBannedSellers(category = category.split("_")[-1], seller_id = seller, store_id = storeSelector.getStoreName())
+                                isBanned = addBannedSellers(category = category, seller_id = seller, store_id = store_id)
 
                                 message = Messages.mes_ban(seller = seller, category = category, isBanned = isBanned)
                                 self.sendMes(mess = message, users= chat)
@@ -626,58 +676,12 @@ class VkApi:
                     chat = event.obj.message['peer_id']
                     user_name = self.get_name(sender)
 
-                    # Если человек вступил в чат, но не состоит в обществе:
-                    if 'action' in event.obj.message and event.object.message['action']['type'] in ['chat_invite_user', 'chat_invite_user_by_link']:
-       
-                        invited_user = event.object.message['action']['member_id']
-
-                        if not self.is_group_members(user_id = invited_user):
-                            self.sendMes(mess = Messages.userChatRemovalLeaveMess(user = self.get_name(invited_user)), users= [chat])
-                            self.removeChatUser(user = invited_user, chat = chat)
-                    
                     # Удаление спамера из чата по магазинам
-                    elif chat in getStoreMonitorChats() and sender not in whiteList:
+                    if chat in getStoreMonitorChats() and sender not in whiteList:
                         
                         self.sendMes(mess = Messages.userCharRemovalMess(user = user_name), users= [chat])
                         self.removeChatUser(user = sender, chat = chat)
                                
-                    elif 'reply_message' in event.obj.message and str(event.obj.message['from_id'])[1:] != self.__group_id:
-                                              
-                        # Бан продавца
-                        if str(sender) in self.__admins and event.obj.message['text'].lower() in VkCommands.banList:
-
-                            try:
-                                reply = event.obj.message['reply_message']['text']   
-                                store_id = ''
-                                seller = ''
-                                # в посте с товаров два тега: тег_категории и тег_продавца
-                                category = re.findall(RegexType.regex_hashtag, reply)
-
-
-                                if VkCommands.hashtagList[0] in category or len(category)==1 or VkCommands.hashtagList[1] in category:
-                                    continue
-
-                                if category[0].split('_')[0].lower()[1:] == Stores.mercari_rus:
-
-                                    seller = re.findall(RegexType.regex_hard_seller_name, reply)[0].split(' ')[-1].replace('(','').replace(')','')
-                                    category = category[0][1:]
-                                    store_id = Stores.mercari
-                                else:
-
-                                    seller = category[-1][1:]
-                                    category = category[0].split("_")[-1]
-                                    store_id = Stores.yahooAuctions
-
-                                if seller:
-                                    isBanned = addBannedSellers(category = category, seller_id = seller, store_id=store_id)
-
-                                    message = Messages.mes_ban(seller = seller, category = category, isBanned = isBanned)
-                                    self.sendMes(mess = message, users= chat)
-                                    if not isBanned:
-                                        logger.info(f"\n[BAN-{category}] Забанен продавец {seller}\n")
-                            except:
-                                continue
-
                     # получение избранного        
                     elif event.obj.message['text'].lower().split(' ')[0] in VkCommands.getFavList:
                             

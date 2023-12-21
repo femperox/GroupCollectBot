@@ -31,6 +31,31 @@ class MercariApi:
         headers['DPOP'] = mercari.generate_DPOP(uuid=f"{randint(0,100)}{uuid_gen_word}", method=method, url=curl)
 
         return headers
+    
+    @staticmethod
+    def getAdditionalInfo(item_id, sellerId):
+    
+        item_info = {}
+        proxies = WebUtils.getProxyServerNoSelenium()
+
+        # пока не получим норм результат
+        for i in range(5):
+            try:
+                proxy = choice(proxies)
+                item_info['mainPhoto'] = MercariApi.getPic(item_id, proxy = proxy)
+                seller = MercariApi.getSelerInfo(seller_id =sellerId, proxy = proxy)
+                item_info['goodRate'] = seller['goodRate']
+                item_info['badRate'] = seller['badRate']
+                item_info['seller']  = f"{seller['seller']} (#{sellerId})"
+                
+
+                return item_info
+            
+            except Exception as e:
+                pprint(e)
+                continue
+
+        return 0
 
     @staticmethod
     def monitorMercariCategory(key_word, type_id):
@@ -78,19 +103,17 @@ class MercariApi:
         item_list_raw = [item for item in item_list_raw if item['itemId'] in item_list_ids]
         item_list = []
 
-        proxies = []
-        if item_list_raw: 
-            proxies = WebUtils.getProxyServerNoSelenium()
+        pprint(item_list_raw)
 
         for item in item_list_raw:
-            proxy = choice(proxies)
-            time.sleep(0.2)
-            item['mainPhoto'] = MercariApi.getPic(item["itemId"], proxy = proxy)
-            time.sleep(0.2)
-            seller = MercariApi.getSelerInfo(seller_id =item['sellerId'], proxy = proxy)
-            item['goodRate'] = seller['goodRate']
-            item['badRate'] = seller['badRate']
-            item['seller']  = f"{seller['seller']} ({item['sellerId']})"
+
+            additionalInfo = MercariApi.getAdditionalInfo(item["itemId"], item["sellerId"])
+            if not additionalInfo:
+                continue
+            item['mainPhoto'] = additionalInfo['mainPhoto']
+            item['goodRate'] = additionalInfo['goodRate']
+            item['badRate'] = additionalInfo['badRate']
+            item['seller']  = additionalInfo['seller']
 
             item_list.append(item.copy())
         

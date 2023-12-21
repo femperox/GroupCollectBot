@@ -6,8 +6,6 @@ from JpStoresApi.SecondaryStoresApi import SecondaryStoreApi as ssa
 from JpStoresApi.StoresApi import StoreApi as sa
 from JpStoresApi.AmiAmiApi import AmiAmiApi
 from JpStoresApi.MercariApi import MercariApi
-
-
 import json
 from confings.Consts import PRIVATES_PATH
 
@@ -37,6 +35,15 @@ class StoreSelector:
         return id
     
     def getStoreUrlByItemId(self, item_id, store_type):
+        """Получить ссылку на товар магазина по его id и типу
+
+        Args:
+            item_id (string): id товара
+            store_type (Stores): тип магазина
+
+        Returns:
+            string: ссылка на товар
+        """
 
         if store_type == Stores.mercari:
             return f'https://jp.mercari.com/item/{item_id}'

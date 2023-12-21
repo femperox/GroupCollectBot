@@ -32,16 +32,16 @@ def checkCollects():
 
     collectList = cs.getSheetListProperties()
 
-
     for collect in collectList:
-    
-        collect[0] = vk.get_name(collect[0]).split('(')
-        collect[0][0] = collect[0][0].replace('@id', '')
-        collect[0][1] = collect[0][1].replace(')', '')
+        if collect:
+            collect[0] = vk.get_name(collect[0]).split('(')
+            collect[0][0] = collect[0][0].replace('@id', '')
+            collect[0][1] = collect[0][1].replace(')', '')
 
-        collect[1] = vk.get_group_name(collect[1]).split('(')
-        collect[1][0] = collect[1][0].replace('@club', '')
-        collect[1][1] = collect[1][1].replace(')', '')
+            collect[1] = vk.get_group_name(collect[1]).split('(')
+            collect[1][0] = collect[1][0].replace('@club', '')
+            collect[1][1] = collect[1][1].replace(')', '')
+    
     
     cs.updateURLS(collectList)
         
@@ -62,8 +62,6 @@ def checkCollects():
                 full_list["group_name"] = rawCollect[1][1]
 
             full_list["admins"] = cList.copy()
-
-        
 
         new_list[collect] = full_list.copy()
         

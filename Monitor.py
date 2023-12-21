@@ -67,6 +67,8 @@ def bs4MonitorYahoo(curl, params):
     firstSeen = True # при первом запуске просматривается только 1 элемент
 
     while True:
+        sleep(50)
+
         try:
             
             soup = WebUtils.getSoup(curl, parser= WebUtils.Bs4Parsers.htmlParser)
@@ -118,7 +120,7 @@ def bs4MonitorYahoo(curl, params):
 
             tmp_seen_aucs = []
             logger.info(f"[SEEN-{params['tag']}] Просмотренные аукционы: {seen_aucs}")
-            sleep(50)
+            
         except Exception as e:
             if tmp_seen_aucs:
                 prev_seen_aucs = seen_aucs.copy()
@@ -126,6 +128,7 @@ def bs4MonitorYahoo(curl, params):
             tmp_seen_aucs = []
             logger.info(f"\n[ERROR-{params['tag']}] {e}\n Последние лоты теперь: {seen_aucs}\n")
             print(f"\n{datetime.datetime.now()} - [ERROR-{params['tag']}]  Упал поток - {e} - {print_exc()}\n Последние лоты теперь: {seen_aucs}\n")
+            continue
 
 def bs4SellerMonitorYahoo(curl, params):
     """Мониторинг продавцов яху с помощью API (с использованием bs4)
@@ -147,8 +150,9 @@ def bs4SellerMonitorYahoo(curl, params):
     firstSeen = True # при первом запуске просматривается только 1 элемент
 
     while True:
+        sleep(50)
         try:
-           
+            
             soup = WebUtils.getSoup(curl, parser= WebUtils.Bs4Parsers.htmlParser)
 
             allLots = soup.findAll('div', class_='Product__bonus')
@@ -198,7 +202,7 @@ def bs4SellerMonitorYahoo(curl, params):
             
             tmp_seen_aucs = []
             logger.info(f"[SEEN-{params['tag']}] Просмотренные аукционы: {seen_aucs}")
-            sleep(50)
+
         except Exception as e:
             if tmp_seen_aucs:
                 prev_seen_aucs = seen_aucs.copy()
@@ -207,18 +211,19 @@ def bs4SellerMonitorYahoo(curl, params):
             logger.info(f"\n[ERROR-{params['tag']}] {print_exc()}\n Последние лоты теперь: {seen_aucs}\n")
             print(f"\n{datetime.datetime.now()} - [ERROR-{params['tag']}]  Упал поток - {e}\n Последние лоты теперь: {seen_aucs}\n")
             print_exc()
+            continue
 
-# To do: Сделать бан продаванов и добавление в избранное
 def monitorMercari(key_word, params):
     items = []
 
     while True:
+            sleep(180)
             try:
                 items = MercariApi.monitorMercariCategory(key_word = key_word, type_id = params['tag'])
-                logger.info(f"[SEEN-{params['tag']}] Просмотренные аукционы: {[x['itemId'] for x in items]}")
+                logger.info(f"[SEEN-{params['tag']}] Просмотренные аукционы: {len([x['itemId'] for x in items])}")
 
                 if items: 
-                    items_parts = createItemPairs(items = items)
+                    items_parts = createItemPairs(items = items, message_img_limit=5)
 
                     for part in items_parts:
                                 
@@ -233,12 +238,11 @@ def monitorMercari(key_word, params):
                         logger.info(f"[MESSAGE-{params['tag']}] Отправлено сообщение {seen_ids}")
                         insertNewSeenProducts(items_id = seen_ids, type_id = params['tag'])
 
-                sleep(60)
             except Exception as e:
                 
                 logger.info(f"\n[ERROR-{params['tag']}] {e} - {print_exc()}\n Последние лоты теперь: {[x['itemId'] for x in items]}\n")
                 print(f"\n{datetime.datetime.now()} - [ERROR-{params['tag']}]  Упал поток - {e} - {print_exc()}\n Последние лоты теперь: {[x['itemId'] for x in items]}\n")
-
+                continue
 
 if __name__ == "__main__":
     vk = vk()

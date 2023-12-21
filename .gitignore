@@ -16,3 +16,5 @@
 *.txt
 *.sql
 *.log
+
+HPoiApi.py

@@ -1,7 +1,7 @@
 from datetime import datetime
 import os
 import json
-from confings.Consts import MONITOR_CONF_PATH, RegexType, STORE_MONITOR_CONF_PATH
+from confings.Consts import MONITOR_CONF_PATH, RegexType, STORE_MONITOR_CONF_PATH, CURRENT_POSRED
 import re
 from itertools import chain
 from pprint import pprint
@@ -118,7 +118,10 @@ def getFavInfo(text, item_index = 0):
     fav_item = {}
 
     storeSelector = StoreSelector()
-    storeSelector.url = re.findall(RegexType.regex_store_item_id_url, text)[item_index]
+    storeSelector.url = CURRENT_POSRED
+    posred_domen = storeSelector.getStoreName()
+    urls = [url for url in re.findall(RegexType.regex_store_item_id_url, text) if url.find(posred_domen) == -1]
+    storeSelector.url = urls[item_index]
 
     fav_item['id'] = storeSelector.getItemID()
     fav_item['store_id'] = storeSelector.getStoreName()
@@ -142,7 +145,7 @@ def flattenList(matrix):
 
     return list(chain.from_iterable(matrix))
 
-def createItemPairs(items):
+def createItemPairs(items, message_img_limit = 10):
     """Сгруппировать товары в группы по 10шт
 
     Args:
@@ -153,7 +156,7 @@ def createItemPairs(items):
     """
 
     items_parts = []
-    message_img_limit = 10
+    
     
     i = 0
     for i in range(0, len(items) // message_img_limit):
