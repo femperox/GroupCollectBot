@@ -12,6 +12,7 @@ from SQLS.DB_Operations import insertNewSeenProducts
 from confings.Consts import STORE_MONITOR_CONF_PATH
 import json
 from APIs.utils import createItemPairs
+from JpStoresApi.HPoiApi import HPoiApi
 
 maxProxyTick = 80
 
@@ -48,7 +49,7 @@ def monitorAmiProduct(rcpns, typeRRS, newProxyTick):
     proxies = []
     
     while True:
-        #sleep(120)
+        sleep(120)
         proxies, newProxyTick = checkNewProxies(oldProxies = proxies, oldProxyTick = newProxyTick)
 
         if not proxies:
@@ -87,10 +88,47 @@ def monitorAmiProduct(rcpns, typeRRS, newProxyTick):
 
         except Exception as e:
             logger_stores.info(f"\n[ERROR-{typeRRS}] {e} - {print_exc()}\n Последние айтемы теперь: {seen_ids}\n")
+            print(e)
             newProxyTick += 1    
             continue
 
-     
+def monitor_hpoi(rcpns, typeRRS, vk):
+
+    seen_ids = []
+    
+    while True:
+        
+        try:
+
+            items = HPoiApi.getHpoiTeasers(type_id = typeRRS)
+
+            logger_stores.info(f"[SEEN-{typeRRS}] len {len(items)} :{[x['itemId'] for x in items]}")
+
+            if items:
+
+                # сбор в сообщения по 1шт
+                items_parts = createItemPairs(items = items, message_img_limit=1)
+
+                for part in items_parts:
+                    sleep(10)
+                    mes = Messages.formHpoiMess(part, typeRRS)
+                    print(part)
+                    pics = [x for x in part[0]['mainPhoto']]
+                    vk.sendMes(mess = mes, users = rcpns, tag = typeRRS, pic = pics)
+
+                    seen_ids = [f"{x['itemId']}" for x in part]
+                    logger_stores.info(f"[MESSAGE-{typeRRS}] Отправлено сообщение {seen_ids}")
+                    insertNewSeenProducts(items_id=seen_ids, type_id= typeRRS)
+
+
+        except Exception as e:
+            print(e)
+            logger_stores.info(f"\n[ERROR-{typeRRS}] {e} - {print_exc()}\n Последние айтемы теперь: {seen_ids}\n")    
+            continue    
+
+        sleep(10800)
+
+
 if __name__ == "__main__":
     vk = vk()
 
@@ -103,9 +141,9 @@ if __name__ == "__main__":
 
         if conf["type"] == MessageType.monitor_amiAmi.value:
             threads.append(threading.Thread(target=monitorAmiProduct, args=( conf["rcpns"], MonitorStoresType.amiAmiEngPreOwned, maxProxyTick)))
-            #threads.append(threading.Thread(target=monitorAmiProduct, args=( conf["rcpns"], MonitorStoresType.amiAmiEngSale,     maxProxyTick - 1)))
-            #threads.append(threading.Thread(target=monitorAmiProduct, args=( conf["rcpns"], MonitorStoresType.amiAmiEngInStock,  maxProxyTick - 2)))
-            #threads.append(threading.Thread(target=monitorAmiProduct, args=( conf["rcpns"], MonitorStoresType.amiAmiEngPreOrder, maxProxyTick - 4)))
+            threads.append(threading.Thread(target=monitorAmiProduct, args=( conf["rcpns"], MonitorStoresType.amiAmiEngSale,     maxProxyTick - 1)))
+            threads.append(threading.Thread(target=monitorAmiProduct, args=( conf["rcpns"], MonitorStoresType.amiAmiEngInStock,  maxProxyTick - 2)))
+            threads.append(threading.Thread(target=monitorAmiProduct, args=( conf["rcpns"], MonitorStoresType.amiAmiEngPreOrder, maxProxyTick - 4)))
 
 
     for thread in threads:

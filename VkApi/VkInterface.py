@@ -521,7 +521,7 @@ class VkApi:
         """
 
         vkBotSession = vk_api.VkApi(token=self.__tok)
-        longPoll = VkLongPoll(vkBotSession,mode= VkLongpollMode.GET_EXTENDED, group_id = self.__group_id)
+        longPoll = VkLongPoll(vkBotSession,mode= VkLongpollMode.GET_EXTENDED, group_id = self.__group_id, wait = 50)
         whiteList = [int(x) for x in self.__admins]
 
         while True:
@@ -555,7 +555,7 @@ class VkApi:
        
        vkBotSession = vk_api.VkApi(token=self.__tok)
 
-       longPoll = VkBotLongPoll(vkBotSession, self.__group_id)
+       longPoll = VkBotLongPoll(vkBotSession, self.__group_id, wait = 50)
        whiteList = [int(x) for x in self.__admins]
 
        storeSelector = StoreSelector()

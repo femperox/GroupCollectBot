@@ -217,7 +217,7 @@ def monitorMercari(key_word, params):
     items = []
 
     while True:
-            sleep(180)
+            sleep(300)
             try:
                 items = MercariApi.monitorMercariCategory(key_word = key_word, type_id = params['tag'])
                 logger.info(f"[SEEN-{params['tag']}] Просмотренные аукционы: {len([x['itemId'] for x in items])}")

@@ -51,7 +51,6 @@ class WebUtils:
         Returns:
             bs4.BeautifulSoup: bs4 soup
         """
-
         if isSeleniumNeeded:
             browser = WebUtils.getSelenium(proxyServer=proxyServer)
             browser.get(url)

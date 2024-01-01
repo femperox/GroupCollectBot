@@ -6,11 +6,10 @@ from dateutil.relativedelta import relativedelta
 import locale
 import json
 import time 
-from SQLS.DB_Operations import GetNotSeenProducts
+from SQLS.DB_Operations import GetNotSeenProducts, insertNewSeenProducts
 from random import choice
 from confings.Consts import MonitorStoresType
 from pprint import pprint
-from SQLS.DB_Operations import insertNewSeenProducts
 
 class AmiAmiApi():
 
@@ -56,7 +55,7 @@ class AmiAmiApi():
         """
 
         wrongCategoriesNames = ['Wall Scroll', 'T-shirt', 'Sweatshirt', 'Nice Body Smartphone Stand',
-                                'Pillow Cover']
+                                'Pillow Cover', 'Clear File', 'Sticker' ]
                 
         for wrongCategory in wrongCategoriesNames:
             if item_name.find(wrongCategory) > -1:
@@ -249,11 +248,11 @@ class AmiAmiApi():
             list of dict: список товаров и инфо о них
         """
 
-        pages_to_see = 10
+        pages_to_see = 15
 
         if type_id == MonitorStoresType.amiAmiEngSale:
             curl = 'https://api.amiami.com/api/v1.0/items?pagemax=50&pagecnt={}&lang=eng&mcode=7001216802&ransu=vM4sX7Eyhya2Bj6bBa0jahnlpEFaqi57&age_confirm=&s_st_saleitem=1&s_st_list_newitem_available=1'
-            pages_to_see = 8
+            pages_to_see = 10
         else:
             curl = 'https://api.amiami.com/api/v1.0/items?pagemax=50&pagecnt={}&lang=eng&mcode=&ransu=&age_confirm=&s_st_list_newitem_available=1'
 
@@ -320,7 +319,7 @@ class AmiAmiApi():
         
         curl = 'https://api.amiami.com/api/v1.0/items?pagemax=50&pagecnt={}&lang=eng&mcode=&ransu=&age_confirm=&s_st_list_preorder_available=1'
 
-        js = AmiAmiApi.curlManyPages(curl, 20, proxy)
+        js = AmiAmiApi.curlManyPages(curl, 23, proxy)
 
         item_list_raw = []
         item_list_ids = []
@@ -340,8 +339,15 @@ class AmiAmiApi():
             item['mainPhoto'] = 'https://img.amiami.com'+preOrder['thumb_url']
             item['siteName'] = 'AmiAmiEng'
             item['itemId'] = preOrder['gcode']
+
+
+            pprint(item['itemId'])
+
             item['name'] = preOrder['gname']
-            item['releaseDate'] = datetime.strptime(preOrder['releasedate'] , '%Y-%m-%d %H:%M:%S')
+            try:
+                item['releaseDate'] = datetime.strptime(preOrder['releasedate'] , '%Y-%m-%d %H:%M:%S')
+            except:
+                continue
             
             if item['releaseDate'].month == datetime.now().month and item['releaseDate'].year == datetime.now().year:
                 continue
@@ -364,9 +370,10 @@ class AmiAmiApi():
                 proxies = WebUtils.getProxyServerNoSelenium(type_needed = ['socks4', 'socks5', 'http'])
 
             logger.info(f"[SEEN-{type_id}-RAW] len {len(item_list_ids)}")
-            pprint(item_list_ids)
+           
 
             for item in item_list_raw:
+                pprint(item['itemId'])
                 time.sleep(1)
                 if not item['itemId'] in item_list_ids:
                     continue
@@ -405,7 +412,7 @@ class AmiAmiApi():
         
         curl = 'https://api.amiami.com/api/v1.0/items?pagemax=50&pagecnt={}&lang=eng&mcode=&ransu=&age_confirm=&s_sortkey=preowned&s_st_condition_flg=1&s_st_list_newitem_available=1'
 
-        js = AmiAmiApi.curlManyPages(curl, 8, proxy)
+        js = AmiAmiApi.curlManyPages(curl, 10, proxy)
 
         item_list = []
         item_list_ids = []
