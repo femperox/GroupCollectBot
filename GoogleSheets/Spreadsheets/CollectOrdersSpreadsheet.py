@@ -129,7 +129,7 @@ class CollectOrdersSpreadsheetClass():
             request.append(ce.repeatCells(spId, "D{0}:E{0}".format(self.startParticipantRow+i), c.light_red))
         
         # условное форматирование            
-        endParticipantRow = self.startParticipantRow + range(participants) - 1
+        endParticipantRow = self.startParticipantRow + participants - 1
         request.append(ce.addConditionalFormatRuleColorChange(spId, f"H{self.startParticipantRow}:H{endParticipantRow}", ConditionType.NUMBER_LESS_THAN_EQ, "0", c.light_green))
         request.append(ce.addConditionalFormatRuleColorChange(spId, f"H{self.startParticipantRow}:H{endParticipantRow}", ConditionType.NUMBER_GREATER, "0", c.light_red))
 
