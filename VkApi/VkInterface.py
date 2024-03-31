@@ -186,7 +186,7 @@ class VkApi:
             extention = self._get_image_extension(url)
             filename = ''
             if extention != '':
-                filename = f'new_image{randint(0,1500)}_{tag}' + extention
+                filename = f'new_image{randint(0,15000)}_{tag}' + extention
                 response = requests.get(url)
                 image = open(os.getcwd()+'/VkApi/tmp/' + filename, 'wb')
                 image.write(response.content)
@@ -194,7 +194,7 @@ class VkApi:
             return filename
         except:
             print_exc()
-            return ''
+            self._local_image_upload(url, tag)
 
     def _cover_image_upload(self, image_name: str) -> dict:
         """Загружает локальное изображение на сервера Вконтакте
@@ -267,9 +267,8 @@ class VkApi:
 
             if isWallServer:
                 vk_response = self.vk.photos.getWallUploadServer(group_id=self.__group_id)
-                #vk_response = self.vk.photos.getUploadServer(group_id=self.__group_id, album_id = -6)
             else:
-                vk_response = self.vk.photos.getMessagesUploadServer()#peer_id= user#group_id=user#, v='5.131')\
+                vk_response = self.vk.photos.getMessagesUploadServer()
             
             vk_url = vk_response['upload_url']
 
@@ -293,13 +292,12 @@ class VkApi:
                             photo=vk_response['photo'],
                             server=vk_response['server'],
                             hash=vk_response['hash'],
-                            #v='5.131'
                         )
           
                     return vk_image[0]
             except:
                 print_exc()
-                return {}
+                self._vk_image_upload(image_name, user, isWallServer)
         return {}
 
     def _form_images_request_signature(self, image_urls: list, user, tag, isWallServer = False) -> str:
