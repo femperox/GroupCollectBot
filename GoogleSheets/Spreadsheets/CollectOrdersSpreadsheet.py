@@ -8,6 +8,7 @@ from dateutil.relativedelta import *
 from multipledispatch import dispatch
 from confings.Consts import CollectOrdersSheetNames as sheetNames, ShipmentPriceType
 from APIs.posredApi import getCurrentCurrencyRate
+from GoogleSheets.API.Constants import ConditionType
 
 class CollectOrdersSpreadsheetClass():
 
@@ -123,11 +124,14 @@ class CollectOrdersSpreadsheetClass():
         request.append(ce.mergeCells(spId, "A{0}:C{1}".format(self.startLotRow+1, self.startLotRow+13)))  # место для картинки
         request.append(ce.mergeCells(spId, "A{0}:C{0}".format(self.summaryRow))) # для "суммарно"
 
-
         for i in range(participants):
             request.append(ce.mergeCells(spId, "B{0}:C{0}".format(self.startParticipantRow+i)))
             request.append(ce.repeatCells(spId, "D{0}:E{0}".format(self.startParticipantRow+i), c.light_red))
-            request.append(ce.repeatCells(spId, "H{0}:H{0}".format(self.startParticipantRow + i), c.light_red))
+        
+        # условное форматирование            
+        endParticipantRow = self.startParticipantRow + range(participants) - 1
+        request.append(ce.addConditionalFormatRuleColorChange(spId, f"H{self.startParticipantRow}:H{endParticipantRow}", ConditionType.NUMBER_LESS_THAN_EQ, "0", c.light_green))
+        request.append(ce.addConditionalFormatRuleColorChange(spId, f"H{self.startParticipantRow}:H{endParticipantRow}", ConditionType.NUMBER_GREATER, "0", c.light_red))
 
         # границы ячеек
         request.append(ce.setCellBorder(spId, "A{0}:H{1}".format(self.startLotRow, self.summaryRow), bstyleList=b.plain_black))

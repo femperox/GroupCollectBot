@@ -1,6 +1,5 @@
 from GoogleSheets.API.Styles.Borders import Borders as b
 
-
 def toRangeType(spId, range):
     '''
     Конвертирует диапозон ячеек в словарь
@@ -47,6 +46,46 @@ def toUserEnteredFormat(color, hali = 'CENTER', vali = 'MIDDLE', textFormat = 'T
     userEnteredFormat["wrapStrategy"] = "WRAP"
 
     return userEnteredFormat
+
+
+def addConditionalFormatRuleColorChange(spId, range, ruleType, ruleValue, ruleColor):
+  """Составить запрос для условного форматирования - смена цвета ячейки в зависимости от ее значения
+
+  Args:
+      spId (int): id листа в документе таблицы
+      range (string): диапозон ячеек в формате "В1:С45" - пример
+      ruleType (ConditionType): тип правила условного форматирования
+      ruleValue (string): значения для правила условного форматирования
+      ruleColor (Colors): цвет, в который ячейка будет окрашиваться
+
+  Returns:
+      dict: словарь для json запроса
+  """
+    
+  request = {
+      "addConditionalFormatRule":
+      {
+          "rule": 
+          {
+              "ranges": [toRangeType(spId, range)],
+              "booleanRule":
+              {
+                  "condition": 
+                  {
+                      "type": ruleType,
+                      "values": [{ "userEnteredValue": ruleValue}]
+                  },  
+                  "format":
+                  {
+                        "backgroundColor": ruleColor
+                  }
+              }
+
+          }
+      }
+  }
+
+  return request
 
 
 def mergeCells(spId, range):
