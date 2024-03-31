@@ -1,12 +1,13 @@
 from VkApi.VkInterface import VkApi as vk
 from GoogleSheets.CollectOrdersSheet import CollectOrdersSheet as collect_table
-from traceback import print_exc 
+from traceback import format_exc, print_exc
 from pprint import pprint 
 from JpStoresApi.StoreSelector import StoreSelector
 from confings.Messages import Messages
 import re
 from datetime import datetime
 from SQLS import DB_Operations
+from APIs.utils import flattenList
 
 def createNamedRange(spId, who, find):
     '''
@@ -392,175 +393,166 @@ def console():
 
     while choise != 3:
 
-      choise = int(input('\nВведите номер:\n1. Сделать лот\t2. Отправки в РФ\n3. Выход\t4. Замена ссылок на теги '
-                         '\n5. Забанить\t6. Уступки\n'
-                         '7. Обновление статуса лотов\n8. Удаление фотографий\nВыбор: '))
+      
+      try: 
+        choiseList = ['Сделать лот', 'Отправки в РФ', 'Выход', 'Замена ссылок на теги',
+                        'Забанить', 'Уступки', 'Обновление статуса лотов', 'Удаление фотографий']
+        choise = int(input('\nВведите номер:\n' + Messages.formConsoleListMes(info_list = choiseList, offset = 2) + '\nВыбор: '))
 
-      if choise == 1:
+        if choise == 1:
 
-        topicName = "❏ Лоты и индивидуалки"
+            topicName = "❏ Лоты и индивидуалки"
 
-        lists = [ collect_table.sp.spreadsheetsIds['Лерины лоты'][0],
-                  collect_table.sp.spreadsheetsIds['Дашины лоты'][0],
-                  collect_table.sp.spreadsheetsIds['Дашины индивидуалки'][0],
-                  collect_table.sp.spreadsheetsIds['ТестЛист'][0]
-                ]
+            lists = [ collect_table.sp.spreadsheetsIds['Дашины лоты'][0],
+                    collect_table.sp.spreadsheetsIds['Дашины индивидуалки'][0],
+                    collect_table.sp.spreadsheetsIds['ТестЛист'][0]
+                    ]
+            lists_name = ['Дашины лоты', 'Дашины индивидуалки', 'ТестЛист']
+            
 
-        print('\nВыберите лист из таблицы:\n'
-              '1. Лерины лоты\t2. Дашины лоты\n'
-              '3. Дашины индивидуалки\t4. Тестовый лист'
-              )
-        choise1 = int(input('Выбор: '))
+            print('\nВыберите лист из таблицы:\n' + Messages.formConsoleListMes(info_list = lists_name))
+            choise1 = int(input('Выбор: '))
 
-        spId = lists[choise1-1]
+            spId = lists[choise1-1]
 
-        site_url = input('\nEnter the site url (might be empty): ')
+            site_url = input('\nEnter the site url (might be empty): ')
 
-        wallPosts = input('\nEnter the vk posts. If more than 1 - use space. (might be empty): ')
-        wallPosts = wallPosts.split(' ')
+            wallPosts = input('\nEnter the vk posts. If more than 1 - use space. (might be empty): ')
+            wallPosts = wallPosts.split(' ')
 
-        img = input('\nEnter the image url (might be empty): ')
+            img = input('\nEnter the image url (might be empty): ')
 
-        items = int(input('\nHow many items are there? '))
+            items = int(input('\nHow many items are there? '))
 
 
-        namedRange = createTableTopic(wallPosts, site_url, spId=spId,
-                                      topicName=topicName, items=items, img_url=img)
+            namedRange = createTableTopic(wallPosts, site_url, spId=spId,
+                                        topicName=topicName, items=items, img_url=img)
 
-        collectType, collectNum = collect_table.sp.defineCollectType(namedRange)
-        DB_Operations.insertCollect(collectType, collectNum, namedRange)
+            collectType, collectNum = collect_table.sp.defineCollectType(namedRange)
+            DB_Operations.insertCollect(collectType, collectNum, namedRange)
 
-      elif choise == 2:
+        elif choise == 2:
 
-        lists = [collect_table.sp.spreadsheetsIds['Дашины лоты (Едет в РФ)'][0],
-                 collect_table.sp.spreadsheetsIds['Дашины лоты (Архив)'][0],
-                 collect_table.sp.spreadsheetsIds['ТестЛист'][0]
-                ]
+            lists = [ collect_table.sp.spreadsheetsIds['Дашины лоты (Архив)'][0],
+                    collect_table.sp.spreadsheetsIds['Дашины лоты (Едет в РФ)'][0],
+                    collect_table.sp.spreadsheetsIds['ТестЛист'][0]
+                    ]
+            
+            lists_name = ['Дашины лоты (Архив)', 'Дашины лоты (Едет в РФ)', 'ТестЛист']
 
-        print('\nВыберите лист из таблицы:\n'
-              '1. Дашины лоты РФ\t2. Дашины лоты Архив\n'
-              '3. Тестовый лист'
-              )
-        choise1 = int(input('Выбор: '))
+            print('\nВыберите лист из таблицы:\n' + Messages.formConsoleListMes(info_list = lists_name))
+            choise1 = int(input('Выбор: '))
 
-        spId = lists[choise1 - 1]
+            spId = lists[choise1 - 1]
 
-        collectList = input("Enter collect's num using comma(, ) (might be empty): ")
-        collectList = collectList.split(', ')
+            collectList = input("Enter collect's num using comma(, ) (might be empty): ")
+            collectList = collectList.split(', ')
 
-        indList = input("Enter ind's num using comma(, ) (might be empty): ")
-        indList = indList.split(', ')
+            indList = input("Enter ind's num using comma(, ) (might be empty): ")
+            indList = indList.split(', ')
 
-        ShipmentToRussiaEvent(spId, collectList, indList)
+            ShipmentToRussiaEvent(spId, collectList, indList)
 
-      elif choise == 4:
-          topics = [ '❏ Лоты и индивидуалки',
-                     '❏ Заказы гашапонов',
-                     '❏ Заказы с AmiAmi',
-                     '❏ Коллект посылка до админа из Краснодара',
-                     '❏ Коллект посылка до админа из Москвы'
-          ]
+        elif choise == 4:
+            topics = [ '❏ Лоты и индивидуалки',
+                        '❏ Заказы гашапонов',
+                        '❏ Заказы с AmiAmi',
+                        '❏ Коллект посылка до админа из Краснодара',
+                        '❏ Коллект посылка до админа из Москвы'
+            ]
 
-          print('\nВыберите обсуждение:\n'
-                '1. {0}\t2. {1}\t3. {2}\n'
-                '4. {3}\t5. {4}'.format(topics[0], topics[1], topics[2], topics[3], topics[4])
-                )
+            print('\nВыберите обсуждение:\n' + Messages.formConsoleListMes(info_list = topics, offset = 2))
 
-          choise1 = int(input('Выбор: '))
-          vk.replace_url(topics[choise1-1])
+            choise1 = int(input('Выбор: '))
+            vk.replace_url(topics[choise1-1])
 
-      elif choise == 5:
+        elif choise == 5:
 
-          user_list = []
-          print('\nTo stop enter any symbol\n')
+            user_list = []
+            print('\nTo stop enter any symbol\n')
 
-          i = 0
+            i = 0
 
-          while True:
-            i += 1
-            url = input('user{0} URL: '.format(i))
-            if url.find('https://vk.com') < 0: break
+            while True:
+                i += 1
+                url = input('user{0} URL: '.format(i))
+                if url.find('https://vk.com') < 0: break
 
-            commentary = input('user{0} commentary: '.format(i))
+                commentary = input('user{0} commentary: '.format(i))
 
-            user_list.append({'id': url, 'comment': commentary })
+                user_list.append({'id': url, 'comment': commentary })
 
-          vk.ban_users(user_list)
+            vk.ban_users(user_list)
 
-      elif choise == 6:
+        elif choise == 6:
 
-          user_list = []
-          print('\nTo stop enter any symbol\n')
-          print('Если индивидуалка, то прицепить любой символ перед номером. Пример: и56')
-          print('Запись в формате: 213 - 1, 2, 4\n')
+            user_list = []
+            print('\nTo stop enter any symbol\n')
+            print('Если индивидуалка, то прицепить любой символ перед номером. Пример: и56')
+            print('Запись в формате: 213 - 1, 2, 4\n')
 
-          i = 0
+            i = 0
 
-          while True:
-              i += 1
-              url = input('user{0} URL: '.format(i))
-              if url.find('https://vk.com') < 0: break
+            while True:
+                i += 1
+                url = input('user{0} URL: '.format(i))
+                if url.find('https://vk.com') < 0: break
 
-              lot, items = input('лот - уступка : '.format(i)).split(' - ')
-              #items = items.split(', ')
-              payed = input('Позиции оплачены? y/n: ')
-              payed = 0 if payed.lower() != 'y' else 1
+                lot, items = input('лот - уступка : '.format(i)).split(' - ')
+                #items = items.split(', ')
+                payed = input('Позиции оплачены? y/n: ')
+                payed = 0 if payed.lower() != 'y' else 1
 
-              user_list.append([lot, [items, url], payed])
+                user_list.append([lot, [items, url], payed])
 
-          changePositions(user_list)
-      elif choise == 7:
+            changePositions(user_list)
+        elif choise == 7:
+                        
+            status = flattenList(DB_Operations.getCollectStatuses())
 
-          status = ['Выкупается', 'Едет на склад', 'На складе', 'Едет в РФ', 'На руках', 'Без статуса', 'Едет на склад в Японии',
-                    'На складе в Японии', 'Едет на склад в РФ', 'На складе в РФ', 'Едет к коллективщику', 'Едет к получателю', 'На складе в транзите',
-                    'Едет на склад транзита']
+            while True:
+                    print('\nTo stop enter any symbol\n')
+                    print('\nВыберите статус:\n' + Messages.formConsoleListMes(info_list = status))
 
-          while True:
-                  print('\nTo stop enter any symbol\n')
-                  print('Выберите статус:\n'
-                    '1. {0}\t2. {1}\t3. {2}\n'
-                    '4. {3}\t5. {4}\t6. {5}\n'
-                    '7. {6}\t8. {7}\n'
-                    '9. {8}\t10. {9}\n'
-                    '11. {10}\t12.{11}\n'
-                    '13. {12}\t14. {13}'.format(status[0], status[1], status[2], status[3], status[4], status[5], status[6],
-                                                status[7], status[8], status[9], status[10], status[11], status[12], status[13])
-                    )
+                    choise1 = int(input('Выбор: '))
+                    stat = status[choise1-1]
+                    if stat == 'Едет в РФ':
+                        print('Через запятую перечислите трек-номера\n')
+                        trakcs = input('Треки: ').split(', ')
 
-                  choise1 = int(input('Выбор: '))
-                  stat = status[choise1-1]
-                  if stat == 'Едет в РФ':
-                      print('Через запятую перечислите трек-номера\n')
-                      trakcs = input('Треки: ').split(', ')
+                        for trakc in trakcs:
+                            stat += '\n' + trakc
+                    if stat == 'Без статуса':
+                        stat = ''
 
-                      for trakc in trakcs:
-                          stat += '\n' + trakc
-                  if stat == 'Без статуса':
-                      stat = ''
+                    collectList = input("Enter collect's num using comma(, ) (might be empty): ")
+                    collectList = collectList.split(', ')
 
-                  collectList = input("Enter collect's num using comma(, ) (might be empty): ")
-                  collectList = collectList.split(', ')
+                    indList = input("Enter ind's num using comma(, ) (might be empty): ")
+                    indList = indList.split(', ')
 
-                  indList = input("Enter ind's num using comma(, ) (might be empty): ")
-                  indList = indList.split(', ')
+                    payment = input('Нужна ли информация об оплатах? y/n: ')
 
-                  payment = input('Нужна ли информация об оплатах? y/n: ')
+                    changeStatus(stat, collectList, indList, payment)
 
-                  changeStatus(stat, collectList, indList, payment)
+        elif choise == 8:
 
-      elif choise == 8:
+                d = input('Введите дату, до которой нужно удалить фотографии: ')
+                d = datetime.strptime(d, '%d.%m.%Y').date()
 
-            d = input('Введите дату, до которой нужно удалить фотографии: ')
-            d = datetime.strptime(d, '%d.%m.%Y').date()
+                album = 'Ваши хотелки'
+                vk.delete_photos(album_name=album, end_date=d)
 
-            album = 'Ваши хотелки'
-            vk.delete_photos(album_name=album, end_date=d)
-
+      except Exception as e:
+          print(f"\n===== ОШИБКА! \n{format_exc()}=====")
+          continue
 
 if __name__ == '__main__':
+
 
     collect_table = collect_table()
     vk = vk()
     store_selector = StoreSelector()
 
     console()
+

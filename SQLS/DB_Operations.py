@@ -491,3 +491,18 @@ def updateCollect(collectType, collectNum, status):
     conn.commit() 
     cursor.close()
     conn.close()
+
+def getCollectStatuses():
+
+    conn = getConnection(DbNames.collectDatabase)
+    cursor = conn.cursor()  
+
+    cursor.execute(f"select status_name from collects_status order by status_id;")
+    result = cursor.fetchall()  
+
+    conn.commit()
+    cursor.close()
+    conn.close()
+    
+    return result
+
