@@ -21,6 +21,7 @@ class MercariApi:
         on_sale = 'on_sale'
         trading = 'trading'
         sold = 'sold_out'
+        deleted = 'deleted'
 
     FREE_SHIPPING = 2
 
@@ -67,7 +68,7 @@ class MercariApi:
                   "pageSize":50,
                   "searchSessionId": uuid.uuid4().hex,
                   "indexRouting": "INDEX_ROUTING_UNSPECIFIED",
-                  "searchCondition":{"keyword":key_word,
+                  "searchCondition":{
                                      "excludeKeyword":"",
                                      "sort":"SORT_CREATED_TIME",
                                      "order":"ORDER_DESC",
@@ -76,6 +77,11 @@ class MercariApi:
                 "serviceFrom":"suruga",
                 "defaultDatasets": [],
 				} 
+        
+        if key_word.isnumeric():
+            params["searchCondition"]["categoryId"] = [int(key_word)]
+        else:
+            params["searchCondition"]["keyword"] = key_word
         
         session = requests.session()
         page = session.post(curl, headers=headers, json=params)
@@ -170,14 +176,18 @@ class MercariApi:
         js = page.json() 
 
         item = {}
-        item['itemPrice'] = js['data']['price']
-        item['tax'] = 0
-        item['itemPriceWTax'] = 0 # Всегда включена в цену
-        item['shipmentPrice'] = spt.free if int(js['data']['shipping_payer']['id']) == MercariApi.FREE_SHIPPING else spt.undefined
-        item['page'] = url
-        item['mainPhoto'] = js['data']['photos'][0]
-        item['siteName'] = 'mercari'
-        item['itemStatus'] = js['data']['status']
-        item['endTime'] = datetime.now() + relativedelta(years=3)
 
+        if js['result'] == "OK":
+            item['itemPrice'] = js['data']['price']
+            item['tax'] = 0
+            item['itemPriceWTax'] = 0 # Всегда включена в цену
+            item['shipmentPrice'] = spt.free if int(js['data']['shipping_payer']['id']) == MercariApi.FREE_SHIPPING else spt.undefined
+            item['page'] = url
+            item['mainPhoto'] = js['data']['photos'][0]
+            item['siteName'] = 'mercari'
+            item['itemStatus'] = js['data']['status']
+            item['endTime'] = datetime.now() + relativedelta(years=3)
+        elif js['result'] == "error":
+            item['itemStatus'] = MercariApi.MercariItemStatus.deleted
+            
         return item

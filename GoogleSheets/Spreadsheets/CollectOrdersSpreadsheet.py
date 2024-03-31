@@ -6,7 +6,7 @@ from pprint import pprint
 from datetime import datetime
 from dateutil.relativedelta import *
 from multipledispatch import dispatch
-from confings.Consts import CollectOrdersSheetNames as sheetNames
+from confings.Consts import CollectOrdersSheetNames as sheetNames, ShipmentPriceType
 from APIs.posredApi import getCurrentCurrencyRate
 
 class CollectOrdersSpreadsheetClass():
@@ -250,14 +250,21 @@ class CollectOrdersSpreadsheetClass():
         if item:
             # стоимость лота со всеми комм и дост
             ran = sheetTitle + "!I{0}".format(self.startLotRow+7)
-            posredTax = str(1000 if int(item['priceYen'])*0.1 <= 1000 else int(item['priceYen'])*0.1).replace('.', ',')
-            formula = "={0} + {1} + {2} + {0}*0.15".format(item['priceYen'], item['percentTax'], posredTax).replace('.', ',')
+            posredTax = str(0)
+            tax = item['tax']/100 if item['tax'] > 0 else 0
+            formula = "={0} + {0}*{1} + {2} + {0}*0.15".format(item['itemPrice'], tax, posredTax).replace('.', ',')
             data.append(ce.insertValue(spId, ran, formula))
+
+            ran = sheetTitle + "!I{0}".format(self.startLotRow+8)
+            shipmentPrice = item['shipmentPrice'].value if isinstance(item['shipmentPrice'], ShipmentPriceType) else item['shipmentPrice']
+        
+            formula = f"={shipmentPrice}".replace('.', ',')
+            data.append(ce.insertValue(spId, ran, formula))
+            
         
             # личная комм
-            ran = sheetTitle + "!I{0}".format(self.startLotRow+11)
-            posredTax = str(1000 if int(item['priceYen'])*0.1 <= 1000 else int(item['priceYen'])*0.1).replace('.', ',')
-            formula = "={0} + {1} + {2}".format(item['priceYen'], item['percentTax'], posredTax).replace('.', ',')
+            ran = sheetTitle + "!I{0}".format(self.startLotRow+11)            
+            formula = "={0} + {0}*{1} + {2}".format(item['itemPrice'], tax, posredTax).replace('.', ',')
             data.append(ce.insertValue(spId, ran, formula))
         
             formula = "=CEILING(I{0}*J{1})".format(self.startLotRow+11, self.startLotRow+5)
@@ -270,10 +277,10 @@ class CollectOrdersSpreadsheetClass():
 
         if participants == 1:
             ran = sheetTitle + "!D{0}".format(self.startParticipantRow)
-            formula = "=J{0}".format(self.startLotRow+8)
+            formula = "=J{0}".format(self.startLotRow+7)
             data.append(ce.insertValue(spId, ran, formula))
             ran = sheetTitle + "!E{0}".format(self.startParticipantRow)
-            formula = "=J{0}".format(self.startLotRow + 9)
+            formula = "=J{0}".format(self.startLotRow + 8)
             data.append(ce.insertValue(spId, ran, formula))
 
         return data

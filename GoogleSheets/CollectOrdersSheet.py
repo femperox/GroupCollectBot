@@ -4,6 +4,7 @@ import re
 import GoogleSheets.API.Cells_Editor as ce
 from GoogleSheets.API.Styles.Borders import Borders as b
 from GoogleSheets.API.Styles.Colors import Colors as c
+from APIs.utils import concatList
 
 class CollectOrdersSheet(ParentSheetClass):
 
@@ -241,7 +242,7 @@ class CollectOrdersSheet(ParentSheetClass):
         newParticipantColor = colors[payed]
         newPayment = [newParticipantColor for i in range(5)]
 
-        oldParticipants = add.concatList(self.getParticipantsList(namedRange), self.getPaymentAmount(namedRange))
+        oldParticipants = concatList(self.getParticipantsList(namedRange), self.getPaymentAmount(namedRange))
         actualParticipants = []
         activeIndexes = set()
 
@@ -254,7 +255,7 @@ class CollectOrdersSheet(ParentSheetClass):
         paymentNew = []
         for new in newParticipants:
             paymentNew.append([['' for i in range(5)], newPayment])
-        newParticipants = add.concatList(newParticipants, paymentNew)
+        newParticipants = concatList(newParticipants, paymentNew)
 
         # связка хохяин - индекс
         #oldParticipantsNoItems = {part[1]: oldParticipants.index(part) for part in oldParticipants}

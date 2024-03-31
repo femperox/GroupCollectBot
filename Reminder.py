@@ -90,7 +90,7 @@ def checkTime(usr_id):
                         vk.sendMes(mess=mess, users=fav[0], pic= [fav[2]])
                         logger_fav.info(f"[NOTIFY_FAV-{fav[0]}] для пользователя {fav[0]} отправлено уведомление о {fav[-1]}_{fav[1]}")
             except Exception as e:
-                    logger_fav.info(f"[ERROR_FAV-{fav[0]}] для пользователя {fav[0]} {e}")
+                    logger_fav.info(f"[ERROR_FAV-{fav[0]}] для пользователя {fav[0]} {e} - {fav}")
                     continue
            
 

@@ -18,5 +18,5 @@ def getCurrentCurrencyRate():
 
     for json_item in js:
         if json_item['codeTo'] == 'RUB':
-            return float(json_item['rate'])
+            return float(json_item['rate'])+ 0.07
         

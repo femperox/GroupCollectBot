@@ -10,8 +10,29 @@ from SQLS.DB_Operations import GetNotSeenProducts, insertNewSeenProducts
 from random import choice
 from confings.Consts import MonitorStoresType
 from pprint import pprint
+from requests_html import HTMLSession 
+import cfscrape 
+from seleniumbase import Driver
+import random
 
 class AmiAmiApi():
+
+    driver = [0, 1, 2]
+
+    @staticmethod
+    def startDriver(thread_index):
+
+        AmiAmiApi.driver[thread_index] = Driver(uc=True, incognito= True)
+        AmiAmiApi.driver[thread_index].open('https://www.amiami.com/eng/')  #https://www.amiami.com/eng/
+        time.sleep(2)
+        AmiAmiApi.driver[thread_index].save_screenshot("screenshot.png")
+
+    @staticmethod
+    def stopDriver(thread_index):
+        AmiAmiApi.driver[thread_index].quit()
+
+    def refreshDriver(thread_index):
+        AmiAmiApi.driver[thread_index].refresh()
 
     AMI_API_ITEM_INFO = 'https://api.amiami.com/api/v1.0/item?gcode={}'
 
@@ -55,7 +76,8 @@ class AmiAmiApi():
         """
 
         wrongCategoriesNames = ['Wall Scroll', 'T-shirt', 'Sweatshirt', 'Nice Body Smartphone Stand',
-                                'Pillow Cover', 'Clear File', 'Sticker' ]
+                                'Pillow Cover', 'Clear File', 'Sticker', 'Cycling Jersey', 'Hoodie', 'iPhone Case',
+                                 'Pass Case' ]
                 
         for wrongCategory in wrongCategoriesNames:
             if item_name.find(wrongCategory) > -1:
@@ -77,14 +99,14 @@ class AmiAmiApi():
         """
         
         time.sleep(1)
-        additionalInfo = AmiAmiApi.getAdditionalProductInfo(item_id = item_id, proxy = proxy)
+        additionalInfo = AmiAmiApi.getAdditionalProductInfo(item_id = item_id)
         if additionalInfo['cate1'] in AmiAmiApi.wrongCategoriesNumbers or additionalInfo['sname'] in AmiAmiApi.wrongCategoriesNames:
             return True   
 
         return False
     
     @staticmethod
-    def curlManyPages(curl, length, proxy):
+    def curlManyPages(curl, length, thread_index):
         """Запарсить несколько страниц
 
         Args:
@@ -95,20 +117,22 @@ class AmiAmiApi():
         Returns:
             dict: словарь с инфой о товарах
         """
-        proxies = WebUtils.getProxyServerNoSelenium(type_needed = ['socks4', 'socks5', 'http'])
-
+        #proxies = WebUtils.getProxyServerNoSelenium(type_needed = ['socks5'])#['socks4', 'socks5', 'http'])
+        #pprint(len(proxies))
         js = {}
         for i in range(0, length):
             time.sleep(3)
             try:
-                js_raw = AmiAmiApi.curlAmiAmiEng(curl.format(i+1), proxy)
-                if i % 2 and i != 0:
-                    proxy = choice(proxies)
+                js_raw = AmiAmiApi.curlAmiAmiEng(curl.format(i+1), thread_index)
+                #if i % 2 and i != 0:
+                #    proxy = choice(proxies)
                 if i == 0:
                     js = js_raw
-                else:
+                else:            
                     js['items'].extend(js_raw['items'])
-            except:
+
+            except Exception as e:
+                pprint(e)
                 continue
             
         return js
@@ -116,7 +140,7 @@ class AmiAmiApi():
 
 
     @staticmethod
-    def curlAmiAmiEng(curl, proxy = ''):
+    def curlAmiAmiEng(curl, thread_index, proxy = ''):
         """Запрос к API AmiAmiEng
 
         Args:
@@ -126,18 +150,22 @@ class AmiAmiApi():
             dict: словарь с результатом запроса
         """
 
-        headers = WebUtils.getHeader()
+        headers = {}
+        headers['Accept'] = '*/*'
+        headers['Access-Control-Request-Headers']= 'x-user-key'
         headers['x-user-key'] = 'amiami_dev'
         headers['Sec-Fetch-Dest'] = 'empty'
         headers['Sec-Fetch-Mode'] = 'cors'
         headers['Sec-Fetch-Site'] = 'same-site'
         headers['Referer'] = 'https://www.amiami.com/'
         headers['Origin'] = 'https://www.amiami.com'
+        headers['Sec-Ch-Ua-Mobile'] = '?0'
+       
+        req1= f"""let [resolve] = arguments; fetch('{curl}'""" + """ , {method: 'GET', headers:""" + f"""{headers}""" + """}).then(r => resolve(r.json()))"""
 
-        session = requests.session()
-        page = session.get(curl, headers = headers, proxies = {'http': f'http://{proxy}'} if proxy else None)
+        result = AmiAmiApi.driver[thread_index].execute_async_script(req1)
 
-        return json.loads(page.content)     
+        return result   
 
     @staticmethod
     def parseAmiAmiEng(url, item_id):
@@ -153,7 +181,7 @@ class AmiAmiApi():
 
         curl = AmiAmiApi.AMI_API_ITEM_INFO.format(item_id)
         
-        js = AmiAmiApi.curlAmiAmiEng(curl)
+        js = AmiAmiApi.curlAmiAmiEng(curl, thread_index = 0)
 
         item = {}
         item['itemPrice'] = js['item']['price']
@@ -199,7 +227,7 @@ class AmiAmiApi():
 
         
     @staticmethod
-    def getAdditionalProductInfo(item_id, proxy=[]):
+    def getAdditionalProductInfo(item_id, thread_index, proxy=[]):
         """Получить доп инфо по товару
 
         Args:
@@ -215,8 +243,8 @@ class AmiAmiApi():
         # пока не получим норм результат
         for i in range(5):
             try:
-
-                js = AmiAmiApi.curlAmiAmiEng(curl, choice(proxy))
+                time.sleep(2)
+                js = AmiAmiApi.curlAmiAmiEng(curl, thread_index)
 
                 item_info = {}
                 item_info['sname'] = js['item']['sname'].replace('(Released)', '').replace('Pre-owned ','')
@@ -237,7 +265,7 @@ class AmiAmiApi():
         return 0
 
     @staticmethod
-    def productsAmiAmiEng(type_id, proxy = '', logger = ''):
+    def productsAmiAmiEng(type_id, thread_index, proxy = '', logger = ''):
         """Получение списка товаров из Sale категории AmiAmiEng
 
         Args:
@@ -251,12 +279,12 @@ class AmiAmiApi():
         pages_to_see = 15
 
         if type_id == MonitorStoresType.amiAmiEngSale:
-            curl = 'https://api.amiami.com/api/v1.0/items?pagemax=50&pagecnt={}&lang=eng&mcode=7001216802&ransu=vM4sX7Eyhya2Bj6bBa0jahnlpEFaqi57&age_confirm=&s_st_saleitem=1&s_st_list_newitem_available=1'
+            curl = 'https://api.amiami.com/api/v1.0/items?pagemax=50&pagecnt={}&lang=eng&mcode=&ransu=&age_confirm=&s_st_saleitem=1&s_st_list_newitem_available=1'
             pages_to_see = 10
         else:
             curl = 'https://api.amiami.com/api/v1.0/items?pagemax=50&pagecnt={}&lang=eng&mcode=&ransu=&age_confirm=&s_st_list_newitem_available=1'
 
-        js = AmiAmiApi.curlManyPages(curl, pages_to_see, proxy)
+        js = AmiAmiApi.curlManyPages(curl, pages_to_see, thread_index)
 
         item_list_raw = []
         item_list_ids = []
@@ -291,17 +319,13 @@ class AmiAmiApi():
             item_list_ids = GetNotSeenProducts([item['itemId'] for item in item_list_raw], type_id= type_id)
 
             logger.info(f"[SEEN-{type_id}-RAW] len {len(item_list_ids)}")
-            pprint(item_list_ids)
-
-            if item_list_ids: 
-                proxies = WebUtils.getProxyServerNoSelenium(type_needed = ['socks4', 'socks5', 'http'])
 
             for item in item_list_raw:
-                time.sleep(1)
+                time.sleep(3)
                 if not item['itemId'] in item_list_ids:
                     continue
                 
-                additionalInfo = AmiAmiApi.getAdditionalProductInfo(item['itemId'], proxies)
+                additionalInfo = AmiAmiApi.getAdditionalProductInfo(item['itemId'], thread_index)
                 if not additionalInfo:
                     continue
                 elif additionalInfo['cate1'] in AmiAmiApi.wrongCategoriesNumbers or AmiAmiApi.isWrongCategoryName(additionalInfo['sname']):
@@ -313,13 +337,14 @@ class AmiAmiApi():
         return item_list
     
     @staticmethod
-    def preOrderAmiAmiEng(type_id, proxy = '', logger = ''):
+    def preOrderAmiAmiEng(type_id, thread_index, proxy = '', logger = ''):
 
         locale.setlocale(locale.LC_TIME, 'ru_RU.UTF-8')
         
         curl = 'https://api.amiami.com/api/v1.0/items?pagemax=50&pagecnt={}&lang=eng&mcode=&ransu=&age_confirm=&s_st_list_preorder_available=1'
 
-        js = AmiAmiApi.curlManyPages(curl, 23, proxy)
+        #js = AmiAmiApi.curlManyPages(curl, 23, thread_index)
+        js = AmiAmiApi.curlManyPages(curl, 20, thread_index)
 
         item_list_raw = []
         item_list_ids = []
@@ -366,19 +391,19 @@ class AmiAmiApi():
         if item_list_raw:
             item_list_ids = GetNotSeenProducts([item['itemId'] for item in item_list_raw], type_id= type_id)
         
-            if item_list_ids: 
-                proxies = WebUtils.getProxyServerNoSelenium(type_needed = ['socks4', 'socks5', 'http'])
+            #if item_list_ids: 
+            #    proxies = WebUtils.getProxyServerNoSelenium(type_needed = ['socks4', 'socks5', 'http'])
 
             logger.info(f"[SEEN-{type_id}-RAW] len {len(item_list_ids)}")
            
 
             for item in item_list_raw:
-                pprint(item['itemId'])
-                time.sleep(1)
+
+                time.sleep(3)
                 if not item['itemId'] in item_list_ids:
                     continue
                 
-                additionalInfo = AmiAmiApi.getAdditionalProductInfo(item['itemId'], proxies)
+                additionalInfo = AmiAmiApi.getAdditionalProductInfo(item['itemId'], thread_index)
                 if not additionalInfo:
                     continue
                 elif additionalInfo['cate1'] in AmiAmiApi.wrongCategoriesNumbers or AmiAmiApi.isWrongCategoryName(additionalInfo['sname']):
@@ -399,7 +424,7 @@ class AmiAmiApi():
         return item_list        
     
     @staticmethod
-    def preownedAmiAmiEng(type_id, proxy = '', logger = ''):
+    def preownedAmiAmiEng(type_id, proxy = '', logger = '', thread_index = 0):
         """Получение списка товаров из PreOwned категории AmiAmiEng
 
         Args:
@@ -411,8 +436,8 @@ class AmiAmiApi():
         """
         
         curl = 'https://api.amiami.com/api/v1.0/items?pagemax=50&pagecnt={}&lang=eng&mcode=&ransu=&age_confirm=&s_sortkey=preowned&s_st_condition_flg=1&s_st_list_newitem_available=1'
-
-        js = AmiAmiApi.curlManyPages(curl, 10, proxy)
+      
+        js = AmiAmiApi.curlManyPages(curl, 15, thread_index)
 
         item_list = []
         item_list_ids = []
@@ -445,14 +470,11 @@ class AmiAmiApi():
             item_list_raw = [item for item in item_list_raw if item['itemId'] in item_list_ids]
 
             logger.info(f"[SEEN-{type_id}-RAW] len {len(item_list_ids)}: {item_list_ids}")
-            
-            if item_list_ids: 
-                proxies = WebUtils.getProxyServerNoSelenium(type_needed = ['socks4', 'socks5', 'http'])
 
             for item in item_list_raw:
-                time.sleep(1)
+                time.sleep(3)
                 
-                additionalInfo = AmiAmiApi.getAdditionalProductInfo(item['itemId'], proxy = proxies)
+                additionalInfo = AmiAmiApi.getAdditionalProductInfo(item['itemId'], thread_index)
                 
                 if not additionalInfo:
                     continue
@@ -462,6 +484,7 @@ class AmiAmiApi():
 
                 item['name'] = additionalInfo['sname']
                 item_list.append(item.copy())
+        
         
         return item_list
     

@@ -132,8 +132,8 @@ def getAucInfo(app_id, id):
         page = requests.get(curl, headers=headers)
         xml = xmltodict.parse(page.content)
       
-        info['url'] = xml['ResultSet']['Result']['AuctionItemUrl']
-        info['url'] = xml['ResultSet']['Result']['AuctionItemUrl']
+        info['page'] = xml['ResultSet']['Result']['AuctionItemUrl']
+        info['page'] = xml['ResultSet']['Result']['AuctionItemUrl']
         
         info['endTime'] = xml['ResultSet']['Result']['EndTime'].split('+')[0].replace('T', ' ')
         info['endTime'] = datetime.datetime.strptime(info['endTime'], '%Y-%m-%d %H:%M:%S') - datetime.timedelta(hours=6)
@@ -173,7 +173,7 @@ def getAucInfo(app_id, id):
             info['shipmentPrice'] = getShipmentPrice(app_id, id, info['ShoppingSellerId'], info['PostageSetId'], info['ItemWeight'])
 
         info['itemPrice'] = float(xml['ResultSet']['Result']['Price'])
-        info['tax'] = xml['ResultSet']['Result']['TaxRate'] 
+        info['tax'] = float(xml['ResultSet']['Result']['TaxRate'])
         info['itemPriceWTax'] = float(xml['ResultSet']['Result']['TaxinPrice']) if 'itemPriceWTax' in xml['ResultSet']['Result'] else info['itemPrice']
         info['siteName'] = 'yahooAuctions'
 

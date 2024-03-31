@@ -4,6 +4,7 @@
 *stopLists/
 *.vscode/
 *confings/
+*downloaded_files/
 
 **/covers
 **/tmp
@@ -16,5 +17,9 @@
 *.txt
 *.sql
 *.log
+*.png
+*.chromedriver
 
 HPoiApi.py
+
+*MBO*

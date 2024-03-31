@@ -146,7 +146,7 @@ def flattenList(matrix):
     return list(chain.from_iterable(matrix))
 
 def createItemPairs(items, message_img_limit = 10):
-    """Сгруппировать товары в группы по 10шт
+    """Сгруппировать товары в группы по message_img_limit шт
 
     Args:
         items (list of dict): список товаров
@@ -168,4 +168,19 @@ def createItemPairs(items, message_img_limit = 10):
         items_parts.append(items[(i) * message_img_limit : len(items)])    
 
     return items_parts
+
+def concatList(list1, list2):
+    '''
+    связывает два массива типа [ [...], ... [...]] поэлементно
+
+    :param list1:
+    :param list2:
+    :return: список
+    '''
+
+    resultList = []
+    for i in range(len(list1)):
+        resultList.append([list1[i], list2[i]])
+
+    return resultList
 

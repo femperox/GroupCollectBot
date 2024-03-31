@@ -462,3 +462,32 @@ def insertNewSeenProducts(items_id, type_id):
     conn.commit() 
     cursor.close()
     conn.close()
+
+def getCollectId(collectType, collectNum):
+
+    letter = "C" if collectType == "Коллективка" else "I"
+    return f"{letter}{collectNum}"
+
+def insertCollect(collectType, collectNum, namedRange):
+
+    conn = getConnection(DbNames.collectDatabase)
+    cursor = conn.cursor()  
+
+    cursor.execute(f'''Insert into collects values
+            ('{getCollectId(collectType, collectNum)}', 0, '{namedRange}', False )
+           ''')
+
+    conn.commit() 
+    cursor.close()
+    conn.close()
+
+def updateCollect(collectType, collectNum, status):
+
+    conn = getConnection(DbNames.collectDatabase)
+    cursor = conn.cursor()  
+
+    cursor.execute(f''' Call CollectUpdate('{getCollectId(collectType, collectNum)}', '{status}')''')
+
+    conn.commit() 
+    cursor.close()
+    conn.close()

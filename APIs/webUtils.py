@@ -1,4 +1,5 @@
 from bs4 import BeautifulSoup
+import undetected_chromedriver as uc
 from seleniumwire import webdriver
 from selenium.webdriver.chrome.options import Options
 #import chromedriver_autoinstaller as chromedriver old
@@ -76,24 +77,36 @@ class WebUtils:
         Returns:
             seleniumwire.webdriver.Chrome: веб-драйвер
         """
-
-        options = Options()
-
-        options.add_argument('--no-sandbox')
+        
+        options = webdriver.ChromeOptions() #Options()
+        options.headless = True
+        #options.add_argument('--no-sandbox')
 
         if proxyServer:
-            options.add_argument(f'--proxy-server={proxyServer}')
+            options.add_argument(f'--proxy-server=socks5://{proxyServer}')
 
         if isDisplayed:
             options.add_argument(f'user-agent={LINUX_USER_AGENT}')
             return webdriver.Chrome(options=options)
-            
-        options.add_argument("--headless=new") 
-        options.add_argument('--disable-dev-shm-usage') 
-        options.add_argument(f'user-agent={LINUX_USER_AGENT}')
+       
+        #options.add_argument("start-maximized")    
+        #options.add_argument("--headless") 
+        #options.add_argument('--disable-dev-shm-usage') 
+        #options.add_argument(f'user-agent={LINUX_USER_AGENT}')
+        #options.add_argument("--enable-javascript")
+        #options.add_argument("x-user-key=amiami_dev")
+        #options.add_argument('Sec-Fetch-Dest=empty')
+        #options.add_argument('Sec-Fetch-Mode=cors')
+        #options.add_argument('Sec-Fetch-Site=same-site')
+        #options.add_argument('Referer=https://www.amiami.com/')
+        #options.add_argument('Origin=https://www.amiami.com')
+        #options.add_experimental_option("excludeSwitches", ["enable-automation"])
+        #options.add_experimental_option('useAutomationExtension', False)
+        #options.add_argument("--disable-blink-features=AutomationControlled")
 
-
-        return webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
+        # uc.Chrome(driver_executable_path='/usr/bin/chromedriver', options = options ) #
+        # webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
+        return webdriver.Chrome(options=options)
  
     @staticmethod
     def getDisplay():
@@ -104,6 +117,13 @@ class WebUtils:
         """
 
         return Display(visible=0, size=(800, 600))
+    
+    @staticmethod
+    def getScraperSessoin(session):
+
+        scraper=cfscrape.create_scraper(sess=session, delay=10)
+        #scraper = cfscrape.CloudflareScraper() 
+        return scraper
     
     @staticmethod
     def getSraper(url):
@@ -167,8 +187,7 @@ class WebUtils:
      
         #curl = f'https://raw.githubusercontent.com/jetkai/proxy-list/main/online-proxies/json/proxies.json' ['http', 'https']
         curl = 'https://raw.githubusercontent.com/MuRongPIG/Proxy-Master/main/{}.txt'
-        
-
+        #curl = 'https://raw.githubusercontent.com/mmpx12/proxy-list/master/{}.txt'
 
         proxy_list = [] 
         for type in type_needed:

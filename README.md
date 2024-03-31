@@ -60,7 +60,8 @@
 🌐 [amiAmiEng](https://www.amiami.com/eng/) и [amiAmiJp](https://www.amiami.jp)  
 🌐 [animate](https://www.animate-onlineshop.jp)  
 🌐 [mercari](https://jp.mercari.com)  
-🌐 [mandarake](https://www.mandarake.co.jp)
+🌐 [mandarake](https://www.mandarake.co.jp)  
+🌐 [hpoi](https://www.hpoi.net)
 
 
 ## Что будет дорабатываться/добавляться?

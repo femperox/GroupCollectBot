@@ -252,11 +252,11 @@ if __name__ == "__main__":
           
     active_chats = []
     for conf in conf_list[1:]:
+        
         if conf["store"] == Stores.yahooAuctions:
             if conf["type"] == "big-category": threads.append(threading.Thread(target=bs4MonitorYahoo, args=(conf["curl"], conf["params"])))
             else: 
                 threads.append(threading.Thread(target=bs4SellerMonitorYahoo, args=(conf["curl"], conf["params"])))
-        
         elif conf["store"] == Stores.mercari:
             threads.append(threading.Thread(target=monitorMercari, args=(conf["curl"], conf["params"])))
         

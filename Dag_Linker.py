@@ -74,7 +74,7 @@ def updateCurrencyStatus():
         currency_rate = getCurrentCurrencyRate()
         vk.edit_group_status(mess.mes_currency.format(currency_rate))
 
-        logger_utils.info(f"""[UPDATE-CURRENCY] Курс = {currency_rate}""") 
+        logger_utils.info(f"""[UPDATE-CURRENCY] Курс ~ {currency_rate}""") 
     except Exception as e:
         logger_utils.info(f"""[ERROR-CURRENCY] {e}""")
 

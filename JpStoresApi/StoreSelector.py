@@ -80,7 +80,9 @@ class StoreSelector:
             pprint(Stores.amiAmi)
             
             if url.find('/eng/')>0:
+                AmiAmiApi.startDriver()
                 item = AmiAmiApi.parseAmiAmiEng(url, self.getItemID().split("=")[-1])
+                AmiAmiApi.stopDriver()
             else:
                 item = ''
                 item = AmiAmiApi.parseAmiAmiJp(url)

@@ -20,6 +20,7 @@ class StoreApi:
         curl = f'https://www.animate-onlineshop.jp/pd/{item_id}/'
 
         soup = WebUtils.getSoup(curl)
+        pprint(soup.contents)
         name = soup.find('div', class_='item_overview_detail').find('h1').text
         price = int(soup.find('p', class_='price new_price fl_l').text.replace(',', '').split('円')[0])
         qnty = int(soup.find('input', id='lot')['value'])
