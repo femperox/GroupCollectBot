@@ -11,7 +11,7 @@ import time
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from SQLS.DB_Operations import IsExistBannedSeller
-
+from APIs.posredApi import PosredApi
 
 
 class MercariApi:
@@ -187,6 +187,14 @@ class MercariApi:
             item['siteName'] = 'mercari'
             item['itemStatus'] = js['data']['status']
             item['endTime'] = datetime.now() + relativedelta(years=3)
+            
+
+            posredCommission = PosredApi.getСommissionForItem(item['page'])
+            if PosredApi.isPercentCommision(posredCommission):
+                item['posredCommission'] = f"{item['itemPrice']}*{posredCommission['value']/100}"
+                item['posredCommissionValue'] = item['itemPrice']*(posredCommission['value']/100)
+            else:
+                item['posredCommission'] = posredCommission['value']            
         elif js['result'] == "error":
             item['itemStatus'] = MercariApi.MercariItemStatus.deleted
             

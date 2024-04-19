@@ -3,6 +3,7 @@ import requests
 from time import sleep
 from pprint import pprint
 from confings.Consts import ShipmentPriceType as spt
+from APIs.posredApi import PosredApi
 
 class StoreApi:
 
@@ -35,6 +36,13 @@ class StoreApi:
         item['mainPhoto'] = img
         item['siteName'] = 'Animate'
         item['name'] = name
+
+        posredCommission = PosredApi.getСommissionForItem(item['page'])
+        if PosredApi.isPercentCommision(posredCommission):
+            item['posredCommission'] = f"{item['itemPrice']}*{posredCommission['value']/100}"
+            item['posredCommissionValue'] = item['itemPrice']*(posredCommission['value']/100)
+        else:
+            item['posredCommission'] = posredCommission['value']          
 
         return item
         

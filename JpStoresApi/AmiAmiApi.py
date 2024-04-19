@@ -192,6 +192,8 @@ class AmiAmiApi():
         item['siteName'] = 'AmiAmiEng'
         item['name'] = js['item']['gname']
 
+        item['posredCommission'] = 0
+
         return item
 
     @staticmethod

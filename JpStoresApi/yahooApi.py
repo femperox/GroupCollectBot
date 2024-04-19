@@ -8,6 +8,8 @@ import json
 from APIs.webUtils import WebUtils 
 from confings.Consts import PREFECTURE_CODE, CURRENT_POSRED
 from traceback import print_exc
+from APIs.posredApi import PosredApi
+from confings.Consts import ShipmentPriceType as spt
 
 def getRep(app_id, id):
     """Получение репутации продавца
@@ -158,7 +160,7 @@ def getAucInfo(app_id, id):
             info['blitz'] = -1
         
         if 'FreeshippingIcon' in xml['ResultSet']['Result']['Option'].keys():
-            info['shipmentPrice'] = '0'
+            info['shipmentPrice'] = spt.free
         else:
             try: 
                 info['ShoppingSellerId'] = xml['ResultSet']['Result']['Seller']['ShoppingSellerId']
@@ -176,6 +178,13 @@ def getAucInfo(app_id, id):
         info['tax'] = float(xml['ResultSet']['Result']['TaxRate'])
         info['itemPriceWTax'] = float(xml['ResultSet']['Result']['TaxinPrice']) if 'itemPriceWTax' in xml['ResultSet']['Result'] else info['itemPrice']
         info['siteName'] = 'yahooAuctions'
+
+        posredCommission = PosredApi.getСommissionForItem(info['page'])
+        if PosredApi.isPercentCommision(posredCommission):
+            info['posredCommission'] = f"{info['itemPriceWTax']}*{posredCommission['value']/100}"
+            info['posredCommissionValue'] = info['itemPriceWTax']*(posredCommission['value']/100)
+        else:
+            info['posredCommission'] = posredCommission['value']
 
         return info
         

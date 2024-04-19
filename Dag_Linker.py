@@ -4,7 +4,7 @@ from VkApi.VkInterface import VkApi as vk
 from SQLS.DB_Operations import addTags, getCurrentParcel, insertUpdateParcel, getParcelExpireDate, setParcelNotified
 from Logger import logger_utils
 from APIs.pochtaApi import getTracking
-from APIs.posredApi import getCurrentCurrencyRate
+from APIs.posredApi import PosredApi
 from confings.Messages import Messages as mess
 from confings.Consts import PochtaApiStatus, vkCoverTime
 
@@ -71,7 +71,7 @@ def updateCurrencyStatus():
     """Обновление статуса с текущим курсом рубля к йене
     """    
     try: 
-        currency_rate = getCurrentCurrencyRate()
+        currency_rate = PosredApi.getCurrentCurrencyRate()
         vk.edit_group_status(mess.mes_currency.format(currency_rate))
 
         logger_utils.info(f"""[UPDATE-CURRENCY] Курс ~ {currency_rate}""") 
