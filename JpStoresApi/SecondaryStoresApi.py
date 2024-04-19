@@ -7,6 +7,7 @@ import json
 from random import randint
 from confings.Consts import ShipmentPriceType as spt
 from selenium.webdriver.common.by import By
+from traceback import print_exc
 
 
 
@@ -52,43 +53,41 @@ class SecondaryStoreApi:
         Returns:
             dict: словарь с информацией о лоте
         """
-        item = ''
-        proxyServers = WebUtils.getProxyServer(country='JP')
-        
-        pprint(proxyServers)
-        for proxyServer in proxyServers:
-            
-            ok = WebUtils.getSelenium(proxyServer=proxyServer)
-            ok.implicitly_wait(30)
-            ok.get(url)
 
-            try:
-                img = ok.find_element(By.ID, "elevate_zoom").get_attribute("src")
-                pprint(img)
-            except:
-                pprint(f'{proxyServer} cant get img. getting another one proxy')
-                continue
+        item = {}
+        
+        ok = WebUtils.getSelenium()
+        ok.implicitly_wait(30)
+
+        # у манды оч странная херота - просто открыть страницу без рефера не получится (либо я лохушка)
+        ok.open("https://www.mandarake.co.jp")
+        ok.open("https://order.mandarake.co.jp/order/?lang=en")
+        ok.open(url)
+
+        try:
+            # хз как иначе вытащить картинку товара
+            img = ok.find_element(By.ID, "elevate_zoom").get_attribute("src")
+            pprint(img)
 
             info = ''
             for request in ok.requests:
                 if request.url.find('getInfo') > 0:
                     info = request.response.body
+            
+            if info:
 
-            if not info:
-                pprint(f'{proxyServer} cant get info. getting another one proxy')
-                continue
+                info = json.loads(info.decode('utf8'))
 
-            info = json.loads(info.decode('utf8'))
-            pprint(type(info))
-            item = ''
-            item['itemPrice'] = info['price']
-            item['itemPriceWTax'] = info['price_with_tax']
-            item['tax'] = item['itemPriceWTax'] * 100 / item['priceYen']
-            item['shipmentPrice'] = spt.undefined
-            item['page'] = url
-            item['mainPhoto'] = img
-            item['siteName'] = 'Mandarake'
-        
-            break
-
-        return item
+                item['itemPrice'] = info['price']
+                item['itemPriceWTax'] = info['price_with_tax']
+                item['tax'] = 100 - item['itemPriceWTax'] * 100 / item['itemPrice']
+                item['shipmentPrice'] = spt.undefined
+                item['page'] = url
+                item['mainPhoto'] = img
+                item['siteName'] = 'Mandarake'  
+        except:
+            pprint('cant get item info.')
+            print_exc()
+        finally:
+            ok.quit()
+            return item

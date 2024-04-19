@@ -37,7 +37,7 @@ class MercariApi:
     def getAdditionalInfo(item_id, sellerId):
     
         item_info = {}
-        proxies = WebUtils.getProxyServerNoSelenium()
+        proxies = WebUtils.getProxyServer()
 
         # пока не получим норм результат
         for i in range(5):

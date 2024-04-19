@@ -750,7 +750,7 @@ class VkApi:
                         self.removeChatUser(user = sender, chat = chat)
                                
                     # получение избранного        
-                    elif event.obj.message['text'].lower().split(' ')[0] in VkCommands.getFavList:
+                    elif event.obj.message['text'].lower().split(' ')[0] in VkCommands.getFavList and sender in whiteList:
                             
                             try:
                                 text = event.obj.message['text'].lower()
@@ -774,7 +774,7 @@ class VkApi:
                                 logger_fav.info(f"[ERROR_SEL_FAV-{sender}] для пользователя {sender}: {e}") 
                                             
                     # Ручное добавление в избранное 
-                    elif event.obj.message['text'].lower().split(' ')[0] in VkCommands.favList and event.obj.message['text'].lower().find("https://")>=0:
+                    elif event.obj.message['text'].lower().split(' ')[0] in VkCommands.favList and event.obj.message['text'].lower().find("https://")>=0 and sender in whiteList:
                         
                         auc_ids = re.findall(RegexType.regex_store_item_id_url, event.obj.message['text'].lower())  
               
@@ -1491,3 +1491,54 @@ class VkApi:
         except:
             print_exc()
             return [], post_url
+
+    def _get_album_cover(self, album_id: int) -> int:
+        """
+        Args:
+            album_id (id): id альбома
+
+        Returns:
+            int: ID заглавной фотографии альбома или -1
+        """
+
+        try:
+            # идентификатор сообщества в параметре owner_id необходимо указывать со знаком "-"
+            vk_response = self.vk.photos.getAlbums(owner_id = '-'+self.__group_id, need_covers = 1, album_ids=album_id)
+            album = vk_response.get('items', [])
+            return album[0]["thumb_id"]
+        except Exception as e:
+            print_exc()
+            return -1
+
+
+    def delete_photos(self, album_id: int, end_date):
+        """Удаляет фото из альбома до указанной даты (не включительно)
+
+        Args:
+            album_id (int): id альбома
+            end_date (datetime): предельная дата
+        """
+
+
+        cover_id = self._get_album_cover(album_id)
+
+        # идентификатор сообщества в параметре owner_id необходимо указывать со знаком "-"
+        params = { "owner_id": '-' + self.__group_id,
+                   "album_id": album_id,
+                   "extended": 1,
+                   "count": 1000
+        }
+
+        photos = self.vk.photos.get(**params)
+
+        params_delete = { "owner_id": '-' + self.__group_id,
+        }
+
+        for photo in photos["items"]:
+            if cover_id != photo["id"]:
+                date = (datetime.fromtimestamp(int(photo["date"]))).date()
+                if date < end_date:
+                    params_delete["photo_id"] = photo["id"]
+                    self.vk.photos.delete(**params_delete)
+                else:
+                    break

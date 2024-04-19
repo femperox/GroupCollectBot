@@ -416,6 +416,7 @@ def console():
             spId = lists[choise1-1]
 
             site_url = input('\nEnter the site url (might be empty): ')
+           
 
             wallPosts = input('\nEnter the vk posts. If more than 1 - use space. (might be empty): ')
             wallPosts = wallPosts.split(' ')

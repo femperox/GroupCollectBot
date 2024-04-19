@@ -9,6 +9,7 @@ from webdriver_manager.chrome import ChromeDriverManager
 from confings.Consts import LINUX_USER_AGENT
 import cfscrape
 import pprint
+from seleniumbase import Driver
 import json
 import requests
 
@@ -67,56 +68,17 @@ class WebUtils:
         return soup
 
     @staticmethod
-    def getSelenium(isDisplayed = False, proxyServer = ''):
+    def getSelenium(isUC = False):
         """получить веб-драйве
 
         Args:
-            isDisplayed (bool, optional): дисплейинг. Defaults to False.
             proxy_server (str, optional): Прокси сервер. Defaults to ''.
 
         Returns:
             seleniumwire.webdriver.Chrome: веб-драйвер
         """
         
-        options = webdriver.ChromeOptions() #Options()
-        options.headless = True
-        #options.add_argument('--no-sandbox')
-
-        if proxyServer:
-            options.add_argument(f'--proxy-server=socks5://{proxyServer}')
-
-        if isDisplayed:
-            options.add_argument(f'user-agent={LINUX_USER_AGENT}')
-            return webdriver.Chrome(options=options)
-       
-        #options.add_argument("start-maximized")    
-        #options.add_argument("--headless") 
-        #options.add_argument('--disable-dev-shm-usage') 
-        #options.add_argument(f'user-agent={LINUX_USER_AGENT}')
-        #options.add_argument("--enable-javascript")
-        #options.add_argument("x-user-key=amiami_dev")
-        #options.add_argument('Sec-Fetch-Dest=empty')
-        #options.add_argument('Sec-Fetch-Mode=cors')
-        #options.add_argument('Sec-Fetch-Site=same-site')
-        #options.add_argument('Referer=https://www.amiami.com/')
-        #options.add_argument('Origin=https://www.amiami.com')
-        #options.add_experimental_option("excludeSwitches", ["enable-automation"])
-        #options.add_experimental_option('useAutomationExtension', False)
-        #options.add_argument("--disable-blink-features=AutomationControlled")
-
-        # uc.Chrome(driver_executable_path='/usr/bin/chromedriver', options = options ) #
-        # webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
-        return webdriver.Chrome(options=options)
- 
-    @staticmethod
-    def getDisplay():
-        """получить виртуальное окно браузера
-
-        Returns:
-            pyvirtualdisplay.display.Display: виртуальное окно браузера
-        """
-
-        return Display(visible=0, size=(800, 600))
+        return Driver(uc=True, incognito= True) if isUC else Driver(incognito= True, wire=True)
     
     @staticmethod
     def getScraperSessoin(session):
@@ -148,32 +110,7 @@ class WebUtils:
 
         return getSraperSoup(response)
     
-    @staticmethod
-    def getProxyServer(country = 'US'):
-        """Получить список прокси с proxyservers.pro
-
-        Args:
-            country (str, optional): Страна. Defaults to 'US'.
-
-        Returns:
-            list of string: список прокси
-        """
-            
-        pprint('getting proxy servers')
-
-        proxy_site = 'https://proxyservers.pro/proxy/list/protocol/http%2Chttps/country/{}/order/updated/order_dir/desc/page/1'
-
-        soup = WebUtils.getSoup(url = proxy_site.format(country), isSeleniumNeeded= True)
-        
-        result_list_hosts = soup.find_all('a', class_='ajax1 action-dialog-ajax-inact action-modal-ajax-inact')
-        result_list_ports = soup.find_all('span', class_='port')
-
-        pprint('got proxy servers')
-
-        return [f'{result_list_hosts[i].text}:{result_list_ports[i].get_text()}' for i in range(len(result_list_hosts))]
-
-    
-    def getProxyServerNoSelenium(type_needed = ['http']):
+    def getProxyServer(type_needed = ['http']):
         """Получить список прокси с гита
 
         Args:

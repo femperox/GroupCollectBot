@@ -22,7 +22,7 @@ class AmiAmiApi():
     @staticmethod
     def startDriver(thread_index):
 
-        AmiAmiApi.driver[thread_index] = Driver(uc=True, incognito= True)
+        AmiAmiApi.driver[thread_index] = WebUtils.getSelenium(isUC=True)
         AmiAmiApi.driver[thread_index].open('https://www.amiami.com/eng/')  #https://www.amiami.com/eng/
         time.sleep(2)
         AmiAmiApi.driver[thread_index].save_screenshot("screenshot.png")
@@ -117,8 +117,7 @@ class AmiAmiApi():
         Returns:
             dict: словарь с инфой о товарах
         """
-        #proxies = WebUtils.getProxyServerNoSelenium(type_needed = ['socks5'])#['socks4', 'socks5', 'http'])
-        #pprint(len(proxies))
+
         js = {}
         for i in range(0, length):
             time.sleep(3)
@@ -391,9 +390,6 @@ class AmiAmiApi():
         if item_list_raw:
             item_list_ids = GetNotSeenProducts([item['itemId'] for item in item_list_raw], type_id= type_id)
         
-            #if item_list_ids: 
-            #    proxies = WebUtils.getProxyServerNoSelenium(type_needed = ['socks4', 'socks5', 'http'])
-
             logger.info(f"[SEEN-{type_id}-RAW] len {len(item_list_ids)}")
            
 
