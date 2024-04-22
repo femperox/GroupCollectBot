@@ -181,7 +181,7 @@ def getAucInfo(app_id, id):
 
         posredCommission = PosredApi.getСommissionForItem(info['page'])
         if PosredApi.isPercentCommision(posredCommission):
-            info['posredCommission'] = f"{info['itemPriceWTax']}*{posredCommission['value']/100}"
+            info['posredCommission'] = f"{int(info['itemPriceWTax'])}*{posredCommission['value']/100 if posredCommission['value'] > 0 else 0}"
             info['posredCommissionValue'] = info['itemPriceWTax']*(posredCommission['value']/100)
         else:
             info['posredCommission'] = posredCommission['value']

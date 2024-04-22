@@ -486,7 +486,7 @@ def updateCollect(collectType, collectNum, status):
     conn = getConnection(DbNames.collectDatabase)
     cursor = conn.cursor()  
 
-    cursor.execute(f''' Call CollectUpdate('{getCollectId(collectType, collectNum)}', '{status}')''')
+    cursor.execute(f''' Call CollectUpdate('{getCollectId(collectType, collectNum)}', '{status}');''')
 
     conn.commit() 
     cursor.close()
@@ -506,3 +506,42 @@ def getCollectStatuses():
     
     return result
 
+def getUserMenuStatus(user_id):
+    """Получить статус пользователя в чате с ботом
+
+    Args:
+        user_id (int): id пользователя
+
+    Returns:
+        string: статус в чате с ботом
+    """
+    
+    conn = getConnection(DbNames.collectDatabase)
+    cursor = conn.cursor()  
+
+    sql = f"""select status_value 
+        from BOT_MENU_STATUS bot
+        join USER_MENU_STATUS as user1
+        on (BOT.STATUS_ID = USER1.STATUS_ID)
+        where USER_ID = {user_id};
+    """
+
+    cursor.execute(sql)
+    result = cursor.fetchone() 
+
+    conn.commit()
+    cursor.close()
+    conn.close()
+    
+    return result[0]
+
+def updateUserMenuStatus(user_id, status):
+
+    conn = getConnection(DbNames.collectDatabase)
+    cursor = conn.cursor()  
+
+    cursor.execute(f''' Call USER_MENU_STATUS_UPDATE({user_id}, '{status}');''')
+
+    conn.commit() 
+    cursor.close()
+    conn.close()

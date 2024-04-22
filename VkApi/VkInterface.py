@@ -12,11 +12,10 @@ from vk_api.bot_longpoll import VkBotLongPoll, VkBotEventType
 from vk_api.longpoll import VkLongPoll, VkChatEventType, VkEventType, VkLongpollMode
 from vk_api.keyboard import VkKeyboard, VkKeyboardColor
 from confings.Messages import MessageType, Messages
-from Logger import logger, logger_fav
-from SQLS.DB_Operations import addFav, getFav, deleteFav, getFandoms, getTags, addBans, insertUpdateParcel, addBannedSellers
-from JpStoresApi.yahooApi import getAucInfo
-from confings.Consts import CURRENT_POSRED, BanActionType, MAX_BAN_REASONS, RegexType, PayloadType, VkCommands, PRIVATES_PATH, VkCoverSize, Stores
-from APIs.utils import getMonitorChats, getFavInfo, getStoreMonitorChats, flattenList
+from Logger import logger, logger_fav, logger_utils
+from SQLS.DB_Operations import addFav, getFav, deleteFav, getFandoms, getTags, addBans, insertUpdateParcel, addBannedSellers, updateUserMenuStatus, getUserMenuStatus
+from confings.Consts import VK_PROPOSED_CHAT_ID, BanActionType, MAX_BAN_REASONS, RegexType, PayloadType, VkCommands, PRIVATES_PATH, VkCoverSize, Stores
+from APIs.utils import getMonitorChats, getFavInfo, getStoreMonitorChats
 from APIs.pochtaApi import getTracking
 from JpStoresApi.StoreSelector import StoreSelector
 import time
@@ -442,6 +441,23 @@ class VkApi:
                  }
         self.__vk_message.messages.removeChatUser(**params)
 
+    
+    def form_menu_buttons(self, isAddButton = False, buttonPayloadText = ''):
+
+        settings = dict(one_time= False, inline=True)
+            
+        keyboard = ''
+
+        keyboard = VkKeyboard(**settings)
+
+        if isAddButton:
+            keyboard.add_callback_button(label='Поставить на выкуп', color=VkKeyboardColor.POSITIVE, payload= {"type": PayloadType.menu_bot_add_item["type"],  "text": buttonPayloadText}) 
+
+        else:
+            keyboard.add_callback_button(label='Узнать цену товара (Япония)', color=VkKeyboardColor.PRIMARY, payload= PayloadType.menu_check_price)
+
+        return keyboard
+
 
     def form_inline_buttons(self, type, items = ''):
 
@@ -625,6 +641,10 @@ class VkApi:
        longPoll = VkBotLongPoll(vkBotSession, self.__group_id, wait = 50)
        whiteList = [int(x) for x in self.__admins]
 
+       # Личные сообщение
+       not_dm_chats = getMonitorChats()
+       not_dm_chats.append(getStoreMonitorChats())
+
        storeSelector = StoreSelector()
         
        while True:
@@ -648,9 +668,6 @@ class VkApi:
                     sender = event. obj['from_id']
                     chat = event.obj['peer_id']
  
-                    # Личные сообщение
-                    not_dm_chats = getMonitorChats()
-                    not_dm_chats.append(getStoreMonitorChats())
                     if chat not in not_dm_chats:
                         try:
                             track = re.findall(RegexType.regex_track, event.obj['text'])[0]
@@ -724,8 +741,41 @@ class VkApi:
                                 message = Messages.mes_ban(seller = seller, category = category, isBanned = isBanned)
                                 self.sendMes(mess = message, users= chat)
                                 if not isBanned:
-                                    logger.info(f"\n[BAN-{category.split('_')[-1]}] Забанен продавец {seller}\n")                      
+                                    logger.info(f"\n[BAN-{category.split('_')[-1]}] Забанен продавец {seller}\n") 
 
+                        # менюшка с чеком цены
+                        elif event.object['payload'] == PayloadType.menu_check_price:
+
+                            updateUserMenuStatus(user_id = event.object.user_id, status = PayloadType.menu_check_price['type'])
+                            mes = "Пришлите ссылку на товар.\n\n✅ После ссылки можете добавить свой комментарий, например, если это аукцион, свою максимальную ставку ЗА ТОВАР в йенах."
+                            mes += "\n\n🕒 После того как пришлёте ссылку дождитесь расчета бота."
+                            self.sendMes(mess = mes, users = chat)     
+
+                        # Челик поставил на выкуп товар
+                        elif event.object['payload']["type"] == PayloadType.menu_bot_add_item["type"]:
+
+                            attachment = ''
+                            if len(mes['items'][0]['attachments']) > 0:
+                                attachment =  mes['items'][0]['attachments'][0]['photo']
+                                attachment = 'photo{}_{}_{},'.format(attachment['owner_id'], attachment['id'], attachment['access_key'])
+
+                            url = re.findall(RegexType.regex_store_url_bot, mes['items'][0]['text'])[0]
+                            textInfo = event.object['payload']["text"].replace(url, '')
+                            text = Messages.formAddItemMes(item_url = url, user = self.get_name(event.object.user_id), info = textInfo)
+
+                            self.sendMes(mess = text, users = VK_PROPOSED_CHAT_ID, pic = [attachment])
+
+                            edit_params = {
+                                'peer_id' : mes['items'][0]['peer_id'],
+                                'message': mes['items'][0]['text'],
+                                'group_id': self.__group_id,
+                                'conversation_message_id': mes['items'][0]['conversation_message_id'],
+                                'keyboard': '',
+                                'attachment': attachment
+                            }
+
+                            self.__vk_message.messages.edit(**edit_params)
+                            self.sendMes(mess = "Спасибо! Ваша заявка на выкуп принята!", users = chat)
 
                         params = {
                             'user_id': event.object.user_id,
@@ -735,7 +785,6 @@ class VkApi:
 
                         self.__vk_message.messages.sendMessageEventAnswer(**params) 
 
-                    
                 # Входящие сообщения
                 elif event.type == VkBotEventType.MESSAGE_NEW:
 
@@ -748,6 +797,24 @@ class VkApi:
                         
                         self.sendMes(mess = Messages.userCharRemovalMess(user = user_name), users= [chat])
                         self.removeChatUser(user = sender, chat = chat)
+
+                    # ответ на менюшку
+                    elif PayloadType.menu_check_price["type"] == getUserMenuStatus(user_id=sender):
+                        updateUserMenuStatus(user_id=sender, status= PayloadType.menu_bot_none["type"])
+                        url = event.obj.message['text']
+                        try:
+                            url = re.findall(RegexType.regex_store_url_bot, url)[0]  
+                            messText, pic = Messages.formPriceMes(url=url)
+                            self.sendMes(mess = messText, users= chat, keyboard = self.form_menu_buttons(isAddButton = True, buttonPayloadText = event.obj.message['text']), pic = [pic] if pic else [])
+                            logger_utils.info(f"""[CHECK_PRICE] - Расчитана цена для пользователя {self.get_name(id = sender)} товара [{url}]""")
+                        except Exception as e:
+                            logger_utils.info(f"""[ERROR_CHECK_PRICE] - Не удалось посчитать цену для пользователя {self.get_name(id = sender)} товара [{url}] :: {e}""")
+                            self.sendMes(mess = "Возникла ошибка, попробуйте ещё раз! Убедитесь в правильности ссылки! Снова выберите в меню кнопку расчёта цены", users= chat)                        
+                        
+                    # менюшка
+                    elif chat not in not_dm_chats and (sender in whiteList) and event.obj.message['text'].lower() in  VkCommands.menuList:
+
+                        self.sendMes(mess="Выберите пункт меню", users=chat, keyboard=self.form_menu_buttons())
                                
                     # получение избранного        
                     elif event.obj.message['text'].lower().split(' ')[0] in VkCommands.getFavList and sender in whiteList:
