@@ -643,7 +643,8 @@ class VkApi:
 
        # Личные сообщение
        not_dm_chats = getMonitorChats()
-       not_dm_chats.append(getStoreMonitorChats())
+       not_dm_chats.extend(getStoreMonitorChats())
+       not_dm_chats.append(VK_PROPOSED_CHAT_ID)
 
        storeSelector = StoreSelector()
         
@@ -763,7 +764,7 @@ class VkApi:
                             textInfo = event.object['payload']["text"].replace(url, '')
                             text = Messages.formAddItemMes(item_url = url, user = self.get_name(event.object.user_id), info = textInfo)
 
-                            self.sendMes(mess = text, users = VK_PROPOSED_CHAT_ID, pic = [attachment])
+                            self.sendMes(mess = text, users = VK_PROPOSED_CHAT_ID, pic = [attachment] if attachment else [])
 
                             edit_params = {
                                 'peer_id' : mes['items'][0]['peer_id'],
