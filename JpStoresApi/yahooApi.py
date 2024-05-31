@@ -9,7 +9,7 @@ from APIs.webUtils import WebUtils
 from confings.Consts import PREFECTURE_CODE, CURRENT_POSRED
 from traceback import print_exc
 from APIs.posredApi import PosredApi
-from confings.Consts import ShipmentPriceType as spt
+from confings.Consts import ShipmentPriceType
 
 def getRep(app_id, id):
     """Получение репутации продавца
@@ -89,7 +89,7 @@ def getShipmentPrice(app_id, id, seller_id , postage_id = 1, item_weight = 0):
     if len(prices):
         return float(min(prices))
     else:
-        return -1
+        return ShipmentPriceType.undefined
 
 def getCurrentPrice(app_id, id):
     """Получение текущей цены аукциона
@@ -160,7 +160,7 @@ def getAucInfo(app_id, id):
             info['blitz'] = -1
         
         if 'FreeshippingIcon' in xml['ResultSet']['Result']['Option'].keys():
-            info['shipmentPrice'] = spt.free
+            info['shipmentPrice'] = ShipmentPriceType.free
         else:
             try: 
                 info['ShoppingSellerId'] = xml['ResultSet']['Result']['Seller']['ShoppingSellerId']
@@ -181,8 +181,13 @@ def getAucInfo(app_id, id):
 
         posredCommission = PosredApi.getСommissionForItem(info['page'])
         if PosredApi.isPercentCommision(posredCommission):
-            info['posredCommission'] = f"{int(info['itemPriceWTax'])}*{posredCommission['value']/100 if posredCommission['value'] > 0 else 0}"
-            info['posredCommissionValue'] = info['itemPriceWTax']*(posredCommission['value']/100)
+
+            if info['shipmentPrice'] not in [ShipmentPriceType.free, ShipmentPriceType.undefined]:
+                info['posredCommission'] = f"({int(info['itemPriceWTax'])} + {int(info['shipmentPrice'])})*{posredCommission['value']/100 if posredCommission['value'] > 0 else 0}"
+                info['posredCommissionValue'] = (info['itemPriceWTax'] + info['shipmentPrice'])*(posredCommission['value']/100)
+            else:
+                info['posredCommission'] = f"{int(info['itemPriceWTax'])}*{posredCommission['value']/100 if posredCommission['value'] > 0 else 0}"
+                info['posredCommissionValue'] = info['itemPriceWTax']*(posredCommission['value']/100)
         else:
             info['posredCommission'] = posredCommission['value']
 

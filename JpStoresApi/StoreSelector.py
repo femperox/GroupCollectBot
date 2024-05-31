@@ -32,6 +32,7 @@ class StoreSelector:
         """
 
         id = self.url.split('/')[-1]
+        id = id.replace('?source_location=share', '').replace('&utm_source=web&utm_medium=share', '').replace('detail.php?product_id=', '')
         return id
     
     def getStoreUrlByItemId(self, item_id, store_type):
@@ -80,12 +81,12 @@ class StoreSelector:
             pprint(Stores.amiAmi)
             
             if url.find('/eng/')>0:
-                AmiAmiApi.startDriver()
+                AmiAmiApi.startDriver(thread_index=0)
                 item = AmiAmiApi.parseAmiAmiEng(url, self.getItemID().split("=")[-1])
-                AmiAmiApi.stopDriver()
+                AmiAmiApi.stopDriver(thread_index=0)
             else:
-                item = ''
-                item = AmiAmiApi.parseAmiAmiJp(url)
+                item = {}
+                #item = AmiAmiApi.parseAmiAmiJp(url)
             
         elif site == Stores.mandarake:
             item = ssa.parseMandarake(url)

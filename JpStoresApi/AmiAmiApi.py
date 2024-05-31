@@ -77,7 +77,7 @@ class AmiAmiApi():
 
         wrongCategoriesNames = ['Wall Scroll', 'T-shirt', 'Sweatshirt', 'Nice Body Smartphone Stand',
                                 'Pillow Cover', 'Clear File', 'Sticker', 'Cycling Jersey', 'Hoodie', 'iPhone Case',
-                                 'Pass Case' ]
+                                 'Pass Case', 'Bed Sheet', 'Duvet Cover', 'Towel Blanket', 'Rubber Mat', 'COSPA', 'Canvas Art' ]
                 
         for wrongCategory in wrongCategoriesNames:
             if item_name.find(wrongCategory) > -1:

@@ -191,7 +191,7 @@ class MercariApi:
 
             posredCommission = PosredApi.getСommissionForItem(item['page'])
             if PosredApi.isPercentCommision(posredCommission):
-                item['posredCommission'] = f"{int(item['itemPriceWTax'])}*{posredCommission['value']/100 if posredCommission['value'] > 0 else 0}"
+                item['posredCommission'] = f"{int(item['itemPrice'])}*{posredCommission['value']/100 if posredCommission['value'] > 0 else 0}"
                 item['posredCommissionValue'] = item['itemPrice']*(posredCommission['value']/100)
             else:
                 item['posredCommission'] = posredCommission['value']            

@@ -14,7 +14,7 @@ from vk_api.keyboard import VkKeyboard, VkKeyboardColor
 from confings.Messages import MessageType, Messages
 from Logger import logger, logger_fav, logger_utils
 from SQLS.DB_Operations import addFav, getFav, deleteFav, getFandoms, getTags, addBans, insertUpdateParcel, addBannedSellers, updateUserMenuStatus, getUserMenuStatus
-from confings.Consts import VK_PROPOSED_CHAT_ID, BanActionType, MAX_BAN_REASONS, RegexType, PayloadType, VkCommands, PRIVATES_PATH, VkCoverSize, Stores
+from confings.Consts import VK_AUTOTAG_FORM_URL, VK_PROPOSED_CHAT_ID, VK_ERRORS_CHAT_ID, BanActionType, MAX_BAN_REASONS, RegexType, PayloadType, VkCommands, PRIVATES_PATH, VkCoverSize, Stores
 from APIs.utils import getMonitorChats, getFavInfo, getStoreMonitorChats
 from APIs.pochtaApi import getTracking
 from JpStoresApi.StoreSelector import StoreSelector
@@ -454,7 +454,9 @@ class VkApi:
             keyboard.add_callback_button(label='Поставить на выкуп', color=VkKeyboardColor.POSITIVE, payload= {"type": PayloadType.menu_bot_add_item["type"],  "text": buttonPayloadText}) 
 
         else:
-            keyboard.add_callback_button(label='Узнать цену товара (Япония)', color=VkKeyboardColor.PRIMARY, payload= PayloadType.menu_check_price)
+            keyboard.add_openlink_button(link = VK_AUTOTAG_FORM_URL, label ='Добавиться к автотегам')
+            keyboard.add_line()
+            keyboard.add_callback_button(label='Узнать цену товара (Япония) (test-режим)', color=VkKeyboardColor.PRIMARY, payload= PayloadType.menu_check_price)
 
         return keyboard
 
@@ -750,6 +752,7 @@ class VkApi:
                             updateUserMenuStatus(user_id = event.object.user_id, status = PayloadType.menu_check_price['type'])
                             mes = "Пришлите ссылку на товар.\n\n✅ После ссылки можете добавить свой комментарий, например, если это аукцион, свою максимальную ставку ЗА ТОВАР в йенах."
                             mes += "\n\n🕒 После того как пришлёте ссылку дождитесь расчета бота."
+                            mes += "\n\n‼️ Для Яху-ауков в расчётах используется последняя ставка на лот. Это не значит, что это будет окончательная стоимость лота (если это не блиц)."
                             self.sendMes(mess = mes, users = chat)     
 
                         # Челик поставил на выкуп товар
@@ -799,6 +802,11 @@ class VkApi:
                         self.sendMes(mess = Messages.userCharRemovalMess(user = user_name), users= [chat])
                         self.removeChatUser(user = sender, chat = chat)
 
+                    # менюшка
+                    elif chat not in not_dm_chats and event.obj.message['text'].lower() in  VkCommands.menuList:
+                        # and (sender in whiteList)
+                        self.sendMes(mess="Выберите пункт меню", users=chat, keyboard=self.form_menu_buttons())
+
                     # ответ на менюшку
                     elif PayloadType.menu_check_price["type"] == getUserMenuStatus(user_id=sender):
                         updateUserMenuStatus(user_id=sender, status= PayloadType.menu_bot_none["type"])
@@ -810,13 +818,9 @@ class VkApi:
                             logger_utils.info(f"""[CHECK_PRICE] - Расчитана цена для пользователя {self.get_name(id = sender)} товара [{url}]""")
                         except Exception as e:
                             logger_utils.info(f"""[ERROR_CHECK_PRICE] - Не удалось посчитать цену для пользователя {self.get_name(id = sender)} товара [{url}] :: {e}""")
-                            self.sendMes(mess = "Возникла ошибка, попробуйте ещё раз! Убедитесь в правильности ссылки! Снова выберите в меню кнопку расчёта цены", users= chat)                        
-                        
-                    # менюшка
-                    elif chat not in not_dm_chats and (sender in whiteList) and event.obj.message['text'].lower() in  VkCommands.menuList:
-
-                        self.sendMes(mess="Выберите пункт меню", users=chat, keyboard=self.form_menu_buttons())
-                               
+                            self.sendMes(mess = "Возникла ошибка, попробуйте ещё раз! Убедитесь в правильности ссылки! Снова выберите в меню кнопку расчёта цены", users= chat) 
+                            self.sendMes(mess = f"Сообщение:\n {url}\n\n\nОшибка:\n{e}", users=VK_ERRORS_CHAT_ID)                                 
+                    
                     # получение избранного        
                     elif event.obj.message['text'].lower().split(' ')[0] in VkCommands.getFavList and sender in whiteList:
                             
