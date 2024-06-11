@@ -184,3 +184,45 @@ def concatList(list1, list2):
 
     return resultList
 
+def flatTableParticipantList(particpantList):
+    """Привести табличный вид списка участников в простой список позиций
+       Исходный список формируется с помощью CollectOrdersSheet.getParticipantsList(namedRange)
+
+    Args:
+        particpantList (list of lists): табличный список участников
+    """
+
+    flatList = []
+    for particpant in particpantList:
+        info = {}
+        try:
+            info['id'] = re.search(RegexType.regex_vk_url, particpant[1]).group(0).split('id')[1].replace('";', '')
+            info['items'] = particpant[0]
+            flatList.append(info.copy())
+        except:
+            continue
+
+    return flatList
+
+def flatTopicParticipantList(particpantList):
+    """Привести топиеовый вид списка участников в простой список позиций
+       Исходный список формируется с помощью makeDistinctList + checkParticipants
+       TO DO: унифицировать всё
+
+    Args:
+        particpantList (list of lists): табличный список участников
+    """
+
+    flatList = []
+    for particpant in particpantList:
+        pprint(particpant[0])
+        info = {}
+        try:
+            info['id'] = particpant[1][0].split('id')[1]
+            info['items'] = ", ".join(str(item) for item in particpant[0])
+            flatList.append(info.copy())
+        except Exception as e:
+            pprint(e)
+            continue
+
+    return flatList

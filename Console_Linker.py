@@ -7,7 +7,20 @@ from confings.Messages import Messages
 import re
 from datetime import datetime
 from SQLS import DB_Operations
-from APIs.utils import flattenList
+from APIs.utils import flattenList, flatTableParticipantList, flatTopicParticipantList
+
+def updateParticipantDB(participantList, collectId, isYstypka = False):
+    """Обновить БД со списком участников и их позициями
+
+    Args:
+        participantList (list of lists): список участников
+        collectId (string): id коллекта
+        isYstypka (bool, optional): как часть уступки - нужно полностью переписывать весь коллект. Defaults to False.
+    """
+
+    list = flatTableParticipantList(particpantList = participantList) if isYstypka else flatTopicParticipantList(particpantList = participantList)
+    for item in list:
+        DB_Operations.updateInsertParticipantsCollect(collect_id = collectId, user_id = item['id'], items = item['items'], isYstypka = isYstypka)    
 
 def createNamedRange(spId, who, find):
     '''
@@ -308,6 +321,9 @@ def createTableTopic(post_url, site_url ='', spId=0, topicName=0, items=0, img_u
 
     collect_table.updateTable(namedRange, transformToTableFormat(participantsList), topicInfo[0])
 
+
+    updateParticipantDB(participantList = participantsList, collectId = namedRange.replace('D', '').replace('nd', '').replace('ollect', ''))
+
     return namedRange
 
 
@@ -355,14 +371,16 @@ def changeStatus(stat, collectList, indList, payment, topic_name = "❏ Лоты
 def changePositions(userList, topic_name = "❏ Лоты и индивидуалки"):
 
     for yst in userList:
-
+        collect_id = ''
         try:
             number = int(yst[0])
-            lot = "Collect{0}".format(number)
+            lot = "Collect{}".format(number)
+            collect_id = 'C{}'.format(number)
             type = "Коллективка"
         except:
             number = int(yst[0][1:])
-            lot = "Ind{0}".format(number)
+            lot = "Ind{}".format(number)
+            collect_id = 'I{}'.format(number)
             type = "Индивидуалка"
 
         id = vk.get_tuple_name(yst[1][1])
@@ -374,8 +392,12 @@ def changePositions(userList, topic_name = "❏ Лоты и индивидуал
         except:
             actualParticipants, paymentInfo = collect_table.changePositions('L'+lot, newParticipants["participantList"], yst[2])
 
+        updateParticipantDB(participantList = actualParticipants, collect_id = collect_id, isYstypka = True)
+
+        DB_Operations.updateInsertParticipantsCollect()
 
         actualParticipants = tableToTopic(actualParticipants, paymentInfo)
+        pprint(actualParticipants)
 
 
         what_to_find = {

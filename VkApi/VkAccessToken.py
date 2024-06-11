@@ -18,3 +18,5 @@ def get_access_token(client_id: int, scope: int) -> None:
 
 tmp_dict = json.load(open(PRIVATES_PATH, 'r'))
 get_access_token(tmp_dict['app_id'], tmp_dict['rights'])
+
+#get_access_token(tmp_dict['app_id_kz'], tmp_dict['rights'])

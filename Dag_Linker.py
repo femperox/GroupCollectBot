@@ -122,7 +122,6 @@ class DagLinkerValues:
     updateTrackingStatuses = 'updateTrackingStatuses'
     updateCoverPhoto = 'updateCoverPhoto'
 
-
 if __name__ == "__main__":
 
     vk = vk()

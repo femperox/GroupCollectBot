@@ -116,6 +116,7 @@ class CollectOrdersSheet(ParentSheetClass):
        info_urls = self.getJsonNamedRange(namedRange, typeCalling = 1)
        info_items = self.getJsonNamedRange(namedRange, typeCalling = 1, valueRenderOption= "FORMATTED_VALUE")
 
+
        info_urls = info_urls['values'][14:]
        info_items = info_items['values'][14:]
 

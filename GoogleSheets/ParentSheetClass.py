@@ -50,7 +50,8 @@ class ParentSheetClass:
         '''
         try:
            result = self.service.spreadsheets().values().get(spreadsheetId= self.__spreadsheet_id, range=namedRange, valueRenderOption = valueRenderOption).execute()
-        except :
+        except Exception as e:
+           print(e)
            result = {"range": -1}
 
         if typeCalling == 0 : return result["range"]

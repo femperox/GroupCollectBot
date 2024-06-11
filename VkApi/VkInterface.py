@@ -276,7 +276,7 @@ class VkApi:
                     vk_url, 
                     files={'photo': open(os.getcwd()+'/VkApi/tmp/{}'.format(image_name), 'rb')}
                 ).json()
-                os.remove(os.getcwd()+'/VkApi/tmp/' + image_name)
+                #os.remove(os.getcwd()+'/VkApi/tmp/' + image_name)
 
                 if vk_response['photo']:
                     if isWallServer:

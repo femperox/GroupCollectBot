@@ -492,6 +492,44 @@ def updateCollect(collectType, collectNum, status):
     cursor.close()
     conn.close()
 
+def deleteParticipantsCollect(collect_id):
+    """Удалить всех пользователей связанных с collect_id
+
+    Args:
+        collect_id (string): id коллекта
+    """
+
+    conn = getConnection(DbNames.collectDatabase)
+    cursor = conn.cursor()  
+
+    cursor.execute(f''' delete from Participants_Collects where collect_id = '{collect_id}';''')
+
+    conn.commit() 
+    cursor.close()
+    conn.close()
+
+def updateInsertParticipantsCollect(collect_id, user_id, items, isYstypka = False):
+    """Внести изменения в таблицу коллектов и участников
+
+    Args:
+        collect_id (string): id коллекта
+        user_id (int): id участника
+        items (string): список позиций
+        isYstypka (bool, optional): как часть уступки - нужно полностью переписывать весь коллект. Defaults to False.
+    """
+
+    if isYstypka:
+        deleteParticipantsCollect(collect_id = collect_id)
+    
+    conn = getConnection(DbNames.collectDatabase)
+    cursor = conn.cursor()  
+
+    cursor.execute(f''' Call ParticipantsCollectUpdate('{collect_id}', {user_id}, '{items}');''')
+
+    conn.commit() 
+    cursor.close()
+    conn.close()
+
 def getCollectStatuses():
 
     conn = getConnection(DbNames.collectDatabase)
@@ -505,6 +543,12 @@ def getCollectStatuses():
     conn.close()
     
     return result
+
+#============================
+
+
+
+#============================
 
 def getUserMenuStatus(user_id):
     """Получить статус пользователя в чате с ботом
