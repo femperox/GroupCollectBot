@@ -263,14 +263,14 @@ class VkApi:
             dict: В случае успешного выполнения запроса вернёт словарь с представлением медиа Вконтакте
         """
         if image_name != '':
-
+            pprint(isWallServer)
             if isWallServer:
                 vk_response = self.vk.photos.getWallUploadServer(group_id=self.__group_id)
             else:
                 vk_response = self.vk.photos.getMessagesUploadServer()
             
             vk_url = vk_response['upload_url']
-
+            pprint(vk_url)
             try:
                 vk_response = requests.post(
                     vk_url, 
@@ -287,16 +287,18 @@ class VkApi:
                             hash=vk_response['hash'],                            
                         )
                     else:
+
                         vk_image = self.vk.photos.saveMessagesPhoto(
                             photo=vk_response['photo'],
                             server=vk_response['server'],
                             hash=vk_response['hash'],
                         )
-          
+                    #pprint(vk_image)
                     return vk_image[0]
-            except:
+            except Exception as e:
+                pprint(e)
                 print_exc()
-                self._vk_image_upload(image_name, user, isWallServer)
+                #self._vk_image_upload(image_name, user, isWallServer)
         return {}
 
     def _form_images_request_signature(self, image_urls: list, user, tag, isWallServer = False) -> str:
@@ -459,6 +461,17 @@ class VkApi:
             keyboard.add_callback_button(label='Узнать цену товара (Япония) (test-режим)', color=VkKeyboardColor.PRIMARY, payload= PayloadType.menu_check_price)
 
         return keyboard
+    
+    def form_menu_buying_buttons(self):
+        
+        settings = dict(one_time= False, inline=True)
+            
+        keyboard = VkKeyboard(**settings)
+
+        keyboard.add_callback_button(label ='Добавить в ⭐️', color=VkKeyboardColor.SECONDARY)
+        keyboard.add_line()
+        keyboard.add_callback_button(label='Товар выкуплен', color=VkKeyboardColor.POSITIVE, payload= PayloadType.menu_check_price)
+        keyboard.add_callback_button(label='Товар НЕ выкуплен', color=VkKeyboardColor.NEGATIVE, payload= PayloadType.menu_check_price)
 
 
     def form_inline_buttons(self, type, items = ''):

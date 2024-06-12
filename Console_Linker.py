@@ -560,11 +560,11 @@ def console():
 
         elif choise == 8:
 
-                d = input('Введите дату, до которой нужно удалить фотографии: ')
+                d = input('Введите дату, до которой нужно удалить фотографии (ДД.ММ.ГГГГ): ')
                 d = datetime.strptime(d, '%d.%m.%Y').date()
 
-                album = 'Ваши хотелки'
-                vk.delete_photos(album_name=album, end_date=d)
+                album = 274685308
+                vk.delete_photos(album_id=album, end_date=d)
 
       except Exception as e:
           print(f"\n===== ОШИБКА! \n{format_exc()}=====")
