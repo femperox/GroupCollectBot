@@ -21,7 +21,7 @@ class PosredApi:
 
         for json_item in js:
             if json_item['codeTo'] in CURRENCIES.rub.value:
-                return float(json_item['rate'])- 0.03
+                return float(json_item['rate'])+ 0.01
             
     @staticmethod
     def getCurrentAmiCurrencyRate():
@@ -73,11 +73,12 @@ class PosredApi:
         from JpStoresApi.StoreSelector import StoreSelector
         
         #commissionFree = [Stores.mercari, Stores.payPay, Stores.yahooAuctions, Stores.amazon]
-        
-        standartCommissionPercent = 6
-
         ss = StoreSelector()
         ss.url = url
+        if ss.getStoreName() == Stores.amiAmi and ss.isEngAmi(url=url):
+            standartCommissionPercent = 0
+        else:
+            standartCommissionPercent = 6
 
         return {'value': standartCommissionPercent, 'key': CURRENCIES.percent}
         

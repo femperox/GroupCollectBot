@@ -14,9 +14,9 @@ from vk_api.keyboard import VkKeyboard, VkKeyboardColor
 from confings.Messages import MessageType, Messages
 from Logger import logger, logger_fav, logger_utils
 from SQLS.DB_Operations import addFav, getFav, deleteFav, getFandoms, getTags, addBans, insertUpdateParcel, addBannedSellers, updateUserMenuStatus, getUserMenuStatus
-from confings.Consts import VK_AUTOTAG_FORM_URL, VK_PROPOSED_CHAT_ID, VK_ERRORS_CHAT_ID, BanActionType, MAX_BAN_REASONS, RegexType, PayloadType, VkCommands, PRIVATES_PATH, VkCoverSize, Stores
+from confings.Consts import TrackingTypes, VK_AUTOTAG_FORM_URL, VK_PROPOSED_CHAT_ID, VK_ERRORS_CHAT_ID, BanActionType, MAX_BAN_REASONS, RegexType, PayloadType, VkCommands, PRIVATES_PATH, VkCoverSize, Stores
 from APIs.utils import getMonitorChats, getFavInfo, getStoreMonitorChats
-from APIs.pochtaApi import getTracking
+from APIs.TrackingAPIs.TrackingSelector import TrackingSelector
 from JpStoresApi.StoreSelector import StoreSelector
 import time
 
@@ -263,20 +263,18 @@ class VkApi:
             dict: В случае успешного выполнения запроса вернёт словарь с представлением медиа Вконтакте
         """
         if image_name != '':
-            pprint(isWallServer)
             if isWallServer:
                 vk_response = self.vk.photos.getWallUploadServer(group_id=self.__group_id)
             else:
                 vk_response = self.vk.photos.getMessagesUploadServer()
             
             vk_url = vk_response['upload_url']
-            pprint(vk_url)
             try:
                 vk_response = requests.post(
                     vk_url, 
                     files={'photo': open(os.getcwd()+'/VkApi/tmp/{}'.format(image_name), 'rb')}
                 ).json()
-                #os.remove(os.getcwd()+'/VkApi/tmp/' + image_name)
+                os.remove(os.getcwd()+'/VkApi/tmp/' + image_name)
 
                 if vk_response['photo']:
                     if isWallServer:
@@ -293,12 +291,12 @@ class VkApi:
                             server=vk_response['server'],
                             hash=vk_response['hash'],
                         )
-                    #pprint(vk_image)
+                    
                     return vk_image[0]
             except Exception as e:
                 pprint(e)
                 print_exc()
-                #self._vk_image_upload(image_name, user, isWallServer)
+                self._vk_image_upload(image_name, user, isWallServer)
         return {}
 
     def _form_images_request_signature(self, image_urls: list, user, tag, isWallServer = False) -> str:
@@ -686,9 +684,18 @@ class VkApi:
  
                     if chat not in not_dm_chats:
                         try:
-                            track = re.findall(RegexType.regex_track, event.obj['text'])[0]
-                            tracking_info = getTracking(track)
+                            tracking_type = ''
+                            for regex in RegexType.tracking_types_list:
+                                track = re.match(regex, event.obj['text'])
+
+                                if track: 
+                                    tracking_type = TrackingTypes.ids[regex]
+                                    break
+                            tracking_info = {}
+                            tracking_info = TrackingSelector.selectTracker(track=track.group(), type=tracking_type)
                             tracking_info['rcpnVkId'] = chat
+                            
+                            tracking_info['trackingType'] = tracking_type
 
                             insertUpdateParcel(tracking_info)          
                         except:
@@ -1152,7 +1159,7 @@ class VkApi:
                 name = self.get_name(item['from_id'])    
             except:
                 name = self.get_group_name(abs(item['from_id']))
-            pprint(name)
+    
             item['from_id'] = name
 
             new_list.append(item.copy())
@@ -1318,7 +1325,7 @@ class VkApi:
            
 
             result = ''
-            pprint(len(attachments))
+        
             for attachment in attachments:
                 if 'doc' in attachment.keys():
                     att_doc = attachment.get('doc', {})
@@ -1330,7 +1337,7 @@ class VkApi:
             if result != '':
                 if result[len(result) - 1] == ',':
                     result = result[:len(result) - 1:]
-            pprint(result)
+      
             params.setdefault('attachment', result)
    
             comm_id = self.vk.board.createComment(**params)

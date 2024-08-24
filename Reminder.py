@@ -62,7 +62,6 @@ def checkTime(usr_id):
                 
                 # если товар выкупил кто-то или сняли с продажи
                 if fav[4] == Stores.mercari:
-                    pprint('merk')
                     info = MercariApi.parseMercariPage(url = item_url, item_id = fav[1])
                     if info['itemStatus'] != MercariApi.MercariItemStatus.on_sale:
                         

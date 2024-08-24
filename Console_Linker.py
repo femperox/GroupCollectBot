@@ -321,10 +321,8 @@ def createTableTopic(post_url, site_url ='', spId=0, topicName=0, items=0, img_u
 
     collect_table.updateTable(namedRange, transformToTableFormat(participantsList), topicInfo[0])
 
-
+    DB_Operations.insertCollect(collectType, collectNum, namedRange)
     updateParticipantDB(participantList = participantsList, collectId = namedRange.replace('D', '').replace('nd', '').replace('ollect', ''))
-
-    return namedRange
 
 
 def ShipmentToRussiaEvent(toSpId, collectList, indList):
@@ -392,13 +390,9 @@ def changePositions(userList, topic_name = "❏ Лоты и индивидуал
         except:
             actualParticipants, paymentInfo = collect_table.changePositions('L'+lot, newParticipants["participantList"], yst[2])
 
-        updateParticipantDB(participantList = actualParticipants, collect_id = collect_id, isYstypka = True)
-
-        DB_Operations.updateInsertParticipantsCollect()
+        updateParticipantDB(participantList = actualParticipants, collectId = collect_id, isYstypka = True)
 
         actualParticipants = tableToTopic(actualParticipants, paymentInfo)
-        pprint(actualParticipants)
-
 
         what_to_find = {
             "topic_name": topic_name,
@@ -450,9 +444,6 @@ def console():
 
             namedRange = createTableTopic(wallPosts, site_url, spId=spId,
                                         topicName=topicName, items=items, img_url=img)
-
-            collectType, collectNum = collect_table.sp.defineCollectType(namedRange)
-            DB_Operations.insertCollect(collectType, collectNum, namedRange)
 
         elif choise == 2:
 

@@ -11,6 +11,10 @@ from confings.Consts import PRIVATES_PATH
 
 class StoreSelector:
 
+    @staticmethod
+    def isEngAmi(url):
+        return url.find('/eng/')
+
     url = ''
 
     def getStoreName(self):

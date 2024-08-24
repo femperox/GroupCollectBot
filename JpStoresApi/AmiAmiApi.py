@@ -31,10 +31,12 @@ class AmiAmiApi():
     def stopDriver(thread_index):
         AmiAmiApi.driver[thread_index].quit()
 
+    @staticmethod
     def refreshDriver(thread_index):
         AmiAmiApi.driver[thread_index].refresh()
 
     AMI_API_ITEM_INFO = 'https://api.amiami.com/api/v1.0/item?gcode={}'
+
 
     # 9882 - Fashion
     wrongCategoriesNumbers = [9882]
@@ -277,11 +279,11 @@ class AmiAmiApi():
             list of dict: список товаров и инфо о них
         """
 
-        pages_to_see = 15
+        pages_to_see = 7#15
 
         if type_id == MonitorStoresType.amiAmiEngSale:
             curl = 'https://api.amiami.com/api/v1.0/items?pagemax=50&pagecnt={}&lang=eng&mcode=&ransu=&age_confirm=&s_st_saleitem=1&s_st_list_newitem_available=1'
-            pages_to_see = 10
+            pages_to_see = 5#10
         else:
             curl = 'https://api.amiami.com/api/v1.0/items?pagemax=50&pagecnt={}&lang=eng&mcode=&ransu=&age_confirm=&s_st_list_newitem_available=1'
 
@@ -344,8 +346,9 @@ class AmiAmiApi():
         
         curl = 'https://api.amiami.com/api/v1.0/items?pagemax=50&pagecnt={}&lang=eng&mcode=&ransu=&age_confirm=&s_st_list_preorder_available=1'
 
-        #js = AmiAmiApi.curlManyPages(curl, 23, thread_index)
-        js = AmiAmiApi.curlManyPages(curl, 20, thread_index)
+        
+        #js = AmiAmiApi.curlManyPages(curl, 20, thread_index)
+        js = AmiAmiApi.curlManyPages(curl, 10, thread_index)
 
         item_list_raw = []
         item_list_ids = []
@@ -366,8 +369,6 @@ class AmiAmiApi():
             item['siteName'] = 'AmiAmiEng'
             item['itemId'] = preOrder['gcode']
 
-
-            pprint(item['itemId'])
 
             item['name'] = preOrder['gname']
             try:

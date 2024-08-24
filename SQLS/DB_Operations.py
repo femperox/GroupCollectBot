@@ -242,7 +242,7 @@ def getCurrentParcel():
     conn = getConnection(DbNames.collectDatabase)
     cursor = conn.cursor()
 
-    cursor.execute(f'''SELECT barcode, rcpnvkid, notified FROM  PARCEL
+    cursor.execute(f'''SELECT barcode, rcpnvkid, notified, tracking_type FROM  PARCEL
                        WHERE 1=1
                        AND RCPN_GOT = FALSE
                        AND operationType NOT IN ('Уничтожение', 'Временное хранение');
@@ -305,9 +305,9 @@ def insertUpdateParcel(parcelInfo):
     cursor = conn.cursor() 
 
     cursor.execute(f'''Call ParcelInsertUpdate( '{parcelInfo['barcode']}', '{parcelInfo['sndr']}', '{parcelInfo['rcpn']}', 
-                       {parcelInfo['destinationIndex']}, {parcelInfo['operationIndex']}, '{parcelInfo['operationDate']}', 
+                       '{parcelInfo['destinationIndex']}', '{parcelInfo['operationIndex']}', '{parcelInfo['operationDate']}', 
                        '{parcelInfo['operationType']}', '{parcelInfo['operationAttr']}', 
-                       {parcelInfo['mass']}, '{parcelInfo['rcpnVkId']}');''')
+                       {parcelInfo['mass']}, '{parcelInfo['rcpnVkId']}', '{parcelInfo['trackingType']}');''')
 
 
     conn.commit() 

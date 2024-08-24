@@ -28,14 +28,12 @@ def refreshSessions(ticks, thread_index):
     """
 
     if ticks == maxProxyTick:
-        print('ok')
         if not firstStart[thread_index]:
             AmiAmiApi.stopDriver(thread_index)
         AmiAmiApi.startDriver(thread_index)
         logger_stores.info(f"[DRIVER] RELOAD DRIVER")
         return 0
     else:
-        print('why')
         AmiAmiApi.refreshDriver(thread_index)
         logger_stores.info(f"[DRIVER] REFRESH PAGE")
         return ticks
@@ -49,7 +47,6 @@ def monitorAmiProduct(rcpns, typeRRS, newProxyTick, thread_index):
     """
 
     seen_ids = []
-    proxies = []
     
     while True:
         
@@ -112,7 +109,6 @@ def monitor_hpoi(rcpns, typeRRS, vk):
                 for part in items_parts:
                     sleep(10)
                     mes = Messages.formHpoiMess(part, typeRRS)
-                    print(part)
                     pics = [x for x in part[0]['mainPhoto']]
                     vk.sendMes(mess = mes, users = rcpns, tag = typeRRS, pic = pics)
 

@@ -3,10 +3,11 @@ from GoogleSheets.CollectSheet import CollectSheet as cs
 from VkApi.VkInterface import VkApi as vk
 from SQLS.DB_Operations import addTags, getCurrentParcel, insertUpdateParcel, getParcelExpireDate, setParcelNotified
 from Logger import logger_utils
-from APIs.pochtaApi import getTracking
+from APIs.TrackingAPIs.TrackingSelector import TrackingSelector
 from APIs.posredApi import PosredApi
 from confings.Messages import Messages as mess
-from confings.Consts import PochtaApiStatus, vkCoverTime
+from confings.Consts import PochtaApiStatus, vkCoverTime, YandexTrackingApiStatus
+from confings.Consts import TrackingTypes, RegexType
 
 from pprint import pprint
 import sys
@@ -86,26 +87,41 @@ def updateTrackingStatuses():
 
     try:
         parcel_list = getCurrentParcel()
-        
+
+        # чекаем сколько всего яндексов у нас
+        yandex_delivery_count = len(list(filter(lambda parcel: parcel[3] == TrackingTypes.ids[RegexType.regex_track_yandex], parcel_list)))
+        current_yandex_delivery_count = 0
+
         for parcel in parcel_list:
-            tracking_info = getTracking(parcel[0])
+            message = ''
+            
+            # счётчик для отключения драйвераа
+            current_yandex_delivery_count += 1 if parcel[3] == TrackingTypes.ids[RegexType.regex_track_yandex] else 0 
+
+            tracking_info = TrackingSelector.selectTracker(track = parcel[0], type = parcel[3], stopDriver = yandex_delivery_count == current_yandex_delivery_count)
+
             tracking_info['rcpnVkId'] = parcel[1]
+            tracking_info['trackingType'] = parcel[3]
 
             insertUpdateParcel(tracking_info)
+            if not parcel[2]:
+                if parcel[3] == TrackingTypes.ids[RegexType.regex_track]:
+                    if tracking_info['operationAttr'] in [PochtaApiStatus.arrived, PochtaApiStatus.notice_arrived]:
+                        message = mess.mess_notify_arrival.format(tracking_info['barcode'], tracking_info['operationIndex'], getParcelExpireDate(tracking_info['barcode']))
+                elif parcel[3] == TrackingTypes.ids[RegexType.regex_track_yandex]:
+                    if tracking_info['operationType'] in [YandexTrackingApiStatus.arrived]:
+                        message = mess.mess_notify_arrival_yandex.format(tracking_info['barcode'], tracking_info['operationAttr'], tracking_info['destinationIndex'], tracking_info['operationIndex'])
 
-            if tracking_info['operationAttr'] in [PochtaApiStatus.arrived, PochtaApiStatus.notice_arrived] and not parcel[2]:
-                
-                message = mess.mess_notify_arrival.format(tracking_info['barcode'], tracking_info['operationIndex'], getParcelExpireDate(tracking_info['barcode']))
-                
-                vk.sendMes(mess = message, users = tracking_info['rcpnVkId'])
-                setParcelNotified(tracking_info['barcode'])
+                if message:            
+                    vk.sendMes(mess = message, users = tracking_info['rcpnVkId'])
+                    setParcelNotified(tracking_info['barcode'])
 
-                logger_utils.info(f"""[NOTIFIED-TRACKING-NOTIFY] Пользователь {tracking_info['rcpnVkId']} проинфомирован об отправлении {tracking_info['barcode']}""")
-
+                    logger_utils.info(f"""[NOTIFIED-TRACKING-NOTIFY] Пользователь {tracking_info['rcpnVkId']} проинфомирован об отправлении {tracking_info['barcode']}""")
             
             logger_utils.info(f"""[UPDATE-TRACKING-NOTIFY] Информация об отправлении {tracking_info['barcode']} обновлена""")
+        
     except Exception as e:
-        logger_utils.info(f"""[ERROR-TRACKING-NOTIFY] {print_exc()}""")
+        logger_utils.info(f"""[ERROR-TRACKING-NOTIFY] {print_exc()} : {e}""")
 
 def updateCoverPhoto(daytime):
     """Обновление шапки сообщества

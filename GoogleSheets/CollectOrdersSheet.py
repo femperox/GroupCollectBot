@@ -189,6 +189,16 @@ class CollectOrdersSheet(ParentSheetClass):
 
         self.service.spreadsheets().batchUpdate(spreadsheetId=self.getSpreadsheetId(),
                                                   body={"requests": [ce.updateSheetProperties(spId, 650)]}).execute()
+        
+    def deleteNamedRange(self, namedRange):
+        '''
+   
+        :param spId: айди листа в таблице
+        :return:
+        '''
+
+        self.service.spreadsheets().batchUpdate(spreadsheetId=self.getSpreadsheetId(),
+                                                  body={"requests": [ce.deleteNamedRange(name = namedRange)]}).execute()
 
 
     def makeItemString(self, items):

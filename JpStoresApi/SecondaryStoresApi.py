@@ -26,7 +26,6 @@ class SecondaryStoreApi:
         """
 
         curl = f'https://paypayfleamarket.yahoo.co.jp/api/item/v2/items/{item_id}'
-        print(curl)
 
         headers = WebUtils.getHeader()
         page = requests.get(curl, headers=headers)
