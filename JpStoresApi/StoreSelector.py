@@ -13,7 +13,7 @@ class StoreSelector:
 
     @staticmethod
     def isEngAmi(url):
-        return url.find('/eng/')
+        return url.find('/eng/') > -1
 
     url = ''
 
@@ -70,7 +70,12 @@ class StoreSelector:
         item = {}
 
         if site == Stores.mercari:
-            item = MercariApi.parseMercariPage(url, self.getItemID())
+
+            if url.find('/shops/') > -1:
+                item_id = self.getItemID().split('?')[0]
+                item = MercariApi.parseMercariShopsPage(url, item_id)
+            else:
+                item = MercariApi.parseMercariPage(url, self.getItemID())
 
         elif site == Stores.payPay:
             item = ssa.parsePayPay(url, self.getItemID())
@@ -82,15 +87,13 @@ class StoreSelector:
             item = getAucInfo(app_id= app_id,id = self.getItemID())
 
         elif site == Stores.amiAmi:
-            pprint(Stores.amiAmi)
             
             if url.find('/eng/')>0:
                 AmiAmiApi.startDriver(thread_index=0)
                 item = AmiAmiApi.parseAmiAmiEng(url, self.getItemID().split("=")[-1])
                 AmiAmiApi.stopDriver(thread_index=0)
             else:
-                item = {}
-                #item = AmiAmiApi.parseAmiAmiJp(url)
+                item = AmiAmiApi.parseAmiAmiJp(url)
             
         elif site == Stores.mandarake:
             item = ssa.parseMandarake(url)
@@ -98,7 +101,6 @@ class StoreSelector:
         elif site == Stores.animate:
             
             item = sa.parseAnimate(self.getItemID())
-
 
         return item
     

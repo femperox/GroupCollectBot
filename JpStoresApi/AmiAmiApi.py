@@ -13,6 +13,7 @@ from pprint import pprint
 from requests_html import HTMLSession 
 import cfscrape 
 from seleniumbase import Driver
+from APIs.posredApi import PosredApi
 import random
 
 class AmiAmiApi():
@@ -24,7 +25,7 @@ class AmiAmiApi():
 
         AmiAmiApi.driver[thread_index] = WebUtils.getSelenium(isUC=True)
         AmiAmiApi.driver[thread_index].open('https://www.amiami.com/eng/')  #https://www.amiami.com/eng/
-        time.sleep(2)
+        time.sleep(4)
         AmiAmiApi.driver[thread_index].save_screenshot("screenshot.png")
 
     @staticmethod
@@ -36,7 +37,6 @@ class AmiAmiApi():
         AmiAmiApi.driver[thread_index].refresh()
 
     AMI_API_ITEM_INFO = 'https://api.amiami.com/api/v1.0/item?gcode={}'
-
 
     # 9882 - Fashion
     wrongCategoriesNumbers = [9882]
@@ -138,8 +138,6 @@ class AmiAmiApi():
             
         return js
 
-
-
     @staticmethod
     def curlAmiAmiEng(curl, thread_index, proxy = ''):
         """Запрос к API AmiAmiEng
@@ -193,6 +191,7 @@ class AmiAmiApi():
         item['mainPhoto'] = 'https://img.amiami.com'+js['item']['main_image_url']
         item['siteName'] = 'AmiAmiEng'
         item['name'] = js['item']['gname']
+        item['endTime'] = datetime.now() + relativedelta(years=3)
 
         item['posredCommission'] = 0
 
@@ -208,26 +207,30 @@ class AmiAmiApi():
         Returns:
             dict: словарь с информацией о лоте
         """
-
-        soup = WebUtils.getSraper(url)
-        name = soup.find('img', class_='gallery_item_main ofi')['alt']
-        price = int(soup.find('div', class_='price').text.replace(',', '').replace('\t', '').split('円')[0].split('\n')[-1])
-        img = soup.find('img', class_='gallery_item_main ofi')['src']
+        soup = WebUtils.getSoup(url = url, isUcSeleniumNeeded = True)
 
         item = {}
-        
-        item['itemPrice'] = price
+        item['itemPrice'] = soup.find('div', class_ = 'price').text
+        item['itemPrice'] = int(item['itemPrice'].split('円')[0].replace('\t', '').replace('\n', '').replace(',', '').split('OFF')[-1])
+
         item['tax'] = 0
-        item['itemPriceWTax'] = 0
+        item['itemPriceWTax'] = 0 # Всегда включена в цену
         item['shipmentPrice'] = spt.undefined
         item['page'] = url
-        item['mainPhoto'] = img
+        item['mainPhoto'] = soup.find('img', class_ = 'gallery_item_main ofi')['src']
         item['siteName'] = 'AmiAmiJp'
-        item['name'] = name
-        
+        item['name'] = soup.find('h2', class_ = 'heading_10').text
+        item['endTime'] = datetime.now() + relativedelta(years=3)
+
+        posredCommission = PosredApi.getСommissionForItem(item['page'])
+        if PosredApi.isPercentCommision(posredCommission):
+            item['posredCommission'] = f"{item['itemPrice']}*{posredCommission['value']/100 if posredCommission['value'] > 0 else 0}"
+            item['posredCommissionValue'] = item['itemPrice']*(posredCommission['value']/100)
+        else:
+            item['posredCommission'] = posredCommission['value']      
+
         return item
     
-
         
     @staticmethod
     def getAdditionalProductInfo(item_id, thread_index, proxy=[]):
@@ -279,11 +282,11 @@ class AmiAmiApi():
             list of dict: список товаров и инфо о них
         """
 
-        pages_to_see = 7#15
+        pages_to_see = 15
 
         if type_id == MonitorStoresType.amiAmiEngSale:
             curl = 'https://api.amiami.com/api/v1.0/items?pagemax=50&pagecnt={}&lang=eng&mcode=&ransu=&age_confirm=&s_st_saleitem=1&s_st_list_newitem_available=1'
-            pages_to_see = 5#10
+            pages_to_see = 10
         else:
             curl = 'https://api.amiami.com/api/v1.0/items?pagemax=50&pagecnt={}&lang=eng&mcode=&ransu=&age_confirm=&s_st_list_newitem_available=1'
 

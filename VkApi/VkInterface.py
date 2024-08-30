@@ -456,7 +456,7 @@ class VkApi:
         else:
             keyboard.add_openlink_button(link = VK_AUTOTAG_FORM_URL, label ='Добавиться к автотегам')
             keyboard.add_line()
-            keyboard.add_callback_button(label='Узнать цену товара (Япония) (test-режим)', color=VkKeyboardColor.PRIMARY, payload= PayloadType.menu_check_price)
+            keyboard.add_callback_button(label='Узнать цену товара (Япония)', color=VkKeyboardColor.PRIMARY, payload= PayloadType.menu_check_price)
 
         return keyboard
     
@@ -770,10 +770,7 @@ class VkApi:
                         elif event.object['payload'] == PayloadType.menu_check_price:
 
                             updateUserMenuStatus(user_id = event.object.user_id, status = PayloadType.menu_check_price['type'])
-                            mes = "Пришлите ссылку на товар.\n\n✅ После ссылки можете добавить свой комментарий, например, если это аукцион, свою максимальную ставку ЗА ТОВАР в йенах."
-                            mes += "\n\n🕒 После того как пришлёте ссылку дождитесь расчета бота."
-                            mes += "\n\n‼️ Для Яху-ауков в расчётах используется последняя ставка на лот. Это не значит, что это будет окончательная стоимость лота (если это не блиц)."
-                            self.sendMes(mess = mes, users = chat)     
+                            self.sendMes(mess = Messages.formJapCalcMes(), users = chat)     
 
                         # Челик поставил на выкуп товар
                         elif event.object['payload']["type"] == PayloadType.menu_bot_add_item["type"]:
@@ -834,7 +831,8 @@ class VkApi:
                         try:
                             url = re.findall(RegexType.regex_store_url_bot, url)[0]  
                             messText, pic = Messages.formPriceMes(url=url)
-                            self.sendMes(mess = messText, users= chat, keyboard = self.form_menu_buttons(isAddButton = True, buttonPayloadText = event.obj.message['text']), pic = [pic] if pic else [])
+                            payload = event.obj.message['text'].split('?source=home_shops_flashsale_component')[0]
+                            self.sendMes(mess = messText, users= chat, keyboard = self.form_menu_buttons(isAddButton = True, buttonPayloadText = payload), pic = [pic] if pic else [])
                             logger_utils.info(f"""[CHECK_PRICE] - Расчитана цена для пользователя {self.get_name(id = sender)} товара [{url}]""")
                         except Exception as e:
                             logger_utils.info(f"""[ERROR_CHECK_PRICE] - Не удалось посчитать цену для пользователя {self.get_name(id = sender)} товара [{url}] :: {e}""")

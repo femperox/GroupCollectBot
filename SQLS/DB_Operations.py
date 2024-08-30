@@ -245,7 +245,8 @@ def getCurrentParcel():
     cursor.execute(f'''SELECT barcode, rcpnvkid, notified, tracking_type FROM  PARCEL
                        WHERE 1=1
                        AND RCPN_GOT = FALSE
-                       AND operationType NOT IN ('Уничтожение', 'Временное хранение');
+                       AND operationType NOT IN ('Уничтожение', 'Временное хранение')
+                       ORDER BY tracking_type;
                    ''')
 
     result = cursor.fetchall()

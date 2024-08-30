@@ -24,6 +24,7 @@ class MercariApi:
         deleted = 'deleted'
 
     FREE_SHIPPING = 2
+    FREE_SHIPPING_SHOPS = 1
 
     @staticmethod
     def curlMercariApi(curl, uuid_gen_word, method = 'GET'):
@@ -155,7 +156,51 @@ class MercariApi:
         return js['data']['photos'][0]
 
 
+    @staticmethod
+    def parseMercariShopsPage(url, item_id):
+        """Получение базовой информации о лоте со вторички mercari.shops
 
+        Args:
+            url (string): ссылка на лот
+            item_id (string): айди лота
+
+        Returns:
+            dict: словарь с информацией о лоте
+        """
+        
+        curl = f'https://api.mercari.jp/v1/marketplaces/shops/products/{item_id}?view=FULL&imageType=JPEG'
+
+        headers = MercariApi.curlMercariApi(curl = curl, uuid_gen_word = item_id)  
+
+        session = requests.session()
+        page = session.get(curl, headers=headers)
+        js = page.json() 
+
+        item = {}
+        if 'code' not in js.keys():
+            item['itemPrice'] = js['productDetail']['timeSaleDetails']['price'] if js['productDetail']['timeSaleDetails'] else js['price']
+            item['itemPrice'] = int(item['itemPrice'])
+
+            item['tax'] = 0
+            item['itemPriceWTax'] = 0 # Всегда включена в цену
+            item['shipmentPrice'] = spt.free if int(js['productDetail']['shippingPayer']['shippingPayerId']) == MercariApi.FREE_SHIPPING_SHOPS else spt.undefined
+            item['page'] = url
+            item['mainPhoto'] = js['productDetail']['photos'][0]
+            item['siteName'] = 'mercari.shops'
+            item['itemStatus'] = MercariApi.MercariItemStatus.sold if len(js["productTags"]) else MercariApi.MercariItemStatus.on_sale 
+            item['endTime'] = datetime.now() + relativedelta(years=3)
+            
+            posredCommission = PosredApi.getСommissionForItem(item['page'])
+            if PosredApi.isPercentCommision(posredCommission):
+                item['posredCommission'] = f"{item['itemPrice']}*{posredCommission['value']/100 if posredCommission['value'] > 0 else 0}"
+                item['posredCommissionValue'] = item['itemPrice']*(posredCommission['value']/100)
+            else:
+                item['posredCommission'] = posredCommission['value']            
+        elif js['code'] == 5:
+            item['itemStatus'] = MercariApi.MercariItemStatus.deleted   
+        return item
+
+        
     @staticmethod
     def parseMercariPage(url, item_id):
         """Получение базовой информации о лоте со вторички mercari

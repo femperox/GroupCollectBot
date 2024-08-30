@@ -56,7 +56,7 @@ class PosredApi:
         
         for json_item in js['result']:
             if json_item['from'] == '643' and json_item['to'] == '840':
-                return json_item['rate'] + 0.5
+                return json_item['rate'] + 1.5
         
 
     @staticmethod

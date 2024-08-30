@@ -12,7 +12,7 @@ import pprint
 from seleniumbase import Driver
 import json
 import requests
-
+import time
 from pprint import pprint
 
 class WebUtils:
@@ -41,7 +41,7 @@ class WebUtils:
         htmlParser = 'html.parser'
 
     @staticmethod
-    def getSoup(url, timeout = 0, parser = Bs4Parsers.htmlParser, isSeleniumNeeded = False, proxyServer = ''):
+    def getSoup(url, timeout = 0, parser = Bs4Parsers.htmlParser, isSeleniumNeeded = False, proxyServer = '', isUcSeleniumNeeded = False):
         """Получить bs4 soup по заданной ссылке
 
         Args:
@@ -54,9 +54,17 @@ class WebUtils:
             bs4.BeautifulSoup: bs4 soup
         """
         if isSeleniumNeeded:
-            browser = WebUtils.getSelenium(proxyServer=proxyServer)
+            browser = WebUtils.getSelenium()
             browser.get(url)
             soup = BeautifulSoup(browser.page_source, parser)
+            browser.quit()
+        elif isUcSeleniumNeeded:
+            browser = WebUtils.getSelenium(isUC=True)
+            browser.get(url)
+
+            time.sleep(4)
+            soup = BeautifulSoup(browser.page_source, parser)
+            browser.quit()
         else:    
             headers = { 'User-Agent': LINUX_USER_AGENT}
             if proxyServer:
