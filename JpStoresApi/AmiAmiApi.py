@@ -25,7 +25,7 @@ class AmiAmiApi():
 
         AmiAmiApi.driver[thread_index] = WebUtils.getSelenium(isUC=True)
         AmiAmiApi.driver[thread_index].open('https://www.amiami.com/eng/')  #https://www.amiami.com/eng/
-        time.sleep(4)
+        time.sleep(5)
         AmiAmiApi.driver[thread_index].save_screenshot("screenshot.png")
 
     @staticmethod

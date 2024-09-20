@@ -93,7 +93,9 @@ def updateTrackingStatuses():
         current_yandex_delivery_count = 0
 
         for parcel in parcel_list:
+            
             try:
+                pprint(parcel)
                 message = ''
                 
                 # счётчик для отключения драйвераа
@@ -122,6 +124,7 @@ def updateTrackingStatuses():
                 logger_utils.info(f"""[UPDATE-TRACKING-NOTIFY] Информация об отправлении {tracking_info['barcode']} обновлена""")
             except Exception as e:
                 logger_utils.info(f"""[ERROR-TRACKING-NOTIFY] {print_exc()} : {e}""")
+                pprint(e)
                 continue
     except Exception as e:
         logger_utils.info(f"""[ERROR-TRACKING-NOTIFY] {print_exc()} : {e}""")

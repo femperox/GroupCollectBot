@@ -32,15 +32,13 @@ class PosredApi:
         """
 
         soup = WebUtils.getSoup(url = CURRENCY_API_JPY_AMI)
-        currencyScript = soup.findAll('script', id='__NEXT_DATA__')[0]
-        js = json.loads(currencyScript.text)
-        js = js["props"]["pageProps"]["data"]["blocks"][4]["list"]
+        currencyScript = soup.findAll('script')[-1].text.replace('\\', '').replace("self.__next_f.push(", '').replace('n"])', '')
+        currencyJPYStart = currencyScript.find('{"title":"JPY"')
+        currencyJPYEnd = currencyScript.find(']},{"_template":"infoBgBlock","titleBlock":"Конвертация')
+        
+        js = json.loads(currencyScript[currencyJPYStart:currencyJPYEnd])
 
-        for json_item in js:
-                        
-            if json_item['title'] in CURRENCIES.yen.value:
-                return json_item['sale']['value'] + 0.015
-            
+        return js['sale']['value'] + 0.015
 
     @staticmethod
     def getCurrentUSDCurrencyRate():

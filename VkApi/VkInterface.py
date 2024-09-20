@@ -10,14 +10,14 @@ import re
 from random import randint
 from vk_api.bot_longpoll import VkBotLongPoll, VkBotEventType
 from vk_api.longpoll import VkLongPoll, VkChatEventType, VkEventType, VkLongpollMode
-from vk_api.keyboard import VkKeyboard, VkKeyboardColor
 from confings.Messages import MessageType, Messages
 from Logger import logger, logger_fav, logger_utils
 from SQLS.DB_Operations import addFav, getFav, deleteFav, getFandoms, getTags, addBans, insertUpdateParcel, addBannedSellers, updateUserMenuStatus, getUserMenuStatus
-from confings.Consts import TrackingTypes, VK_AUTOTAG_FORM_URL, VK_PROPOSED_CHAT_ID, VK_ERRORS_CHAT_ID, BanActionType, MAX_BAN_REASONS, RegexType, PayloadType, VkCommands, PRIVATES_PATH, VkCoverSize, Stores
+from confings.Consts import TrackingTypes, VK_PROPOSED_CHAT_ID, VK_ERRORS_CHAT_ID, BanActionType, MAX_BAN_REASONS, RegexType, PayloadType, VkCommands, PRIVATES_PATH, VkCoverSize, Stores
 from APIs.utils import getMonitorChats, getFavInfo, getStoreMonitorChats
 from APIs.TrackingAPIs.TrackingSelector import TrackingSelector
 from JpStoresApi.StoreSelector import StoreSelector
+from VkApi.objects.VkButtons import VkButtons
 import time
 
 class VkApi:
@@ -441,84 +441,6 @@ class VkApi:
                  }
         self.__vk_message.messages.removeChatUser(**params)
 
-    
-    def form_menu_buttons(self, isAddButton = False, buttonPayloadText = ''):
-
-        settings = dict(one_time= False, inline=True)
-            
-        keyboard = ''
-
-        keyboard = VkKeyboard(**settings)
-
-        if isAddButton:
-            keyboard.add_callback_button(label='Поставить на выкуп', color=VkKeyboardColor.POSITIVE, payload= {"type": PayloadType.menu_bot_add_item["type"],  "text": buttonPayloadText}) 
-
-        else:
-            keyboard.add_openlink_button(link = VK_AUTOTAG_FORM_URL, label ='Добавиться к автотегам')
-            keyboard.add_line()
-            keyboard.add_callback_button(label='Узнать цену товара (Япония)', color=VkKeyboardColor.PRIMARY, payload= PayloadType.menu_check_price)
-
-        return keyboard
-    
-    def form_menu_buying_buttons(self):
-        
-        settings = dict(one_time= False, inline=True)
-            
-        keyboard = VkKeyboard(**settings)
-
-        keyboard.add_callback_button(label ='Добавить в ⭐️', color=VkKeyboardColor.SECONDARY)
-        keyboard.add_line()
-        keyboard.add_callback_button(label='Товар выкуплен', color=VkKeyboardColor.POSITIVE, payload= PayloadType.menu_check_price)
-        keyboard.add_callback_button(label='Товар НЕ выкуплен', color=VkKeyboardColor.NEGATIVE, payload= PayloadType.menu_check_price)
-
-
-    def form_inline_buttons(self, type, items = ''):
-
-            settings = dict(one_time=False, inline=True)
-            
-            keyboard = ''
-
-            if type == MessageType.monitor_big_category:  
-                      
-                keyboard = VkKeyboard(**settings)
-                keyboard.add_callback_button(label='🚫', color=VkKeyboardColor.NEGATIVE, payload=PayloadType.ban_seller)
-                keyboard.add_callback_button(label='⭐️', color=VkKeyboardColor.POSITIVE, payload=PayloadType.add_fav)
-            
-            elif type in [MessageType.monitor_big_category_other, MessageType.monitor_seller, MessageType.fav_list]:
-        
-                keyboard = VkKeyboard(**settings)
-                j = 0
-                columnn_count = 5
-                for i in range(len(items)):
-                    
-                    if j % columnn_count == 0 and j!=0:
-                        keyboard.add_line()
-
-                    if type in [MessageType.monitor_big_category_other, MessageType.monitor_seller]:
-                        payload = {"type": PayloadType.add_fav_num["type"], "text": PayloadType.add_fav_num["text"].format(i)}
-                        keyboard.add_callback_button(label=f'⭐️ {i+1}', color=VkKeyboardColor.POSITIVE, payload=payload)
-                    
-                    elif type in [MessageType.fav_list]:
-                        payload = {"type": PayloadType.delete_fav_num["type"], "text": PayloadType.delete_fav_num["text"].format(i)}
-                        keyboard.add_callback_button(label=f'🗑 {i+1}', color=VkKeyboardColor.SECONDARY, payload=payload)
-
-                    j += 1
-
-            if type in [MessageType.monitor_big_category_other]:
-                j = 0
-                columnn_count = 5
-                for i in range(len(items)):
-                    
-                    if j % columnn_count == 0:
-                        keyboard.add_line()
-
-                    payload = {"type": PayloadType.ban_seller_num["type"], "text": PayloadType.ban_seller_num["text"].format(i)}
-                    keyboard.add_callback_button(label=f'🚫 {i+1}', color=VkKeyboardColor.NEGATIVE, payload=payload)
-                    
-                    j += 1
-
-            return keyboard
-
     def sendMes(self, mess, users, tag = '', pic = [], keyboard = False):
         """Отправка сообщения
 
@@ -822,7 +744,7 @@ class VkApi:
                     # менюшка
                     elif chat not in not_dm_chats and event.obj.message['text'].lower() in  VkCommands.menuList:
                         # and (sender in whiteList)
-                        self.sendMes(mess="Выберите пункт меню", users=chat, keyboard=self.form_menu_buttons())
+                        self.sendMes(mess="Выберите пункт меню", users=chat, keyboard=VkButtons.form_menu_buttons())
 
                     # ответ на менюшку
                     elif PayloadType.menu_check_price["type"] == getUserMenuStatus(user_id=sender):
@@ -832,7 +754,7 @@ class VkApi:
                             url = re.findall(RegexType.regex_store_url_bot, url)[0]  
                             messText, pic = Messages.formPriceMes(url=url)
                             payload = event.obj.message['text'].split('?source=home_shops_flashsale_component')[0]
-                            self.sendMes(mess = messText, users= chat, keyboard = self.form_menu_buttons(isAddButton = True, buttonPayloadText = payload), pic = [pic] if pic else [])
+                            self.sendMes(mess = messText, users= chat, keyboard = VkButtons.form_menu_buttons(isAddButton = True, buttonPayloadText = payload), pic = [pic] if pic else [])
                             logger_utils.info(f"""[CHECK_PRICE] - Расчитана цена для пользователя {self.get_name(id = sender)} товара [{url}]""")
                         except Exception as e:
                             logger_utils.info(f"""[ERROR_CHECK_PRICE] - Не удалось посчитать цену для пользователя {self.get_name(id = sender)} товара [{url}] :: {e}""")
@@ -851,7 +773,7 @@ class VkApi:
                                 favListing = getFav(sender, offset)
                                 
                                 pics = []
-                                keyboard = self.form_inline_buttons(type = MessageType.fav_list, items = favListing[0])
+                                keyboard = VkButtons.form_inline_buttons(type = MessageType.fav_list, items = favListing[0])
                                 mess, picStr = Messages.formFavMes(user_name=user_name, favListing= favListing, offset= offset)
                                
                                 if picStr != '': pics.append(picStr)

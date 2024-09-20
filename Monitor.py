@@ -15,6 +15,7 @@ from confings.Consts import MONITOR_CONF_PATH, PRIVATES_PATH, Stores
 from confings.Messages import MessageType, Messages
 from APIs.utils import getActiveMonitorChatsTypes, createItemPairs
 from SQLS.DB_Operations import IsExistBannedSeller, insertNewSeenProducts
+from VkApi.objects.VkButtons import VkButtons
 
 threads = []
         
@@ -43,7 +44,7 @@ def sendMessage(items, params):
 
     mes = Messages.formSellerMess(items)
     pics = [x['mainPhoto'] for x in items]
-    keyboard = vk.form_inline_buttons(type = MessageType.monitor_seller, items = pics)
+    keyboard = VkButtons.form_inline_buttons(type = MessageType.monitor_seller, items = pics)
     vk.sendMes(mess = mes, users = params['rcpns'], tag = params['tag'], pic = pics, keyboard = keyboard)
     logger.info(f"[MESSAGE-{params['tag']}] Отправлено сообщение о лотах продавца {items[0]['seller']}")
  
@@ -110,7 +111,7 @@ def bs4MonitorYahoo(curl, params):
                     continue              
                 
                 mes = Messages.formMess(item, params['tag'])
-                keyboard = vk.form_inline_buttons(type = MessageType.monitor_big_category)
+                keyboard = VkButtons.form_inline_buttons(type = MessageType.monitor_big_category)
                 vk.sendMes(mess = mes, users = params['rcpns'], tag = params['tag'], pic = [item['mainPhoto']], keyboard = keyboard )
                 logger.info(f"[MESSAGE-{params['tag']}] Отправлено сообщение о лоте {item['id']}")
             
@@ -230,7 +231,7 @@ def monitorMercari(key_word, params):
                         mes = Messages.formMercariMess(part, params['tag'])
                         pics = [x['mainPhoto'] for x in part]
 
-                        keyboard = vk.form_inline_buttons(type = MessageType.monitor_big_category_other, items = part)
+                        keyboard = VkButtons.form_inline_buttons(type = MessageType.monitor_big_category_other, items = part)
                         vk.sendMes(mess = mes, users = params['rcpns'], tag = params['tag'], pic = pics, keyboard = keyboard)
                         
 
