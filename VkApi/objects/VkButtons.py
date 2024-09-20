@@ -33,7 +33,7 @@ class VkButtons:
         return keyboard
     
     @staticmethod
-    def form_menu_buying_buttons():
+    def form_menu_buying_buttons(userId, userMesId):
         """Подготовить кнопки для меню выкупа
 
         Returns:
@@ -44,10 +44,11 @@ class VkButtons:
             
         keyboard = VkKeyboard(**settings)
 
-        keyboard.add_callback_button(label ='Добавить в ⭐️', color=VkKeyboardColor.SECONDARY)
+        keyboard.add_callback_button(label ='Добавить в ⭐️', color=VkKeyboardColor.SECONDARY, payload= PayloadType.buy_fav)
         keyboard.add_line()
-        keyboard.add_callback_button(label='Товар выкуплен', color=VkKeyboardColor.POSITIVE, payload= PayloadType.menu_check_price)
-        keyboard.add_callback_button(label='Товар НЕ выкуплен', color=VkKeyboardColor.NEGATIVE, payload= PayloadType.menu_check_price)
+
+        keyboard.add_callback_button(label='Товар выкуплен', color=VkKeyboardColor.POSITIVE, payload= {"type": PayloadType.buy_succes["type"],  "user": userId, "userMes": userMesId})
+        keyboard.add_callback_button(label='Товар НЕ выкуплен', color=VkKeyboardColor.NEGATIVE, payload= {"type": PayloadType.buy_fail["type"],  "user": userId, "userMes": userMesId})
 
         return keyboard
 

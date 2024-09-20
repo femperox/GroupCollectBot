@@ -13,7 +13,7 @@ from vk_api.longpoll import VkLongPoll, VkChatEventType, VkEventType, VkLongpoll
 from confings.Messages import MessageType, Messages
 from Logger import logger, logger_fav, logger_utils
 from SQLS.DB_Operations import addFav, getFav, deleteFav, getFandoms, getTags, addBans, insertUpdateParcel, addBannedSellers, updateUserMenuStatus, getUserMenuStatus
-from confings.Consts import TrackingTypes, VK_PROPOSED_CHAT_ID, VK_ERRORS_CHAT_ID, BanActionType, MAX_BAN_REASONS, RegexType, PayloadType, VkCommands, PRIVATES_PATH, VkCoverSize, Stores
+from confings.Consts import TrackingTypes, ItemBuyStatus, VK_PROPOSED_CHAT_ID, VK_ERRORS_CHAT_ID, BanActionType, MAX_BAN_REASONS, RegexType, PayloadType, VkCommands, PRIVATES_PATH, VkCoverSize, Stores
 from APIs.utils import getMonitorChats, getFavInfo, getStoreMonitorChats
 from APIs.TrackingAPIs.TrackingSelector import TrackingSelector
 from JpStoresApi.StoreSelector import StoreSelector
@@ -441,7 +441,7 @@ class VkApi:
                  }
         self.__vk_message.messages.removeChatUser(**params)
 
-    def sendMes(self, mess, users, tag = '', pic = [], keyboard = False):
+    def sendMes(self, mess, users, tag = '', pic = [], keyboard = False, reply_to = ''):
         """Отправка сообщения
 
         Args:
@@ -459,6 +459,7 @@ class VkApi:
                 'peer_ids': users,
                 'message': mess,
                 'random_id': 0,
+                'reply_to': reply_to
             }
 
             if keyboard: params['keyboard'] = keyboard.get_keyboard()
@@ -637,7 +638,7 @@ class VkApi:
                         if event.object['payload']['type'] == PayloadType.add_fav['type']:
 
                             item_index = int(event.object['payload']['text'])
-                            fav_item = getFavInfo(mes['items'][0]['text'], item_index)
+                            fav_item = getFavInfo(mes['items'][0]['text'], item_index, isPosredPresent = False if 'fromBuyMenu' in event.object['payload'].keys() else True)
 
                             fav_item['usr'] = event.object['user_id']
                             try:
@@ -705,8 +706,9 @@ class VkApi:
                             url = re.findall(RegexType.regex_store_url_bot, mes['items'][0]['text'])[0]
                             textInfo = event.object['payload']["text"].replace(url, '')
                             text = Messages.formAddItemMes(item_url = url, user = self.get_name(event.object.user_id), info = textInfo)
-
-                            self.sendMes(mess = text, users = VK_PROPOSED_CHAT_ID, pic = [attachment] if attachment else [])
+                            self.sendMes(mess = text, users = VK_PROPOSED_CHAT_ID, 
+                                         pic = [attachment] if attachment else [],
+                                         keyboard=VkButtons.form_menu_buying_buttons(userId = event.object.user_id, userMesId = mes['items'][0]['id']))
 
                             edit_params = {
                                 'peer_id' : mes['items'][0]['peer_id'],
@@ -718,7 +720,37 @@ class VkApi:
                             }
 
                             self.__vk_message.messages.edit(**edit_params)
-                            self.sendMes(mess = "Спасибо! Ваша заявка на выкуп принята!", users = chat)
+                            self.sendMes(mess = "Спасибо! Ваша заявка на выкуп принята!" + Messages.bot_ending, users = chat)
+
+                        # менюшка со статусом выкупа
+                        elif event.object['payload']["type"] in [PayloadType.buy_fail["type"], PayloadType.buy_succes["type"]]:
+
+                            if event.object['payload']["type"] == PayloadType.buy_succes["type"]:
+                                mess = 'Ваш товар был успешно выкуплен! Коллективщик свяжется с вами для последующей оплаты позже.'
+                                itemStatus = ItemBuyStatus.succes
+                            else:
+                                mess = 'Ваш товар не успели выкупить/удалили/не прошла ваша ставка.'
+                                itemStatus = ItemBuyStatus.fail
+
+                            mess += Messages.bot_ending
+
+                            attachment = ''
+                            if len(mes['items'][0]['attachments']) > 0:
+                                attachment =  mes['items'][0]['attachments'][0]['photo']
+                                attachment = 'photo{}_{}_{},'.format(attachment['owner_id'], attachment['id'], attachment['access_key'])
+
+                            edit_params = {
+                                'peer_id' : mes['items'][0]['peer_id'],
+                                'message': Messages.set_mes_buying_status(itemStatus) + mes['items'][0]['text'],
+                                'group_id': self.__group_id,
+                                'conversation_message_id': mes['items'][0]['conversation_message_id'],
+                                'keyboard': '',
+                                'attachment': attachment
+                            }
+
+                            self.__vk_message.messages.edit(**edit_params)
+
+                            self.sendMes(mess = mess, users = event.object['payload']['user'], reply_to = event.object['payload']['userMes'])
 
                         params = {
                             'user_id': event.object.user_id,

@@ -105,7 +105,7 @@ def getActiveMonitorChatsTypes(conf_list):
     return chat_dict
 
     
-def getFavInfo(text, item_index = 0):
+def getFavInfo(text, item_index = 0, isPosredPresent = True):
     """Получить инфо для избранного из сообщения
 
     Args:
@@ -119,8 +119,12 @@ def getFavInfo(text, item_index = 0):
 
     storeSelector = StoreSelector()
     storeSelector.url = CURRENT_POSRED
-    posred_domen = storeSelector.getStoreName()
-    urls = [url for url in re.findall(RegexType.regex_store_item_id_url, text) if url.find(posred_domen) == -1]
+
+    if isPosredPresent:
+        posred_domen = storeSelector.getStoreName()
+        urls = [url for url in re.findall(RegexType.regex_store_item_id_url, text) if url.find(posred_domen) == -1]
+    else:
+        urls = re.findall(RegexType.regex_store_url_bot, text)
     storeSelector.url = urls[item_index]
 
     fav_item['id'] = storeSelector.getItemID()

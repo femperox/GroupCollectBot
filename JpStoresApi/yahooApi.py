@@ -113,8 +113,7 @@ def getCurrentPrice(app_id, id):
     except Exception as e:
         
         pprint(e)
-    
-    
+        
 def getAucInfo(app_id, id):
     """Получение базовой информации о лоте
 

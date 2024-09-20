@@ -37,6 +37,7 @@ class StoreSelector:
 
         id = self.url.split('/')[-1]
         id = id.replace('?source_location=share', '').replace('&utm_source=web&utm_medium=share', '').replace('detail.php?product_id=', '')
+        id = id.replace('detail?scode=', '').replace('detail?gcode=', '')
         return id
     
     def getStoreUrlByItemId(self, item_id, store_type):
