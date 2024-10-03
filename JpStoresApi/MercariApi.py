@@ -2,12 +2,10 @@ from APIs.webUtils import WebUtils
 import requests
 from pprint import pprint
 import mercari
-import json
 from SQLS.DB_Operations import GetNotSeenProducts
 from random import randint, choice
 from confings.Consts import ShipmentPriceType as spt, Stores
 import uuid
-import time
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from SQLS.DB_Operations import IsExistBannedSeller
@@ -110,8 +108,6 @@ class MercariApi:
         item_list_raw = [item for item in item_list_raw if item['itemId'] in item_list_ids]
         item_list = []
 
-        pprint(item_list_raw)
-
         for item in item_list_raw:
 
             additionalInfo = MercariApi.getAdditionalInfo(item["itemId"], item["sellerId"])
@@ -186,7 +182,6 @@ class MercariApi:
             item['shipmentPrice'] = spt.free if int(js['productDetail']['shippingPayer']['shippingPayerId']) == MercariApi.FREE_SHIPPING_SHOPS else spt.undefined
             item['page'] = url
             item['mainPhoto'] = js['productDetail']['photos'][0]
-            item['siteName'] = 'mercari.shops'
             item['itemStatus'] = MercariApi.MercariItemStatus.sold if len(js["productTags"]) else MercariApi.MercariItemStatus.on_sale 
             item['endTime'] = datetime.now() + relativedelta(years=3)
             
@@ -229,7 +224,6 @@ class MercariApi:
             item['shipmentPrice'] = spt.free if int(js['data']['shipping_payer']['id']) == MercariApi.FREE_SHIPPING else spt.undefined
             item['page'] = url
             item['mainPhoto'] = js['data']['photos'][0]
-            item['siteName'] = 'mercari'
             item['itemStatus'] = js['data']['status']
             item['endTime'] = datetime.now() + relativedelta(years=3)
             

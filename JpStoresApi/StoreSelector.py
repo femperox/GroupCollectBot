@@ -1,13 +1,11 @@
 from pprint import pprint
 import re
 from confings.Consts import RegexType, Stores
-from JpStoresApi.yahooApi import getAucInfo
+from JpStoresApi.yahooApi import yahooApi
 from JpStoresApi.SecondaryStoresApi import SecondaryStoreApi as ssa
 from JpStoresApi.StoresApi import StoreApi as sa
 from JpStoresApi.AmiAmiApi import AmiAmiApi
 from JpStoresApi.MercariApi import MercariApi
-import json
-from confings.Consts import PRIVATES_PATH
 
 class StoreSelector:
 
@@ -68,30 +66,27 @@ class StoreSelector:
 
         self.url = url
         site = self.getStoreName()
+        item_id = self.getItemID()
         item = {}
 
         if site == Stores.mercari:
 
             if url.find('/shops/') > -1:
-                item_id = self.getItemID().split('?')[0]
-                item = MercariApi.parseMercariShopsPage(url, item_id)
+                item = MercariApi.parseMercariShopsPage(url, item_id.split('?')[0])
             else:
-                item = MercariApi.parseMercariPage(url, self.getItemID())
+                item = MercariApi.parseMercariPage(url, item_id)
 
         elif site == Stores.payPay:
-            item = ssa.parsePayPay(url, self.getItemID())
+            item = ssa.parsePayPay(url, item_id)
 
         elif site == Stores.yahooAuctions:
-            
-            tmp_dict = json.load(open(PRIVATES_PATH, encoding='utf-8'))
-            app_id = tmp_dict['yahoo_jp_app_id']
-            item = getAucInfo(app_id= app_id,id = self.getItemID())
+            item = yahooApi.getAucInfo(id = item_id)
 
         elif site == Stores.amiAmi:
             
             if url.find('/eng/')>0:
                 AmiAmiApi.startDriver(thread_index=0)
-                item = AmiAmiApi.parseAmiAmiEng(url, self.getItemID().split("=")[-1])
+                item = AmiAmiApi.parseAmiAmiEng(url, item_id.split("=")[-1])
                 AmiAmiApi.stopDriver(thread_index=0)
             else:
                 item = AmiAmiApi.parseAmiAmiJp(url)
@@ -101,7 +96,10 @@ class StoreSelector:
 
         elif site == Stores.animate:
             
-            item = sa.parseAnimate(self.getItemID())
+            item = sa.parseAnimate(item_id)
 
+        item['siteName'] = site
+        item['id'] = item_id
+        
         return item
     

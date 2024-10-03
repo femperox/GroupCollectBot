@@ -6,6 +6,7 @@ import re
 from itertools import chain
 from pprint import pprint
 from JpStoresApi.StoreSelector import StoreSelector
+from JpStoresApi.yahooApi import yahooApi
 from confings.Consts import Stores
 from dateutil.relativedelta import relativedelta
 
@@ -122,19 +123,12 @@ def getFavInfo(text, item_index = 0, isPosredPresent = True):
 
     if isPosredPresent:
         posred_domen = storeSelector.getStoreName()
-        urls = [url for url in re.findall(RegexType.regex_store_item_id_url, text) if url.find(posred_domen) == -1]
+        urls = [url for url in re.findall(RegexType.regex_store_url_bot, text) if url.find(posred_domen) == -1]
     else:
         urls = re.findall(RegexType.regex_store_url_bot, text)
-    storeSelector.url = urls[item_index]
 
-    fav_item['id'] = storeSelector.getItemID()
-    fav_item['store_id'] = storeSelector.getStoreName()
+    fav_item = storeSelector.selectStore(urls[item_index])
     
-    if fav_item['store_id'] == Stores.yahooAuctions:
-        fav_item['date_end'] = re.findall(RegexType.regex_date, text)[item_index].replace('Конец: ', '')
-    else:
-        fav_item['date_end'] = datetime.now() + relativedelta(years=3)
-
     return fav_item
 
 def flattenList(matrix):

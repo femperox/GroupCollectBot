@@ -94,6 +94,7 @@ class VkButtons:
 
                 j += 1
 
+        # для чего?
         if type in [MessageType.monitor_big_category_other]:
             j = 0
             columnn_count = 5

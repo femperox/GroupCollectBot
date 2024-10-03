@@ -1,5 +1,7 @@
 from APIs.webUtils import WebUtils 
 import requests
+from datetime import datetime
+from dateutil.relativedelta import relativedelta
 from time import sleep
 from pprint import pprint
 from confings.Consts import ShipmentPriceType as spt
@@ -21,7 +23,7 @@ class StoreApi:
         curl = f'https://www.animate-onlineshop.jp/pd/{item_id}/'
 
         soup = WebUtils.getSoup(curl)
-        pprint(soup.contents)
+
         name = soup.find('div', class_='item_overview_detail').find('h1').text
         price = int(soup.find('p', class_='price new_price fl_l').text.replace(',', '').split('円')[0])
         qnty = int(soup.find('input', id='lot')['value'])
@@ -34,8 +36,8 @@ class StoreApi:
         item['shipmentPrice'] = spt.undefined
         item['page'] = curl
         item['mainPhoto'] = img
-        item['siteName'] = 'Animate'
         item['name'] = name
+        item['endTime'] = datetime.now() + relativedelta(years=3)
 
         posredCommission = PosredApi.getСommissionForItem(item['page'])
         if PosredApi.isPercentCommision(posredCommission):

@@ -9,7 +9,7 @@ import datetime
 from APIs.webUtils import WebUtils
 from Logger import logger
 from traceback import print_exc
-from JpStoresApi.yahooApi import getAucInfo
+from JpStoresApi.yahooApi import yahooApi
 from JpStoresApi.MercariApi import MercariApi
 from confings.Consts import MONITOR_CONF_PATH, PRIVATES_PATH, Stores
 from confings.Messages import MessageType, Messages
@@ -57,9 +57,6 @@ def bs4MonitorYahoo(curl, params):
         params (dict): словарь с информацией о потоке
     """
 
-    tmp_dict = json.load(open(PRIVATES_PATH, encoding='utf-8'))
-    app_id = tmp_dict['yahoo_jp_app_id']
-
     seen_aucs = []
     prev_seen_aucs = []
     tmp_seen_aucs = []
@@ -101,7 +98,7 @@ def bs4MonitorYahoo(curl, params):
                 if IsExistBannedSeller(seller_id = item['seller'], category = params['tag'], store_id= Stores.yahooAuctions) or item['price'] > params['maxPrice']-1:
                     continue
 
-                info = getAucInfo(app_id, item['id'])
+                info = yahooApi.getAucInfo(item['id'])
 
                 if len(info) == 0:
                     continue
@@ -138,10 +135,6 @@ def bs4SellerMonitorYahoo(curl, params):
         curl (string): ссылка на аукционы продавца
         params (dict): словарь с информацией о потоке
     """
-
-    tmp_dict = json.load(open(PRIVATES_PATH, encoding='utf-8'))
-    app_id = tmp_dict['yahoo_jp_app_id']
-
     seen_aucs = []
     prev_seen_aucs = []
     tmp_seen_aucs = []
@@ -179,7 +172,7 @@ def bs4SellerMonitorYahoo(curl, params):
                 
                 item['seller'] = lot['data-auction-sellerid']
 
-                info = getAucInfo(app_id, item['id'])
+                info = yahooApi.getAucInfo(item['id'])
 
                 if len(info) == 0:
                     continue

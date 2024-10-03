@@ -587,7 +587,6 @@ class VkApi:
        while True:
         try:
             for event in longPoll.listen():  
-
                 # Выход из сообщества - кик из бесед
                 if event.type == VkBotEventType.GROUP_LEAVE:
                     leave_user = event.obj['user_id']
@@ -648,7 +647,7 @@ class VkApi:
                                 
                             fav_item['attachement'] = 'photo{}_{}_{}'.format(fav_item['attachement']['owner_id'], fav_item['attachement']['id'], fav_item['attachement']['access_key'])
                             
-                            mess = Messages.mes_fav(fav_item = fav_item, fav_func = addFav).format(self.get_name(fav_item['usr']), f"{fav_item['store_id']}_{fav_item['id']}")
+                            mess = Messages.mes_fav(fav_item = fav_item, fav_func = addFav).format(self.get_name(fav_item['usr']), f"{fav_item['siteName']}_{fav_item['id']}")
                             
                             logger_fav.info(f"[ADD_FAV-{fav_item['usr']}] для пользователя {fav_item['usr']}: {mess}")
                             self.sendMes(mess = mess, users = chat)
@@ -795,7 +794,6 @@ class VkApi:
                     
                     # получение избранного        
                     elif event.obj.message['text'].lower().split(' ')[0] in VkCommands.getFavList and sender in whiteList:
-                            
                             try:
                                 text = event.obj.message['text'].lower()
                                 offset = 0
@@ -803,9 +801,8 @@ class VkApi:
                                     offset = int(text.split(' ')[1]) - 1
                                     
                                 favListing = getFav(sender, offset)
-                                
                                 pics = []
-                                keyboard = VkButtons.form_inline_buttons(type = MessageType.fav_list, items = favListing[0])
+                                keyboard = VkButtons.form_inline_buttons(type = MessageType.fav_list, items = favListing[0]) 
                                 mess, picStr = Messages.formFavMes(user_name=user_name, favListing= favListing, offset= offset)
                                
                                 if picStr != '': pics.append(picStr)
@@ -819,26 +816,18 @@ class VkApi:
                                             
                     # Ручное добавление в избранное 
                     elif event.obj.message['text'].lower().split(' ')[0] in VkCommands.favList and event.obj.message['text'].lower().find("https://")>=0 and sender in whiteList:
-                        
-                        auc_ids = re.findall(RegexType.regex_store_item_id_url, event.obj.message['text'].lower())  
-              
+                        store_urls = re.findall(RegexType.regex_store_url_bot, event.obj.message['text'].lower())  
                         items = []
-                        for id in auc_ids:
+                        for url in store_urls:
                             info = {}
-                            info = storeSelector.selectStore(id)
-                            storeSelector.url =id
+                            info = storeSelector.selectStore(url)
                             info['attachement'] = self._form_images_request_signature([info['mainPhoto']], self.__group_id, tag="custom_fav")[0]
                             info['usr'] = sender
-                            info['id'] = storeSelector.getItemID() 
-                            info['date_end'] = info['endTime']
-                            info['store_id'] = storeSelector.getStoreName()
 
                             items.append(info.copy())
 
                         mess = Messages.mes_add_fav(user_name=user_name, auc_list=items, add_func=addFav)
                         self.sendMes(mess, chat)
-
-
                 # репосты
                 elif event.type == VkBotEventType.WALL_POST_NEW and 'copy_history' in event.object:
                     

@@ -34,8 +34,7 @@ def addFav(item):
 
     conn = getConnection()
     cursor = conn.cursor()
-    
-    cursor.execute(f"SELECT ADD_FAV({item['usr']}, '{item['id']}', '{item['attachement']}', '{item['date_end']}', '{item['store_id']}')")
+    cursor.execute(f"SELECT ADD_FAV({item['usr']}, '{item['id']}', '{item['attachement']}', '{item['endTime']}', '{item['siteName']}', '{item['page']}')")
     result = cursor.fetchone()[0]
    
     conn.commit() 

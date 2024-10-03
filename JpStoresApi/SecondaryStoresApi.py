@@ -1,10 +1,9 @@
 from APIs.webUtils import WebUtils 
 import requests
-from time import sleep
 from pprint import pprint
-import mercari
+from datetime import datetime
 import json
-from random import randint
+from dateutil.relativedelta import relativedelta
 from confings.Consts import ShipmentPriceType as spt
 from selenium.webdriver.common.by import By
 from traceback import print_exc
@@ -38,7 +37,7 @@ class SecondaryStoreApi:
         item['shipmentPrice'] = spt.free
         item['page'] = url
         item['mainPhoto'] = js['images'][0]['url']
-        item['siteName'] = 'payPayFleamarket'
+        item['endTime'] = datetime.now() + relativedelta(years=3)
 
         posredCommission = PosredApi.getСommissionForItem(item['page'])
         if PosredApi.isPercentCommision(posredCommission):
@@ -73,7 +72,6 @@ class SecondaryStoreApi:
         try:
             # хз как иначе вытащить картинку товара
             img = ok.find_element(By.ID, "elevate_zoom").get_attribute("src")
-            pprint(img)
 
             info = ''
             for request in ok.requests:
@@ -89,8 +87,8 @@ class SecondaryStoreApi:
                 item['tax'] = item['itemPriceWTax'] * 100 / item['itemPrice'] - 100
                 item['shipmentPrice'] = spt.undefined
                 item['page'] = url
-                item['mainPhoto'] = img
-                item['siteName'] = 'Mandarake'  
+                item['mainPhoto'] = img 
+                item['endTime'] = datetime.now() + relativedelta(years=3)
 
                 posredCommission = PosredApi.getСommissionForItem(item['page'])
                 if PosredApi.isPercentCommision(posredCommission):
