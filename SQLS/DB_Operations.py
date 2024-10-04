@@ -546,7 +546,30 @@ def getCollectStatuses():
 
 #============================
 
+def updateInsertCollectParcel(parcel_id, status_id = -1, topic_id = 0, comment_id = 0):
+    """Обновить таблицу с посылками коллектов
 
+    Args:
+        parcel_id (string): id посылки
+        status_id (int, optional): id статуса. Defaults to -1.
+        topic_id (int, optional): id обсуждения. Defaults to 0.
+        comment_id (int, optional): id коммента в обсуждении. Defaults to 0.
+
+    Returns:
+        int: результат обновления таблицы. 0 - запись обновлена, 1 - запись добавлена.
+    """
+
+    conn = getConnection(DbNames.collectDatabase)
+    cursor = conn.cursor()  
+
+    cursor.execute(f'''SELECT InsertUpdateCollectParcel('{parcel_id}', {status_id}, {topic_id}, {comment_id});''')
+    result = cursor.fetchone()[0]
+   
+    conn.commit() 
+    cursor.close()
+    conn.close()
+
+    return result
 
 #============================
 
@@ -580,12 +603,19 @@ def getUserMenuStatus(user_id):
     return result[0]
 
 def updateUserMenuStatus(user_id, status):
+    """_summary_
+
+    Args:
+        parcel_id (_type_): _description_
+        status_id (_type_): _description_
+
+    """
 
     conn = getConnection(DbNames.collectDatabase)
     cursor = conn.cursor()  
 
-    cursor.execute(f''' Call USER_MENU_STATUS_UPDATE({user_id}, '{status}');''')
-
+    cursor.execute(f"CALL USER_MENU_STATUS_UPDATE({user_id}, '{status}')")
+   
     conn.commit() 
     cursor.close()
     conn.close()

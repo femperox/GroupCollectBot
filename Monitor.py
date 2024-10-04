@@ -240,6 +240,7 @@ def monitorMercari(key_word, params):
 
 if __name__ == "__main__":
     vk = vk()
+    yahooApi = yahooApi()
     
     with open(MONITOR_CONF_PATH, "r") as f: 
         conf_list = json.load(f)

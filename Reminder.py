@@ -35,7 +35,7 @@ def addNotifiers():
         
 
 def checkTime(usr_id):
-    
+    yahooApi = yahooApi()
     storesApi = StoreSelector()
     checked_lots = []
     while True:

@@ -80,6 +80,7 @@ class StoreSelector:
             item = ssa.parsePayPay(url, item_id)
 
         elif site == Stores.yahooAuctions:
+            yahooApi = yahooApi()
             item = yahooApi.getAucInfo(id = item_id)
 
         elif site == Stores.amiAmi:

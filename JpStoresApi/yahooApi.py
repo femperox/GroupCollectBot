@@ -11,10 +11,11 @@ from confings.Consts import ShipmentPriceType
 
 class yahooApi:
 
-    app_id = json.load(open(PRIVATES_PATH, encoding='utf-8'))['yahoo_jp_app_id']
+    def __init__(self):
 
-    @staticmethod
-    def getRep(id):
+        self.app_id = json.load(open(PRIVATES_PATH, encoding='utf-8'))['yahoo_jp_app_id']
+
+    def getRep(self, id):
         """Получение репутации продавца
 
         Args:
@@ -24,7 +25,7 @@ class yahooApi:
             list: список: 1ый элемент - хорошая репутация
         """
 
-        curl = f'https://auctions.yahooapis.jp/AuctionWebService/V1/ShowRating?appid={yahooApi.app_id}&id={id}'
+        curl = f'https://auctions.yahooapis.jp/AuctionWebService/V1/ShowRating?appid={self.app_id}&id={id}'
 
         headers = WebUtils.getHeader()
         page = requests.get(curl, headers=headers)
@@ -39,8 +40,7 @@ class yahooApi:
 
         return [goodRate, badRate]
 
-    @staticmethod
-    def getPic(id):
+    def getPic(self, id):
         """Получение ссылки на изображение лота
 
         Args:
@@ -50,7 +50,7 @@ class yahooApi:
             string: ссылка на заглавное изображение лота
         """
 
-        curl = f'https://auctions.yahooapis.jp/AuctionWebService/V2/auctionItem?appid={yahooApi.app_id}&auctionID={id}'
+        curl = f'https://auctions.yahooapis.jp/AuctionWebService/V2/auctionItem?appid={self.app_id}&auctionID={id}'
 
         headers = WebUtils.getHeader()
         page = requests.get(curl, headers=headers)
@@ -58,8 +58,8 @@ class yahooApi:
 
         return xml['ResultSet']['Result']['Img']['Image1']['#text']
 
-    @staticmethod
-    def getShipmentPrice(id, seller_id , postage_id = 1, item_weight = 0):
+
+    def getShipmentPrice(self, id, seller_id , postage_id = 1, item_weight = 0):
         """Получение стоимости доставки по Японии
 
         Args:
@@ -72,12 +72,11 @@ class yahooApi:
         pref_code = PREFECTURE_CODE[CURRENT_POSRED]
 
         if seller_id == '':
-            curl = f'https://auctions.yahooapis.jp/v1/public/items/{id}/shipments?pref_code={pref_code}&appid={yahooApi.app_id}'
+            curl = f'https://auctions.yahooapis.jp/v1/public/items/{id}/shipments?pref_code={pref_code}&appid={self.app_id}'
         else:
             weight = f'&weight={item_weight}' if int(item_weight)>0 else ''
-            curl =f'https://auctions.yahooapis.jp/v1/public/shoppinginfo/shipments?&pref_code={pref_code}&appid={yahooApi.app_id}&shopping_seller_id={seller_id}&shopping_item_code={id}&shopping_postage_set={postage_id}&price=100{weight}'
+            curl =f'https://auctions.yahooapis.jp/v1/public/shoppinginfo/shipments?&pref_code={pref_code}&appid={self.app_id}&shopping_seller_id={seller_id}&shopping_item_code={id}&shopping_postage_set={postage_id}&price=100{weight}'
         
-        print()
         headers = WebUtils.getHeader()
         page = requests.get(curl, headers=headers)
         
@@ -93,8 +92,7 @@ class yahooApi:
         else:
             return ShipmentPriceType.undefined
 
-    @staticmethod
-    def getCurrentPrice(id):
+    def getCurrentPrice(self, id):
         """Получение текущей цены аукциона
         
         Args:
@@ -106,7 +104,7 @@ class yahooApi:
         """
         
         try:
-            curl = f'https://auctions.yahooapis.jp/AuctionWebService/V2/auctionItem?appid={yahooApi.app_id}&auctionID={id}'
+            curl = f'https://auctions.yahooapis.jp/AuctionWebService/V2/auctionItem?appid={self.app_id}&auctionID={id}'
             headers = WebUtils.getHeader()
             page = requests.get(curl, headers=headers)
             xml = xmltodict.parse(page.content)
@@ -115,9 +113,8 @@ class yahooApi:
         except Exception as e:
             
             pprint(e)
-
-    @staticmethod            
-    def getAucInfo(id):
+       
+    def getAucInfo(self, id):
         """Получение базовой информации о лоте
 
         Args:
@@ -129,7 +126,7 @@ class yahooApi:
 
         info = {}
         try:
-            curl = f'https://auctions.yahooapis.jp/AuctionWebService/V2/auctionItem?appid={yahooApi.app_id}&auctionID={id}'
+            curl = f'https://auctions.yahooapis.jp/AuctionWebService/V2/auctionItem?appid={self.app_id}&auctionID={id}'
 
             headers = WebUtils.getHeader()
             page = requests.get(curl, headers=headers)
@@ -173,7 +170,7 @@ class yahooApi:
                     info['ItemWeight'] = 0
                 
                 
-                info['shipmentPrice'] = yahooApi.getShipmentPrice(id, info['ShoppingSellerId'], info['PostageSetId'], info['ItemWeight'])
+                info['shipmentPrice'] = self.getShipmentPrice(id, info['ShoppingSellerId'], info['PostageSetId'], info['ItemWeight'])
 
             info['itemPrice'] = float(xml['ResultSet']['Result']['Price'])
             info['tax'] = float(xml['ResultSet']['Result']['TaxRate'])
