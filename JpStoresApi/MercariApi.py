@@ -47,7 +47,6 @@ class MercariApi:
                 item_info['goodRate'] = seller['goodRate']
                 item_info['badRate'] = seller['badRate']
                 item_info['seller']  = f"{seller['seller']} (#{sellerId})"
-                
 
                 return item_info
             
@@ -101,7 +100,6 @@ class MercariApi:
             item['page'] = f'https://jp.mercari.com/item/{product["id"]}'
             item['sellerId'] = product['sellerId']
             item['itemId'] = product["id"]
-            item['siteName'] = Stores.mercari
             item_list_raw.append(item.copy())
 
         item_list_ids = GetNotSeenProducts([item['itemId'] for item in item_list_raw], type_id= type_id)
