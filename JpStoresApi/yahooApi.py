@@ -175,7 +175,6 @@ class yahooApi:
             info['itemPrice'] = float(xml['ResultSet']['Result']['Price'])
             info['tax'] = float(xml['ResultSet']['Result']['TaxRate'])
             info['itemPriceWTax'] = float(xml['ResultSet']['Result']['TaxinPrice']) if 'itemPriceWTax' in xml['ResultSet']['Result'] else info['itemPrice']
-            info['siteName'] = 'yahooAuctions'
 
             posredCommission = PosredApi.getСommissionForItem(info['page'])
             if PosredApi.isPercentCommision(posredCommission):

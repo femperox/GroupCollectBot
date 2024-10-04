@@ -25,7 +25,7 @@ class AmiAmiApi():
 
         AmiAmiApi.driver[thread_index] = WebUtils.getSelenium(isUC=True)
         AmiAmiApi.driver[thread_index].open('https://www.amiami.com/eng/')  #https://www.amiami.com/eng/
-        time.sleep(5)
+        time.sleep(4)
         AmiAmiApi.driver[thread_index].save_screenshot("screenshot.png")
 
     @staticmethod
@@ -189,7 +189,6 @@ class AmiAmiApi():
         item['shipmentPrice'] = spt.undefined
         item['page'] = url
         item['mainPhoto'] = 'https://img.amiami.com'+js['item']['main_image_url']
-        item['siteName'] = 'AmiAmiEng'
         item['name'] = js['item']['gname']
         item['endTime'] = datetime.now() + relativedelta(years=3)
 
@@ -218,7 +217,6 @@ class AmiAmiApi():
         item['shipmentPrice'] = spt.undefined
         item['page'] = url
         item['mainPhoto'] = soup.find('img', class_ = 'gallery_item_main ofi')['src']
-        item['siteName'] = 'AmiAmiJp'
         item['name'] = soup.find('h2', class_ = 'heading_10').text
         item['endTime'] = datetime.now() + relativedelta(years=3)
 
@@ -310,7 +308,6 @@ class AmiAmiApi():
             item['shipmentPrice'] = spt.undefined
             item['page'] = f"https://www.amiami.com/eng/detail?gcode={product['gcode']}"
             item['mainPhoto'] = 'https://img.amiami.com'+product['thumb_url']
-            item['siteName'] = 'AmiAmiEng'
             item['itemId'] = product['gcode']
             item['name'] = product['gname']
 
@@ -369,7 +366,6 @@ class AmiAmiApi():
             item['shipmentPrice'] = spt.undefined
             item['page'] = f"https://www.amiami.com/eng/detail?gcode={preOrder['gcode']}"
             item['mainPhoto'] = 'https://img.amiami.com'+preOrder['thumb_url']
-            item['siteName'] = 'AmiAmiEng'
             item['itemId'] = preOrder['gcode']
 
 
@@ -457,7 +453,6 @@ class AmiAmiApi():
             item['shipmentPrice'] = spt.undefined
             item['page'] = f"https://www.amiami.com/eng/detail?gcode={preowned['gcode']}"
             item['mainPhoto'] = 'https://img.amiami.com'+preowned['thumb_url']
-            item['siteName'] = 'AmiAmiEng'
             item['itemId'] = preowned['gcode']
 
             if AmiAmiApi.isWrongCategory(preowned['gcode']) or preowned['image_on'] == 0:
