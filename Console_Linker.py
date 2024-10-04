@@ -5,6 +5,8 @@ from pprint import pprint
 from JpStoresApi.StoreSelector import StoreSelector
 from confings.Messages import Messages
 import re
+from confings.Consts import VkTopicCommentChangeType
+from time import sleep
 from datetime import datetime
 from SQLS import DB_Operations
 from APIs.utils import flattenList, flatTableParticipantList, flatTopicParticipantList
@@ -273,6 +275,10 @@ def makeDistinctList(post_url):
 
     return pl
 
+def getCollectId(collectType, collectNum):
+
+    letter = "C" if collectType == "Коллективка" else "I"
+    return f"{letter}{collectNum}"
 
 def createTableTopic(post_url, site_url ='', spId=0, topicName=0, items=0, img_url = ''):
     '''
@@ -321,7 +327,8 @@ def createTableTopic(post_url, site_url ='', spId=0, topicName=0, items=0, img_u
 
     collect_table.updateTable(namedRange, transformToTableFormat(participantsList), topicInfo[0])
 
-    DB_Operations.insertCollect(collectType, collectNum, namedRange)
+    DB_Operations.updateCollect(collectId = getCollectId(collectType, collectNum), namedRange = namedRange,
+                                topic_id = topicInfo[2]['topic_id'], comment_id = topicInfo[2]['comment_id'])
     updateParticipantDB(participantList = participantsList, collectId = namedRange.replace('D', '').replace('nd', '').replace('ollect', ''))
 
 
@@ -361,7 +368,8 @@ def changeStatus(stat, collectList, indList, payment, topic_name = "❏ Лоты
                     pay = tableToTopic(participants, pay)
                 try:
                     vk.edit_status_comment(what_to_find, status= stat, payment= pay)
-                    DB_Operations.updateCollect(what_to_find['type'], what_to_find['number'], stat)
+                    DB_Operations.updateCollect(collectId = getCollectId(what_to_find['type'], what_to_find['number']), 
+                                                status = stat)
                 except Exception as e:
                     pprint(e)
                     print_exc()
@@ -412,7 +420,8 @@ def console():
       
       try: 
         choiseList = ['Сделать лот', 'Отправки в РФ', 'Выход', 'Замена ссылок на теги',
-                        'Забанить', 'Уступки', 'Обновление статуса лотов', 'Удаление фотографий']
+                        'Забанить', 'Уступки', 'Обновление статуса лотов', 'Удаление фотографий', 
+                        'Сформировать посылку', 'Обновление статуса посылки']
         choise = int(input('\nВведите номер:\n' + Messages.formConsoleListMes(info_list = choiseList, offset = 2) + '\nВыбор: '))
 
         if choise == 1:
@@ -441,9 +450,8 @@ def console():
 
             items = int(input('\nHow many items are there? '))
 
-
-            namedRange = createTableTopic(wallPosts, site_url, spId=spId,
-                                        topicName=topicName, items=items, img_url=img)
+            createTableTopic(wallPosts, site_url, spId=spId,
+                             topicName=topicName, items=items, img_url=img)
 
         elif choise == 2:
 
@@ -551,11 +559,77 @@ def console():
 
         elif choise == 8:
 
-                d = input('Введите дату, до которой нужно удалить фотографии (ДД.ММ.ГГГГ): ')
-                d = datetime.strptime(d, '%d.%m.%Y').date()
+            d = input('Введите дату, до которой нужно удалить фотографии (ДД.ММ.ГГГГ): ')
+            d = datetime.strptime(d, '%d.%m.%Y').date()
 
-                album = 274685308
-                vk.delete_photos(album_id=album, end_date=d)
+            album = 274685308
+            vk.delete_photos(album_id=album, end_date=d)
+
+        elif choise == 9:
+
+            status = flattenList(DB_Operations.getCollectStatuses())
+
+            topicNameParcels = "❏ Посылки"
+            topicNameLots = "❏ Лоты и индивидуалки"
+            parcel_id = 262  #DB_Operations.getMaxCollectParcelId() + 1 
+
+            print('\nВыберите статус:\n' + Messages.formConsoleListMes(info_list = status))
+            choiseStatus = int(input('Выбор: '))
+            stat = status[choiseStatus-1]
+
+            collectList = input("\nEnter collect's num using comma(, ) (might be empty): ")
+            collectList = collectList.split(', ')
+
+            indList = input("Enter ind's num using comma(, ) (might be empty): ")
+            indList = indList.split(', ')
+
+            #img = input('\nEnter the image url using comma(, ) (might be empty): ')
+            #img = img.split(', ')
+
+            mes = Messages.formParcelCollectMes(parcel_id=parcel_id, status = stat, 
+                                                collect_dict= {'collects': collectList, 'inds': indList})
+
+            #topicInfo = vk.post_comment(topic_name = topicNameParcels, message=mes, img_urls=img)
+
+            DB_Operations.updateInsertCollectParcel(parcel_id = parcel_id, status = stat,
+                                                    topic_id = 46691378, comment_id = 2811)
+            # topic_id = topicInfo[2]['topic_id'], comment_id = topicInfo[2]['comment_id']
+            
+            collectList = [f'C{collect}' for collect in collectList if collect != '']
+            indList = [f'I{ind}' for ind in indList if ind != '']
+            collectList.extend(indList)
+
+            for itemId in collectList:
+                sleep(2)
+                DB_Operations.updateCollect(collectId = itemId, status = stat, parcel_id = parcel_id)
+                collectTopicInfo = DB_Operations.getCollectTopicComment(collect_id = itemId)
+                vk.edit_status_comment_NEW(topic_id = collectTopicInfo[0], comment_id = collectTopicInfo[1],
+                                           status = stat)
+        elif choise == 10:
+
+            status = flattenList(DB_Operations.getCollectStatuses())
+
+            parcel_id = int(input('\nВведите номер посылки: '))
+
+            print('\nВыберите статус:\n' + Messages.formConsoleListMes(info_list = status))
+            choiseStatus = int(input('Выбор: '))
+            stat = status[choiseStatus-1]
+
+            DB_Operations.updateInsertCollectParcel(parcel_id = parcel_id, status = stat)
+            parcelInfo = DB_Operations.getCollectParcel(parcel_id = parcel_id) # index: -2 -1
+            vk.edit_status_comment_NEW(topic_id = parcelInfo[-2], comment_id = parcelInfo[-1],
+                                       status= stat, typeChange = VkTopicCommentChangeType.parcel)
+
+            collectList = DB_Operations.getAllCollectsInParcel(parcel_id = parcel_id)
+            collectList = [collect[0] for collect in collectList]
+            
+            for itemId in collectList:
+                sleep(2)
+                DB_Operations.updateCollect(collectId = itemId, status = stat, parcel_id = parcel_id)
+                collectTopicInfo = DB_Operations.getCollectTopicComment(collect_id = itemId)
+                vk.edit_status_comment_NEW(topic_id = collectTopicInfo[0], comment_id = collectTopicInfo[1],
+                                           status = stat)
+            
 
       except Exception as e:
           print(f"\n===== ОШИБКА! \n{format_exc()}=====")

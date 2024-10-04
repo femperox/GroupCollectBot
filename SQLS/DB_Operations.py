@@ -463,30 +463,23 @@ def insertNewSeenProducts(items_id, type_id):
     cursor.close()
     conn.close()
 
-def getCollectId(collectType, collectNum):
 
-    letter = "C" if collectType == "Коллективка" else "I"
-    return f"{letter}{collectNum}"
+def updateCollect(collectId, status = '', namedRange = '', parcel_id = -1, topic_id = 0, comment_id = 0):
+    """Обновить информацию о коллекте
 
-def insertCollect(collectType, collectNum, namedRange):
-
-    conn = getConnection(DbNames.collectDatabase)
-    cursor = conn.cursor()  
-
-    cursor.execute(f'''Insert into collects values
-            ('{getCollectId(collectType, collectNum)}', 0, '{namedRange}', False )
-           ''')
-
-    conn.commit() 
-    cursor.close()
-    conn.close()
-
-def updateCollect(collectType, collectNum, status):
+    Args:
+        collectType (_type_): тип коллекта
+        collectNum (_type_):номер коллекта
+        status (string): статус коллекта
+        parcel_id (int, optional): id посылки. Defaults to -1.
+        topic_id (int, optional): id обсуждения. Defaults to 0.
+        comment_id (int, optional): id комментария в обсуждении. Defaults to 0.
+    """
 
     conn = getConnection(DbNames.collectDatabase)
     cursor = conn.cursor()  
 
-    cursor.execute(f''' Call CollectUpdate('{getCollectId(collectType, collectNum)}', '{status}');''')
+    cursor.execute(f''' Call CollectInsertUpdate('{collectId}', '{status}', '{namedRange}', {parcel_id}, {topic_id}, {comment_id});''')
 
     conn.commit() 
     cursor.close()
@@ -544,14 +537,62 @@ def getCollectStatuses():
     
     return result
 
+def getAllCollectsInParcel(parcel_id):
+    """Получить все коллекты с посылки по parcel_id
+
+    Args:
+        parcel_id (int): id посылки.
+
+    Returns:
+        list of list: записи с посылками
+    """
+
+    conn = getConnection(DbNames.collectDatabase)
+    cursor = conn.cursor()  
+    
+    sel = f'''SELECT * from collects
+              where PARCEL_ID = {parcel_id}
+           '''
+    cursor.execute(sel)
+    result = cursor.fetchall()
+        
+    cursor.close()
+    conn.close()
+    
+    return result
+
+def getCollectTopicComment(collect_id):
+    """Получить topic_id и comment_id коллекта по collect_id
+
+    Args:
+        collect_id (string): id коллекта
+
+    Returns:
+        list: [topic_id и comment_id]
+    """
+
+    conn = getConnection(DbNames.collectDatabase)
+    cursor = conn.cursor()  
+    
+    sel = f'''SELECT topic_id, comment_id FROM collects 
+              where collect_id = '{collect_id}'
+           '''
+    cursor.execute(sel)
+    result = cursor.fetchone() 
+        
+    cursor.close()
+    conn.close()
+    
+    return result
+
 #============================
 
-def updateInsertCollectParcel(parcel_id, status_id = -1, topic_id = 0, comment_id = 0):
+def updateInsertCollectParcel(parcel_id, status = '', topic_id = 0, comment_id = 0):
     """Обновить таблицу с посылками коллектов
 
     Args:
-        parcel_id (string): id посылки
-        status_id (int, optional): id статуса. Defaults to -1.
+        parcel_id (int): id посылки
+        status (string, optional): статус. Defaults to ''.
         topic_id (int, optional): id обсуждения. Defaults to 0.
         comment_id (int, optional): id коммента в обсуждении. Defaults to 0.
 
@@ -562,13 +603,77 @@ def updateInsertCollectParcel(parcel_id, status_id = -1, topic_id = 0, comment_i
     conn = getConnection(DbNames.collectDatabase)
     cursor = conn.cursor()  
 
-    cursor.execute(f'''SELECT InsertUpdateCollectParcel('{parcel_id}', {status_id}, {topic_id}, {comment_id});''')
+    cursor.execute(f'''SELECT InsertUpdateCollectParcel({parcel_id}, '{status}', {topic_id}, {comment_id});''')
     result = cursor.fetchone()[0]
    
     conn.commit() 
     cursor.close()
     conn.close()
 
+    return result
+
+
+def getAllCollectParcels():
+    """Получить все записи с посылками
+
+    Returns:
+        list of list: записи с посылками
+    """
+
+    conn = getConnection(DbNames.collectDatabase)
+    cursor = conn.cursor()  
+    
+    sel = f'''SELECT * FROM COLLECT_PARCEL 
+              ORDER BY PARCEL_ID
+           '''
+    cursor.execute(sel)
+    result = cursor.fetchall()
+        
+    cursor.close()
+    conn.close()
+    
+    return result
+
+def getCollectParcel(parcel_id):
+    """Получить запись о посылке по parcel_id
+
+    Args:
+        parcel_id (int): id посылки
+
+    Returns:
+        list: запись о посылке
+    """
+
+    conn = getConnection(DbNames.collectDatabase)
+    cursor = conn.cursor()  
+    
+    sel = f'''SELECT * FROM COLLECT_PARCEL 
+              where PARCEL_ID = {parcel_id}
+           '''
+    cursor.execute(sel)
+    result = cursor.fetchone() 
+        
+    cursor.close()
+    conn.close()
+    
+    return result
+
+def getMaxCollectParcelId():
+    """ Получить максимальное айди посылок
+
+    Returns:
+        int: id посылки
+    """
+    
+    conn = getConnection(DbNames.collectDatabase)
+    cursor = conn.cursor()
+    
+    cursor.execute('''SELECT MAX(PARCEL_ID) FROM COLLECT_PARCEL''')
+    result = cursor.fetchone()[0]
+    
+    cursor.close()
+    conn.close()
+    
     return result
 
 #============================
@@ -603,11 +708,11 @@ def getUserMenuStatus(user_id):
     return result[0]
 
 def updateUserMenuStatus(user_id, status):
-    """_summary_
+    """Обновить статус меню бота
 
     Args:
-        parcel_id (_type_): _description_
-        status_id (_type_): _description_
+        user_id (int): id пользователя
+        status (string): статус меню бота
 
     """
 

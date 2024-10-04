@@ -13,7 +13,7 @@ from vk_api.longpoll import VkLongPoll, VkChatEventType, VkEventType, VkLongpoll
 from confings.Messages import MessageType, Messages
 from Logger import logger, logger_fav, logger_utils
 from SQLS.DB_Operations import addFav, getFav, deleteFav, getFandoms, getTags, addBans, insertUpdateParcel, addBannedSellers, updateUserMenuStatus, getUserMenuStatus
-from confings.Consts import TrackingTypes, ItemBuyStatus, VK_PROPOSED_CHAT_ID, VK_ERRORS_CHAT_ID, BanActionType, MAX_BAN_REASONS, RegexType, PayloadType, VkCommands, PRIVATES_PATH, VkCoverSize, Stores
+from confings.Consts import VkTopicCommentChangeType, TrackingTypes, ItemBuyStatus, VK_PROPOSED_CHAT_ID, VK_ERRORS_CHAT_ID, BanActionType, MAX_BAN_REASONS, RegexType, PayloadType, VkCommands, PRIVATES_PATH, VkCoverSize, Stores
 from APIs.utils import getMonitorChats, getFavInfo, getStoreMonitorChats
 from APIs.TrackingAPIs.TrackingSelector import TrackingSelector
 from JpStoresApi.StoreSelector import StoreSelector
@@ -1192,7 +1192,7 @@ class VkApi:
             img_urls (list, optional): Список url картинок, которые необходимо прикрепить. По умолчанию = [].
 
         Returns:
-            tuple: Возвращает url созданного / изменённого комментария + список url прикреплённых к нему изображений
+            tuple: Возвращает url созданного / изменённого комментария + список url прикреплённых к нему изображений + словарь topic_id, comment_id
         """
         try:
             topic_id = self._get_topic_by_name(topic_name)
@@ -1223,10 +1223,11 @@ class VkApi:
                     return '', []
         
             res_url = 'https://vk.com/topic-{}_{}?post={}'.format(self.__group_id, topic_id, comm_id)
-            return res_url, attachments[1]
+            topic_info = {'topic_id': topic_id, 'comment_id': comm_id}
+            return res_url, attachments[1], topic_info
         except:
             print_exc()
-            return '', []
+            return '', [], {}
         
     def captcha_handler(self, captcha):
         """ При возникновении капчи вызывается эта функция и ей передается объект
@@ -1451,6 +1452,63 @@ class VkApi:
             'topic_id': topic_id,
             'comment_id': comment['id'],
             'message': text,
+            'attachments': attachments
+        }
+
+        try:
+            self.vk.board.editComment(**params_edit)
+        except:
+            return -1
+        
+    def find_comment_NEW(self, topic_id, comment_id):
+
+        params = {
+                'group_id': self.__group_id,
+                'topic_id': topic_id,
+                'count': 1,
+                'start_comment_id': comment_id
+        }
+
+        return self.vk.board.getComments(**params)['items'][0]
+
+        
+    def edit_status_comment_NEW(self, topic_id, comment_id, status = '', payment = [], typeChange = VkTopicCommentChangeType.collect):
+
+        comment = self.find_comment_NEW(topic_id, comment_id)
+        old_text = comment['text']
+        new_text = ''
+
+        # Изменение статуса
+        if status:
+            if typeChange == VkTopicCommentChangeType.collect:
+                status_end_part =  re.search('\n\n\d', old_text).span()[1] - 3
+                status_start_part = re.search('Состояние: ', old_text).span()[1]
+            elif typeChange == VkTopicCommentChangeType.parcel:
+                status_end_part =  re.search('\n\n\w', old_text).span()[1] - 3
+                status_start_part = re.search('Статус: ', old_text).span()[1]
+            new_text = old_text[:status_start_part] + status + old_text[status_end_part:]
+
+        # Изменение инфы об оплате
+        if len(payment) > 0:
+
+            # если статус был уже изменён
+            if new_text:
+                participants_start_part = re.search('\n\n\d', new_text).span()[1] - 1
+                participants_end_part = re.search('\n\nПоедет', new_text).span()[0] + 1
+            else:
+                participants_start_part = re.search('\n\n\d', old_text).span()[1] - 1
+                participants_end_part = re.search('\n\nПоедет', old_text).span()[0] + 1
+                new_text = old_text
+
+            new_text = new_text[:participants_start_part] + payment + new_text[participants_end_part:]
+        pprint(new_text)
+        attachments = self._get_previous_attachments(topic_id, comment_id)
+        
+        params_edit = {
+            'group_id': self.__group_id,
+            'topic_id': topic_id,
+            'comment_id': comment_id,
+            'message': new_text,
             'attachments': attachments
         }
 
