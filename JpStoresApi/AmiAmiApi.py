@@ -25,7 +25,7 @@ class AmiAmiApi():
 
         AmiAmiApi.driver[thread_index] = WebUtils.getSelenium(isUC=True)
         AmiAmiApi.driver[thread_index].open('https://www.amiami.com/eng/')  #https://www.amiami.com/eng/
-        time.sleep(4)
+        time.sleep(10)
         AmiAmiApi.driver[thread_index].save_screenshot("screenshot.png")
 
     @staticmethod
@@ -89,12 +89,11 @@ class AmiAmiApi():
         return False
     
     @staticmethod
-    def isWrongCategoryNumber(item_id, proxy = []):
+    def isWrongCategoryNumber(item_id):
         """Определить неинтересующие категории числовые
 
         Args:
             item_id (string): айди лота
-            proxy (str, optional): прокси. Defaults to ''.
 
         Returns:
             boolean: принадлженость к неинтересующим категориям
@@ -114,7 +113,6 @@ class AmiAmiApi():
         Args:
             curl (string): строка запроса API
             length (int): количество необходимых страниц
-            proxy (string): прокси
 
         Returns:
             dict: словарь с инфой о товарах
@@ -125,8 +123,6 @@ class AmiAmiApi():
             time.sleep(3)
             try:
                 js_raw = AmiAmiApi.curlAmiAmiEng(curl.format(i+1), thread_index)
-                #if i % 2 and i != 0:
-                #    proxy = choice(proxies)
                 if i == 0:
                     js = js_raw
                 else:            
@@ -139,7 +135,7 @@ class AmiAmiApi():
         return js
 
     @staticmethod
-    def curlAmiAmiEng(curl, thread_index, proxy = ''):
+    def curlAmiAmiEng(curl, thread_index):
         """Запрос к API AmiAmiEng
 
         Args:
@@ -231,12 +227,11 @@ class AmiAmiApi():
     
         
     @staticmethod
-    def getAdditionalProductInfo(item_id, thread_index, proxy=[]):
+    def getAdditionalProductInfo(item_id, thread_index):
         """Получить доп инфо по товару
 
         Args:
             item_id (string): айди лота
-            proxy (str, optional): прокси. Defaults to ''.
 
         Returns:
             dict: словарь с доп инфой о товаре
@@ -269,12 +264,11 @@ class AmiAmiApi():
         return 0
 
     @staticmethod
-    def productsAmiAmiEng(type_id, thread_index, proxy = '', logger = ''):
+    def productsAmiAmiEng(type_id, thread_index, logger = ''):
         """Получение списка товаров из Sale категории AmiAmiEng
 
         Args:
             type_id (str): категория парсинга.
-            proxy (str, optional): прокси. Defaults to ''.
 
         Returns:
             list of dict: список товаров и инфо о них
@@ -340,7 +334,7 @@ class AmiAmiApi():
         return item_list
     
     @staticmethod
-    def preOrderAmiAmiEng(type_id, thread_index, proxy = '', logger = ''):
+    def preOrderAmiAmiEng(type_id, thread_index, logger = ''):
 
         locale.setlocale(locale.LC_TIME, 'ru_RU.UTF-8')
         
@@ -422,12 +416,11 @@ class AmiAmiApi():
         return item_list        
     
     @staticmethod
-    def preownedAmiAmiEng(type_id, proxy = '', logger = '', thread_index = 0):
+    def preownedAmiAmiEng(type_id, logger = '', thread_index = 0):
         """Получение списка товаров из PreOwned категории AmiAmiEng
 
         Args:
             type_id (str): категория парсинга.
-            proxy (str, optional): прокси. Defaults to ''.
 
         Returns:
             list of dict: список товаров и инфо о них
