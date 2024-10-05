@@ -485,6 +485,26 @@ def updateCollect(collectId, status = '', namedRange = '', parcel_id = -1, topic
     cursor.close()
     conn.close()
 
+def setCollectCommentId(collect_id, comment_id):
+    """Установить comment_id для коллекта
+
+    Args:
+        collect_id (string): id коллекта
+        comment_id (int): id комментария в обсуждении
+    """
+
+    conn = getConnection(DbNames.collectDatabase)
+    cursor = conn.cursor()  
+    
+    sel = f'''update collects
+             set comment_id = {comment_id}
+             where collect_id = '{collect_id}';'''
+    cursor.execute(sel)
+
+    conn.commit() 
+    cursor.close()
+    conn.close()
+
 def deleteParticipantsCollect(collect_id):
     """Удалить всех пользователей связанных с collect_id
 
@@ -552,6 +572,7 @@ def getAllCollectsInParcel(parcel_id):
     
     sel = f'''SELECT * from collects
               where PARCEL_ID = {parcel_id}
+              order by collect_id
            '''
     cursor.execute(sel)
     result = cursor.fetchall()

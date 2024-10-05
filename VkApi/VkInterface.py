@@ -1501,7 +1501,7 @@ class VkApi:
                 new_text = old_text
 
             new_text = new_text[:participants_start_part] + payment + new_text[participants_end_part:]
-        pprint(new_text)
+
         attachments = self._get_previous_attachments(topic_id, comment_id)
         
         params_edit = {

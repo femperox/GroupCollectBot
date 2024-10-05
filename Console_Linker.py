@@ -570,8 +570,7 @@ def console():
             status = flattenList(DB_Operations.getCollectStatuses())
 
             topicNameParcels = "❏ Посылки"
-            topicNameLots = "❏ Лоты и индивидуалки"
-            parcel_id = 262  #DB_Operations.getMaxCollectParcelId() + 1 
+            parcel_id = DB_Operations.getMaxCollectParcelId() + 1 
 
             print('\nВыберите статус:\n' + Messages.formConsoleListMes(info_list = status))
             choiseStatus = int(input('Выбор: '))
@@ -583,24 +582,23 @@ def console():
             indList = input("Enter ind's num using comma(, ) (might be empty): ")
             indList = indList.split(', ')
 
-            #img = input('\nEnter the image url using comma(, ) (might be empty): ')
-            #img = img.split(', ')
+            img = input('\nEnter the image url using comma(, ) (might be empty): ')
+            img = img.split(', ')
 
             mes = Messages.formParcelCollectMes(parcel_id=parcel_id, status = stat, 
                                                 collect_dict= {'collects': collectList, 'inds': indList})
 
-            #topicInfo = vk.post_comment(topic_name = topicNameParcels, message=mes, img_urls=img)
+            topicInfo = vk.post_comment(topic_name = topicNameParcels, message=mes, img_urls=img)
 
             DB_Operations.updateInsertCollectParcel(parcel_id = parcel_id, status = stat,
-                                                    topic_id = 46691378, comment_id = 2811)
-            # topic_id = topicInfo[2]['topic_id'], comment_id = topicInfo[2]['comment_id']
+                                                    topic_id = topicInfo[2]['topic_id'], comment_id = topicInfo[2]['comment_id'])
             
             collectList = [f'C{collect}' for collect in collectList if collect != '']
             indList = [f'I{ind}' for ind in indList if ind != '']
             collectList.extend(indList)
 
             for itemId in collectList:
-                sleep(2)
+                sleep(4)
                 DB_Operations.updateCollect(collectId = itemId, status = stat, parcel_id = parcel_id)
                 collectTopicInfo = DB_Operations.getCollectTopicComment(collect_id = itemId)
                 vk.edit_status_comment_NEW(topic_id = collectTopicInfo[0], comment_id = collectTopicInfo[1],
@@ -624,7 +622,8 @@ def console():
             collectList = [collect[0] for collect in collectList]
             
             for itemId in collectList:
-                sleep(2)
+                pprint(itemId)
+                sleep(4)
                 DB_Operations.updateCollect(collectId = itemId, status = stat, parcel_id = parcel_id)
                 collectTopicInfo = DB_Operations.getCollectTopicComment(collect_id = itemId)
                 vk.edit_status_comment_NEW(topic_id = collectTopicInfo[0], comment_id = collectTopicInfo[1],
@@ -632,7 +631,7 @@ def console():
             
 
       except Exception as e:
-          print(f"\n===== ОШИБКА! \n{format_exc()}=====")
+          print(f"\n===== ОШИБКА! \n{format_exc()} - {e}=====")
           continue
 
 if __name__ == '__main__':
