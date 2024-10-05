@@ -557,6 +557,26 @@ def getCollectStatuses():
     
     return result
 
+def getMaxCollectId(type):
+    """ Получить максимальное айди коллекта, в зависимости от его типа
+
+    Returns:
+        int: id посылки
+    """
+    
+    conn = getConnection(DbNames.collectDatabase)
+    cursor = conn.cursor()
+    
+    cursor.execute(f'''select max(cast(substring(collect_id, 2) as int)) from collects
+                   where collect_id like '{type}%'
+                   ''')
+    result = cursor.fetchone()[0]
+    
+    cursor.close()
+    conn.close()
+    
+    return result
+
 def getAllCollectsInParcel(parcel_id):
     """Получить все коллекты с посылки по parcel_id
 

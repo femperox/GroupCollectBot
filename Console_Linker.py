@@ -24,31 +24,31 @@ def updateParticipantDB(participantList, collectId, isYstypka = False):
     for item in list:
         DB_Operations.updateInsertParticipantsCollect(collect_id = collectId, user_id = item['id'], items = item['items'], isYstypka = isYstypka)    
 
-def createNamedRange(spId, who, find):
-    '''
-    Генерирует именованный диапозон. Нужно доработать
+def createNamedRange(spId):
+    """Генерирует именованный диапозон. Нужно доработать
 
-    :param who:
-    :param num:
-    :param what:
-    :return:
-    '''
+    Args:
+        spId (int): id листа таблицы
 
-    # тут сделать проверку по айди
-    result = who
+    Returns:
+        string, string: именованный диапозон и айди коллекта для БД
+    """
+    namedRange = 'D'
+    collect_id = ''
+    collect_type = ''
 
-    if spId == collect_table.sp.spreadsheetsIds['Дашины лоты'][0] or spId == collect_table.sp.spreadsheetsIds['Лерины лоты'][0]:
-    # пока хз чё
-        result += "Collect"
-        find['key_word'] = 'Коллективка'
+    if spId == collect_table.sp.spreadsheetsIds['Дашины лоты'][0]:
+        collect_type = "C"
+        namedRange +='Collect'
     else:
-        result += 'Ind'
-        find['key_word'] = 'Индивидуалка'
+        collect_type = 'I'
+        namedRange += 'Ind'
 
-    num = int(vk.get_last_lot(find)) + 1
-    result += str(num)
+    num = str(DB_Operations.getMaxCollectId(collect_type) + 1)
+    namedRange += str(num)
+    collect_id = collect_type + num
 
-    return result
+    return namedRange, collect_id
 
 def strToList(string):
     '''
@@ -168,7 +168,6 @@ def transformToTableFormat(participantsList):
     '''
 
     pList = []
-
     for p in participantsList:
         if isinstance(p[1], str):
             hyperlink = p[1]
@@ -280,54 +279,42 @@ def getCollectId(collectType, collectNum):
     letter = "C" if collectType == "Коллективка" else "I"
     return f"{letter}{collectNum}"
 
-def createTableTopic(post_url, site_url ='', spId=0, topicName=0, items=0, img_url = ''):
+def createTableTopic(post_url, site_url ='', spId=0, topic_id=0, items=0, img_url = ''):
     '''
     Создаёт таблицу и комент в обсуждении по заданным параметрам
 
     :param post_url: список адресов записей на стене сообщества
     :param spId:
-    :param topicName:
+    :param topic_id:
     :param items:
     :param img_url:
     :return:
     '''
 
-    if spId == collect_table.sp.spreadsheetsIds['Лерины лоты'][0]:
-        letter = 'L'
-        where = 'Железнодорожный'
-    else:
-        letter = 'D'
-        where = 'Краснодар'
-
-    find = {'topic_name': topicName, 'collect_type': 'Индивидуалка'}
-
     item = {}
     siteName = ''
     if site_url != '':
         item = store_selector.selectStore(site_url)
-        siteName = f'( {item["siteName"]} )'
         if len(img_url) == 0:
             img_url = item['mainPhoto']
 
-    namedRange = createNamedRange(spId, letter, find)
+    namedRange, collect_id = createNamedRange(spId)
 
     participantsList = makeDistinctList(post_url) if post_url[0] != '' else []
     participantsList = checkParticipants(participantsList, items)
     participantsList.sort()
 
-    collectType, collectNum = collect_table.sp.defineCollectType(namedRange)
-    mes = Messages.mes_collect_info(collectType = collectType, collectNum = collectNum,
+    mes = Messages.mes_collect_info(collectId = collect_id,
                                     participantList = transformToTopicFormat(participantsList), 
-                                    lotWallUrl = post_url, siteName = siteName, 
-                                    where = where)
+                                    lotWallUrl = post_url, siteName = item["siteName"])
 
-    topicInfo = vk.post_comment(topic_name = topicName, message=mes, img_urls=[img_url])
+    topicInfo = vk.post_comment(topic_id = topic_id, message=mes, img_urls=[img_url])
 
     collect_table.createTable(spId, namedRange, participants = items, image = topicInfo[1][0], item = item)
 
     collect_table.updateTable(namedRange, transformToTableFormat(participantsList), topicInfo[0])
 
-    DB_Operations.updateCollect(collectId = getCollectId(collectType, collectNum), namedRange = namedRange,
+    DB_Operations.updateCollect(collectId = collect_id, namedRange = namedRange,
                                 topic_id = topicInfo[2]['topic_id'], comment_id = topicInfo[2]['comment_id'])
     updateParticipantDB(participantList = participantsList, collectId = namedRange.replace('D', '').replace('nd', '').replace('ollect', ''))
 
@@ -348,85 +335,77 @@ def ShipmentToRussiaEvent(toSpId, collectList, indList):
             if lotList[key][i] != '':
                 collect_table.moveTable(toSpId, key + lotList[key][i])
 
-def changeStatus(stat, collectList, indList, payment, topic_name = "❏ Лоты и индивидуалки"):
+def changeStatus(stat, collectList, indList, payment):
 
+    collect_list = [f'C{x}' if len(x)>0 else x for x in collectList if x != '']
+    collect_list.extend([f'I{x}' if len(x)>0 else x for x in indList if x != ''])
 
-    lotList = {'DCollect': [int(x) if len(x)>0 else x for x in collectList], 'DInd': [int(x) if len(x)>0 else x for x in indList]}
-    typeList = {'DCollect': 'Коллективка', 'DInd': 'Индивидуалка'}
+    for collect_id in collect_list:
 
-    what_to_find = {"topic_name": topic_name} # "type": "Коллективка", "number": 234}
+        pay = ''
+        if payment == 'y':
+            namedRange = collect_id.replace('C', 'DCollect') if collect_id.find('C') > -1 else collect_id.replace('I', 'DInd')
+            pay = collect_table.getPaymentStatus(namedRange)
+            participants = collect_table.getParticipantsList(namedRange)
+            pay = tableToTopic(participants, pay)
+        try:
+            collectTopicInfo = DB_Operations.getCollectTopicComment(collect_id = collect_id)
+            vk.edit_collects_activity_comment(topic_id = collectTopicInfo[0], comment_id = collectTopicInfo[1], 
+                                              status_text = stat, participant_text = pay)
+            DB_Operations.updateCollect(collectId = collect_id, status = stat)
+        except Exception as e:
+            pprint(e)
+            print_exc()
 
-    for key in lotList.keys():
-        what_to_find['type'] = typeList[key]
-        for i in range(len(lotList[key])):
-            if lotList[key][i] != '':
-                what_to_find['number'] = lotList[key][i]
-                pay = ''
-                if payment == 'y':
-                    pay = collect_table.getPaymentStatus('{0}{1}'.format(key, lotList[key][i]))
-                    participants = collect_table.getParticipantsList('{0}{1}'.format(key, lotList[key][i]))
-                    pay = tableToTopic(participants, pay)
-                try:
-                    vk.edit_status_comment(what_to_find, status= stat, payment= pay)
-                    DB_Operations.updateCollect(collectId = getCollectId(what_to_find['type'], what_to_find['number']), 
-                                                status = stat)
-                except Exception as e:
-                    pprint(e)
-                    print_exc()
-
-def changePositions(userList, topic_name = "❏ Лоты и индивидуалки"):
-
-    for yst in userList:
+def changePositions(userList):
+    for ystypka in userList:
         collect_id = ''
-        try:
-            number = int(yst[0])
-            lot = "Collect{}".format(number)
-            collect_id = 'C{}'.format(number)
-            type = "Коллективка"
-        except:
-            number = int(yst[0][1:])
-            lot = "Ind{}".format(number)
-            collect_id = 'I{}'.format(number)
-            type = "Индивидуалка"
+        lot = ''
 
-        id = vk.get_tuple_name(yst[1][1])
-        yst[1][1] = [id[1], id[0]]
+        if ystypka['collect'].isdigit():
+            lot = "Collect{}".format(int(ystypka['collect']))
+            collect_id = 'C{}'.format(int(ystypka['collect']))
+        else:
+            lot = "Ind{}".format(ystypka['collect'])
+            collect_id = 'I{}'.format(ystypka['collect'])
 
-        newParticipants = transformToTableFormat([yst[1]])
+        #TO DO: Поменять логику, нахера делать ревёрс
+        user_info = list(vk.get_tuple_name(ystypka['url']))
+        user_info.reverse()
+        user_info = [[ystypka['collect_items'], user_info]]
+
+        newParticipants = transformToTableFormat(user_info)
         try:
-            actualParticipants, paymentInfo = collect_table.changePositions('D'+lot, newParticipants["participantList"], yst[2])
+            actualParticipants, paymentInfo = collect_table.changePositions('D'+lot, newParticipants["participantList"], ystypka['payment_status'])
         except:
-            actualParticipants, paymentInfo = collect_table.changePositions('L'+lot, newParticipants["participantList"], yst[2])
+            actualParticipants, paymentInfo = collect_table.changePositions('L'+lot, newParticipants["participantList"], ystypka['payment_status'])
 
         updateParticipantDB(participantList = actualParticipants, collectId = collect_id, isYstypka = True)
 
         actualParticipants = tableToTopic(actualParticipants, paymentInfo)
 
-        what_to_find = {
-            "topic_name": topic_name,
-            "type": type,
-            "number": number
-        }
-
-        vk.edit_comment(actualParticipants, what_to_find)
+        topicCollectInfo = DB_Operations.getCollectTopicComment(collect_id = collect_id)
+        vk.edit_collects_activity_comment(topic_id = topicCollectInfo[0], comment_id = topicCollectInfo[1], 
+                                          participant_text = actualParticipants)
 
 
 def console():
 
     choise = 0
+    topicList = vk.get_topics()
+    albumList = vk.get_albums()
 
-    while choise != 3:
-
-      
+    while choise != 3:      
       try: 
-        choiseList = ['Сделать лот', 'Отправки в РФ', 'Выход', 'Замена ссылок на теги',
-                        'Забанить', 'Уступки', 'Обновление статуса лотов', 'Удаление фотографий', 
-                        'Сформировать посылку', 'Обновление статуса посылки']
+        choiseList = ['Сделать лот', 'Отправки в РФ', 'Выход', 'Забанить', 
+                      'Уступки', 'Обновление статуса лотов', 'Удаление фотографий', 
+                      'Сформировать посылку', 'Обновление статуса посылки']
         choise = int(input('\nВведите номер:\n' + Messages.formConsoleListMes(info_list = choiseList, offset = 2) + '\nВыбор: '))
 
         if choise == 1:
 
-            topicName = "❏ Лоты и индивидуалки"
+            topicIdCollect = [topic['id'] for topic in topicList 
+                              if topic['title'].lower().find('лоты') > -1][0]
 
             lists = [ collect_table.sp.spreadsheetsIds['Дашины лоты'][0],
                     collect_table.sp.spreadsheetsIds['Дашины индивидуалки'][0],
@@ -442,7 +421,6 @@ def console():
 
             site_url = input('\nEnter the site url (might be empty): ')
            
-
             wallPosts = input('\nEnter the vk posts. If more than 1 - use space. (might be empty): ')
             wallPosts = wallPosts.split(' ')
 
@@ -451,7 +429,7 @@ def console():
             items = int(input('\nHow many items are there? '))
 
             createTableTopic(wallPosts, site_url, spId=spId,
-                             topicName=topicName, items=items, img_url=img)
+                             topic_id = topicIdCollect, items=items, img_url=img)
 
         elif choise == 2:
 
@@ -476,19 +454,6 @@ def console():
             ShipmentToRussiaEvent(spId, collectList, indList)
 
         elif choise == 4:
-            topics = [ '❏ Лоты и индивидуалки',
-                        '❏ Заказы гашапонов',
-                        '❏ Заказы с AmiAmi',
-                        '❏ Коллект посылка до админа из Краснодара',
-                        '❏ Коллект посылка до админа из Москвы'
-            ]
-
-            print('\nВыберите обсуждение:\n' + Messages.formConsoleListMes(info_list = topics, offset = 2))
-
-            choise1 = int(input('Выбор: '))
-            vk.replace_url(topics[choise1-1])
-
-        elif choise == 5:
 
             user_list = []
             print('\nTo stop enter any symbol\n')
@@ -506,7 +471,7 @@ def console():
 
             vk.ban_users(user_list)
 
-        elif choise == 6:
+        elif choise == 5:
 
             user_list = []
             print('\nTo stop enter any symbol\n')
@@ -516,19 +481,21 @@ def console():
             i = 0
 
             while True:
+                user_info = {}
                 i += 1
-                url = input('user{0} URL: '.format(i))
-                if url.find('https://vk.com') < 0: break
-
-                lot, items = input('лот - уступка : '.format(i)).split(' - ')
-                #items = items.split(', ')
+                user_info['url'] = input('user{0} URL: '.format(i))
+                if user_info['url'].find('https://vk.com') < 0: 
+                    break
+                
+                user_info['collect'], user_info['collect_items'] = input('лот - уступка : '.format(i)).split(' - ')
+                
                 payed = input('Позиции оплачены? y/n: ')
-                payed = 0 if payed.lower() != 'y' else 1
-
-                user_list.append([lot, [items, url], payed])
+                user_info['payment_status'] = 0 if payed.lower() != 'y' else 1
+                
+                user_list.append(user_info.copy())
 
             changePositions(user_list)
-        elif choise == 7:
+        elif choise == 6:
                         
             status = flattenList(DB_Operations.getCollectStatuses())
 
@@ -538,14 +505,6 @@ def console():
 
                     choise1 = int(input('Выбор: '))
                     stat = status[choise1-1]
-                    if stat == 'Едет в РФ':
-                        print('Через запятую перечислите трек-номера\n')
-                        trakcs = input('Треки: ').split(', ')
-
-                        for trakc in trakcs:
-                            stat += '\n' + trakc
-                    if stat == 'Без статуса':
-                        stat = ''
 
                     collectList = input("Enter collect's num using comma(, ) (might be empty): ")
                     collectList = collectList.split(', ')
@@ -557,19 +516,22 @@ def console():
 
                     changeStatus(stat, collectList, indList, payment)
 
+        elif choise == 7:
+
+            print('\nВыберите альбом:\n' + Messages.formConsoleListMes(info_list = [x['title'] for x in albumList]))
+            choiseAlbum = int(input('Выбор: '))
+            album = albumList[choiseAlbum-1]
+
+            date = input('Введите дату, до которой нужно удалить фотографии (ДД.ММ.ГГГГ): ')
+            date = datetime.strptime(date, '%d.%m.%Y').date()
+
+            vk.delete_photos(album_id = album['id'], end_date = date)
+
         elif choise == 8:
 
-            d = input('Введите дату, до которой нужно удалить фотографии (ДД.ММ.ГГГГ): ')
-            d = datetime.strptime(d, '%d.%m.%Y').date()
-
-            album = 274685308
-            vk.delete_photos(album_id=album, end_date=d)
-
-        elif choise == 9:
-
             status = flattenList(DB_Operations.getCollectStatuses())
-
-            topicNameParcels = "❏ Посылки"
+            topicIdParcels = [topic['id'] for topic in topicList 
+                              if topic['title'].lower().find('посылки') > -1][0]
             parcel_id = DB_Operations.getMaxCollectParcelId() + 1 
 
             print('\nВыберите статус:\n' + Messages.formConsoleListMes(info_list = status))
@@ -588,7 +550,7 @@ def console():
             mes = Messages.formParcelCollectMes(parcel_id=parcel_id, status = stat, 
                                                 collect_dict= {'collects': collectList, 'inds': indList})
 
-            topicInfo = vk.post_comment(topic_name = topicNameParcels, message=mes, img_urls=img)
+            topicInfo = vk.post_comment(topic_id = topicIdParcels, message=mes, img_urls=img)
 
             DB_Operations.updateInsertCollectParcel(parcel_id = parcel_id, status = stat,
                                                     topic_id = topicInfo[2]['topic_id'], comment_id = topicInfo[2]['comment_id'])
@@ -601,9 +563,9 @@ def console():
                 sleep(4)
                 DB_Operations.updateCollect(collectId = itemId, status = stat, parcel_id = parcel_id)
                 collectTopicInfo = DB_Operations.getCollectTopicComment(collect_id = itemId)
-                vk.edit_status_comment_NEW(topic_id = collectTopicInfo[0], comment_id = collectTopicInfo[1],
+                vk.edit_collects_activity_comment(topic_id = collectTopicInfo[0], comment_id = collectTopicInfo[1],
                                            status = stat)
-        elif choise == 10:
+        elif choise == 9:
 
             status = flattenList(DB_Operations.getCollectStatuses())
 
@@ -615,7 +577,7 @@ def console():
 
             DB_Operations.updateInsertCollectParcel(parcel_id = parcel_id, status = stat)
             parcelInfo = DB_Operations.getCollectParcel(parcel_id = parcel_id) # index: -2 -1
-            vk.edit_status_comment_NEW(topic_id = parcelInfo[-2], comment_id = parcelInfo[-1],
+            vk.edit_collects_activity_comment(topic_id = parcelInfo[-2], comment_id = parcelInfo[-1],
                                        status= stat, typeChange = VkTopicCommentChangeType.parcel)
 
             collectList = DB_Operations.getAllCollectsInParcel(parcel_id = parcel_id)
@@ -626,7 +588,7 @@ def console():
                 sleep(4)
                 DB_Operations.updateCollect(collectId = itemId, status = stat, parcel_id = parcel_id)
                 collectTopicInfo = DB_Operations.getCollectTopicComment(collect_id = itemId)
-                vk.edit_status_comment_NEW(topic_id = collectTopicInfo[0], comment_id = collectTopicInfo[1],
+                vk.edit_collects_activity_comment(topic_id = collectTopicInfo[0], comment_id = collectTopicInfo[1],
                                            status = stat)
             
 

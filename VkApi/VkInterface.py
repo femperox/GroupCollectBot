@@ -232,27 +232,6 @@ class VkApi:
                 return {}
         return {}
     
-    def _get_topic_by_name(self, topic_name: str) -> int:
-        """
-        Args:
-            topic_name (str): Название обсуждения
-
-        Returns:
-            int: ID обсуждения с именем topic_name или -1
-        """
-        try:
-
-            vk_response = self.vk.board.getTopics(group_id=self.__group_id, preview_length=0)
-
-            topics = vk_response.get('items', [])
-            for topic in topics:
-                if topic['title'] == topic_name:
-                    return topic['id']
-        except Exception as e:
-            pprint(e)
-            return -1
-
-
     def _vk_image_upload(self, image_name: str, user: str, isWallServer = False) -> dict:
         """Загружает локальное изображение на сервера Вконтакте
 
@@ -330,17 +309,40 @@ class VkApi:
             print_exc()
             return '', []
 
-    def _get_albums(self):
-        """Получить альбомы сообщества
+    def get_albums(self):
+        """Получить базовую инфу о фотоальбомах сообщества - id и название
 
         Returns:
-            list of dict: список альбомов и инфа о них
+            list of dict: список словарей с инфой о фотоальбоме
         """
+        try:
+            albums_info = self.vk.photos.getAlbums(owner_id = f'-{self.__group_id}', need_system = 1)['items']
+            result = []
+            for album in albums_info:
+                result.append({'title': album['title'], 
+                               'id': album['id']})
+            return result
+        except Exception as e:
+            pprint(e)
+            return []
 
-        albums = self.vk.photos.getAlbums(owner_id = f'-{self.__group_id}', need_system=1)
-        
-        return albums
+    
+    def get_topics(self):
+        """Получить базовую инфу об обсуждениях сообщества - id и название
 
+        Returns:
+            list of dict: список словарей с инфой об обсуждении
+        """
+        try:
+            topics_info = self.vk.board.getTopics(group_id=self.__group_id)['items']
+            result = []
+            for topic in topics_info:
+                result.append({'title': topic['title'], 
+                               'id': topic['id']})
+            return result
+        except Exception as e:
+            pprint(e)
+            return []
         
     def get_name(self, id):
         '''
@@ -1147,47 +1149,12 @@ class VkApi:
             print_exc()
             return '', []
 
-    def find_comment(self, what_to_find):
-        '''
-        Поиск комментария по заданыым критериям
-        :param what_to_find: словарь вида { "topic_name" : ..., "type": Коллективка/Индивидуалка/Посылка , "number" : ...}
-        :return: возращает инфу о найденном комментарии
-        '''
-
-        topic_id = self._get_topic_by_name(what_to_find["topic_name"])
-        start_comment_id = 1
-
-        while True:
-            params = {
-                'group_id': self.__group_id,
-                'topic_id': topic_id,
-                'sort': 'asc',
-                'count': 100,
-                'start_comment_id': start_comment_id + 1
-            }
-
-            comments = self.vk.board.getComments(**params)
-            id = list(comments['items'])[-1]['id']
-
-            if len(comments) <= 1 or id == start_comment_id: break
-            start_comment_id = id
-
-            for comment in comments['items']:
-                if comment['text'].find(what_to_find['type']) == 0:
-
-                    number = comment['text'].split('\n')[0].split(' ')[1]
-                    number = int(re.findall("(\d+)", number)[0])
-                    if number == what_to_find["number"]:
-                        return comment
-                        break            
-
-    def post_comment(self, topic_name: str, message: str, comment_url='', from_group=1, img_urls=[]) -> tuple:
+    def post_comment(self, topic_id: int, message: str, from_group=1, img_urls=[]) -> tuple:
         """Позволяет создать или изменить комментарий в обсуждении. Для изменения нужно передать ссылку на комментарий
 
         Args:
-            topic_name (str): Название обсуждения
+            topic_name (int): id обсуждения
             message (str): Текст комментария
-            comment_url (str, optional): url комментария в обсуждении. Передаётся в случае изменения. По умолчанию = ''
             from_group (int, optional): От имени кого будет опубликована запись. 1 - от сообщества, 0 - от имени пользователя. По умолч. = 1
             img_urls (list, optional): Список url картинок, которые необходимо прикрепить. По умолчанию = [].
 
@@ -1195,7 +1162,6 @@ class VkApi:
             tuple: Возвращает url созданного / изменённого комментария + список url прикреплённых к нему изображений + словарь topic_id, comment_id
         """
         try:
-            topic_id = self._get_topic_by_name(topic_name)
             params = {
                 'group_id': self.__group_id,
                 'topic_id': topic_id,
@@ -1207,20 +1173,8 @@ class VkApi:
 
             if attachments != ('', []):
                 params.setdefault('attachment', attachments[0])
-            if comment_url == '':
-                comm_id = self.vk.board.createComment(**params)
-            else:
-                params.pop('guid')
-                params.pop('from_group')
-                comm_id = int(comment_url[comment_url.find('post=') + 5:])
-                if attachments == ('', []):
-                    attachments = self._get_previous_attachments(topic_id, comm_id)
-                    print('previous_att', attachments)
-                    if attachments != ('', []):
-                        params.setdefault('attachments', attachments[0])
-                params.setdefault('comment_id', comm_id)
-                if not self.vk.board.editComment(**params):
-                    return '', []
+
+            comm_id = self.vk.board.createComment(**params)
         
             res_url = 'https://vk.com/topic-{}_{}?post={}'.format(self.__group_id, topic_id, comm_id)
             topic_info = {'topic_id': topic_id, 'comment_id': comm_id}
@@ -1241,226 +1195,17 @@ class VkApi:
 
         # Пробуем снова отправить запрос с капчей
         return captcha.try_again(key)
-
-        
-    def post_comment_id(self, topic_id: str, message: str, attachments = [], from_group=1) -> tuple:
-        """Позволяет создать или изменить комментарий в обсуждении. Для изменения нужно передать ссылку на комментарий
+    
+    def find_board_comment(self, topic_id, comment_id):
+        """Найти комментарий в обсуждении
 
         Args:
-            topic_name (str): Название обсуждения
-            message (str): Текст комментария
-            comment_url (str, optional): url комментария в обсуждении. Передаётся в случае изменения. По умолчанию = ''
-            from_group (int, optional): От имени кого будет опубликована запись. 1 - от сообщества, 0 - от имени пользователя. По умолч. = 1
-            img_urls (list, optional): Список url картинок, которые необходимо прикрепить. По умолчанию = [].
+            topic_id (int): id обсуждения
+            comment_id (int): id комментария
 
         Returns:
-            tuple: Возвращает url созданного / изменённого комментария + список url прикреплённых к нему изображений
+            dict: словарь с информацией о комментарии
         """
-        try:
-            params = {
-                'group_id': self.__group_id,
-                'topic_id': topic_id,
-                'message': message,
-                'from_group': from_group,
-                'guid': random.randint(0, 1000000000),
-            }
-           
-
-            result = ''
-        
-            for attachment in attachments:
-                if 'doc' in attachment.keys():
-                    att_doc = attachment.get('doc', {})
-                    result += f"{self._form_images_request_signature(isWallServer = True, user=self.__group_id, tag='doc to pic', image_urls=[att_doc['preview']['photo']['sizes'][-1]['src']])[0]},"
-                else:
-                    att_photo = attachment.get('photo', {})
-                    result += 'photo{}_{},'.format(att_photo.get('owner_id', ''), att_photo.get('id', ''))
-                
-            if result != '':
-                if result[len(result) - 1] == ',':
-                    result = result[:len(result) - 1:]
-      
-            params.setdefault('attachment', result)
-   
-            comm_id = self.vk.board.createComment(**params)
-
-            
-        except:
-            print_exc()
-            return '', []
-
-    def get_last_lot(self, what_to_find):
-        '''
-        Возвращает номер последнего лота (коллекта/индивидуалки)
-        :param what_to_find: словарь, содержащий имя обсуждения и ключевое слово
-        :return:
-        '''
-
-        topic_id = self._get_topic_by_name(what_to_find['topic_name'])
-
-        params = {
-            'group_id': self.__group_id,
-            'topic_id': topic_id,
-            'sort': 'desc',
-            'count': 100
-        }
-
-        comments = self.vk.board.getComments(**params)
-
-        number = 0
-        for comment in comments['items']:
-            if comment['text'].find(what_to_find['key_word']) == 0:
-                number = comment['text'].split('\n')[0].split(' ')[1]
-                return number
-
-        return number   
-    
-    def replace_url(self, topic_name):
-        '''
-        Заменяет ссылки на пользователей на "тег"
-
-        :param topic_name: Название обсуждения
-        :return:
-        '''
-
-        topic_id = self._get_topic_by_name(topic_name)
-
-        start_comment_id = 1
-        while True:
-            params = {
-                'group_id': self.__group_id,
-                'topic_id': topic_id,
-                'sort': 'asc',
-                'count': 100,
-                'start_comment_id': start_comment_id + 1
-            }
-
-            comments = self.vk.board.getComments(**params)
-            id = list(comments['items'])[-1]['id']
-
-
-
-            if len(comments) <= 1 or id == start_comment_id: break
-            start_comment_id = id
-
-
-            for comment in comments['items']:
-
-                text = comment['text']
-
-                urls = re.findall('- https://(\S+)', text)
-
-
-                if len(urls) == 0: continue
-
-                print('\n'+text.split('\n')[0])
-
-                for url in urls:
-                    user = self.get_num_id(url)
-                    print(user)
-                    id = re.findall('vk.com/(\S+)', user[1])[0]
-                    text = text.replace('https://'+url, '[{0}|{1}]'.format(id, user[0]))
-
-                attachments = self._get_previous_attachments(topic_id, comment['id'])
-                params_edit = {
-                    'group_id': self.__group_id,
-                    'topic_id': topic_id,
-                    'comment_id': comment['id'],
-                    'message': text,
-                    'attachments': attachments
-                }
-
-                self.vk.board.editComment(**params_edit)
-                time.sleep(3)
-
-    def edit_comment(self, text, what_to_find):
-        '''
-        Редактирует определённый комментарий в обсуждении
-
-        :param text: текст, который необходимо вставить
-        :param what_to_find: словарь вида { "topic_name" : ..., "type": Коллективка/Индивидуалка/Посылка , "number" : ...}
-        :return:
-        '''
-
-        comment = self.find_comment(what_to_find)
-        old_text = comment['text']
-
-        try:
-            start_part = re.search('\n\n\d', old_text).span()[1] - 1
-        except:
-            # Состояние: Едет в РФ \n tracks \n\n позиции
-            start_part = re.search('\n \n\d', old_text).span()[1] - 1
-        try:
-            end_part = re.search('\n\nПоедет', old_text).span()[0]
-        except:
-            end_part = re.search('\n \nПоедет', old_text).span()[0]
-
-        text = old_text[:start_part] + text + old_text[end_part:]
-
-        topic_id = self._get_topic_by_name(what_to_find["topic_name"])
-        attachments = self._get_previous_attachments(topic_id, comment['id'])
-        params_edit = {
-            'group_id': self.__group_id,
-            'topic_id': topic_id,
-            'comment_id': comment['id'],
-            'message': text,
-            'attachments': attachments
-        }
-
-        self.vk.board.editComment(**params_edit)
-
-
-    def edit_status_comment(self, what_to_find, status = '', payment = []):
-        '''
-
-        :param what_to_find: словарь вида { "topic_name" : ..., "type": Коллективка/Индивидуалка/Посылка , "number" : ...}
-        :param status: статус ['Выкупается', 'Едет на склад', 'На складе', 'Едет в РФ', 'На руках', 'Без статуса']. Может быть пустым
-        :param payment: список тегов с оплатой. Может быть пустым
-        :return:
-        '''
-
-        comment = self.find_comment(what_to_find)
-
-        old_text = comment['text']
-
-        text = ''
-
-        # Изменение статуса
-        if len(status) > 0:
-            status_end_part =  re.search('\n\n\d', old_text).span()[1] - 3
-            status_start_part = re.search('Состояние: ', old_text).span()[1]
-            text = old_text[:status_start_part] + status + old_text[status_end_part:]
-
-        # Изменение инфы об оплате
-        if len(payment) > 0:
-
-            # если статус был уже изменён
-            if len(text)>0:
-                participants_start_part = re.search('\n\n\d', text).span()[1] - 1
-                participants_end_part = re.search('\n\nПоедет', text).span()[0] + 1
-            else:
-                participants_start_part = re.search('\n\n\d', old_text).span()[1] - 1
-                participants_end_part = re.search('\n\nПоедет', old_text).span()[0] + 1
-                text = old_text
-
-            text = text[:participants_start_part] + payment + text[participants_end_part:]
-
-        topic_id = self._get_topic_by_name(what_to_find["topic_name"])
-        attachments = self._get_previous_attachments(topic_id, comment['id'])
-        params_edit = {
-            'group_id': self.__group_id,
-            'topic_id': topic_id,
-            'comment_id': comment['id'],
-            'message': text,
-            'attachments': attachments
-        }
-
-        try:
-            self.vk.board.editComment(**params_edit)
-        except:
-            return -1
-        
-    def find_comment_NEW(self, topic_id, comment_id):
 
         params = {
                 'group_id': self.__group_id,
@@ -1471,26 +1216,39 @@ class VkApi:
 
         return self.vk.board.getComments(**params)['items'][0]
 
-        
-    def edit_status_comment_NEW(self, topic_id, comment_id, status = '', payment = [], typeChange = VkTopicCommentChangeType.collect):
+    def edit_collects_activity_comment(self, topic_id, comment_id, status_text = '', 
+                                       participant_text = '', 
+                                       typeChange = VkTopicCommentChangeType.collect):
+        """Изменить комментарий, относящийся к активности коллектов
 
-        comment = self.find_comment_NEW(topic_id, comment_id)
+        Args:
+            topic_id (int): id обсуждения
+            comment_id (int): id комментария
+            status_text (str, optional): текст статуса. Defaults to ''.
+            participant_text (str, optional): текст участников. Defaults to ''.
+            typeChange (VkTopicCommentChangeType, optional): тип активности. Defaults to VkTopicCommentChangeType.collect.
+
+        Returns:
+            int: успешность выполнения. 1 или -1
+        """
+        #TO DO: логику payment не помню, пока менять не буду
+
+        comment = self.find_board_comment(topic_id, comment_id)
         old_text = comment['text']
         new_text = ''
 
         # Изменение статуса
-        if status:
+        if status_text:
             if typeChange == VkTopicCommentChangeType.collect:
                 status_end_part =  re.search('\n\n\d', old_text).span()[1] - 3
                 status_start_part = re.search('Состояние: ', old_text).span()[1]
             elif typeChange == VkTopicCommentChangeType.parcel:
                 status_end_part =  re.search('\n\n\w', old_text).span()[1] - 3
                 status_start_part = re.search('Статус: ', old_text).span()[1]
-            new_text = old_text[:status_start_part] + status + old_text[status_end_part:]
-
+            new_text = old_text[:status_start_part] + status_text + old_text[status_end_part:]
+        
         # Изменение инфы об оплате
-        if len(payment) > 0:
-
+        if participant_text:
             # если статус был уже изменён
             if new_text:
                 participants_start_part = re.search('\n\n\d', new_text).span()[1] - 1
@@ -1499,8 +1257,7 @@ class VkApi:
                 participants_start_part = re.search('\n\n\d', old_text).span()[1] - 1
                 participants_end_part = re.search('\n\nПоедет', old_text).span()[0] + 1
                 new_text = old_text
-
-            new_text = new_text[:participants_start_part] + payment + new_text[participants_end_part:]
+            new_text = new_text[:participants_start_part] + participant_text + new_text[participants_end_part:]
 
         attachments = self._get_previous_attachments(topic_id, comment_id)
         
@@ -1514,6 +1271,7 @@ class VkApi:
 
         try:
             self.vk.board.editComment(**params_edit)
+            return 1
         except:
             return -1
         
