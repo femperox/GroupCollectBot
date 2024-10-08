@@ -6,13 +6,13 @@ from time import sleep
 from SQLS.DB_Operations import getUsers, getAllFavs, deleteFav
 import threading
 from Logger import logger_fav
-from JpStoresApi.yahooApi import yahooApi
+from APIs.StoresApi.JpStoresApi.yahooApi import yahooApi as ya
 import json
 import os
 from confings.Consts import CURRENT_POSRED, Stores
 from confings.Messages import Messages
-from JpStoresApi.StoreSelector import StoreSelector
-from JpStoresApi.MercariApi import MercariApi
+from APIs.StoresApi.JpStoresApi.StoreSelector import StoreSelector
+from APIs.StoresApi.JpStoresApi.MercariApi import MercariApi
 
 NOTIFY_DIFFERENCE = 10*60 + 10
 
@@ -35,7 +35,7 @@ def addNotifiers():
         
 
 def checkTime(usr_id):
-    yahooApi = yahooApi()
+    yahooApi = ya()
     storesApi = StoreSelector()
     checked_lots = []
     while True:

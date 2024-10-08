@@ -16,7 +16,7 @@ from SQLS.DB_Operations import addFav, getFav, deleteFav, getFandoms, getTags, a
 from confings.Consts import VkTopicCommentChangeType, TrackingTypes, ItemBuyStatus, VK_PROPOSED_CHAT_ID, VK_ERRORS_CHAT_ID, BanActionType, MAX_BAN_REASONS, RegexType, PayloadType, VkCommands, PRIVATES_PATH, VkCoverSize, Stores
 from APIs.utils import getMonitorChats, getFavInfo, getStoreMonitorChats
 from APIs.TrackingAPIs.TrackingSelector import TrackingSelector
-from JpStoresApi.StoreSelector import StoreSelector
+from APIs.StoresApi.JpStoresApi.StoreSelector import StoreSelector
 from VkApi.objects.VkButtons import VkButtons
 import time
 
@@ -616,12 +616,15 @@ class VkApi:
                                     tracking_type = TrackingTypes.ids[regex]
                                     break
                             tracking_info = {}
-                            tracking_info = TrackingSelector.selectTracker(track=track.group(), type=tracking_type)
-                            tracking_info['rcpnVkId'] = chat
-                            
-                            tracking_info['trackingType'] = tracking_type
+                            try:
+                                tracking_info = TrackingSelector.selectTracker(track=track.group(), type=tracking_type)
+                                tracking_info['rcpnVkId'] = chat 
+                                tracking_info['trackingType'] = tracking_type
 
-                            insertUpdateParcel(tracking_info)          
+                                insertUpdateParcel(tracking_info)      
+                                logger_utils.info(f"[INSERT-TRACK] пользователю [{chat}] выдан трек [{tracking_info['barcode']}] ")    
+                            except Exception as e:
+                                logger_utils.info(f"[INSERT-TRACK-ERROR] ОШИБКА: {e} - пользователю [{chat}] выдан трек [{tracking_info['barcode']}] ")   
                         except:
                             continue   
 

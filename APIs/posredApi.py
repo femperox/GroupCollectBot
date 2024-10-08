@@ -54,7 +54,7 @@ class PosredApi:
         
         for json_item in js['result']:
             if json_item['from'] == '643' and json_item['to'] == '840':
-                return json_item['rate'] + 1.5
+                return json_item['rate'] + 2.7
         
 
     @staticmethod
@@ -68,7 +68,7 @@ class PosredApi:
         Returns:
             Dict[int, CURRENCIES]: коммишка в % (на 19.04.2024)
         """
-        from JpStoresApi.StoreSelector import StoreSelector
+        from APIs.StoresApi.JpStoresApi.StoreSelector import StoreSelector
         
         #commissionFree = [Stores.mercari, Stores.payPay, Stores.yahooAuctions, Stores.amazon]
         ss = StoreSelector()
@@ -79,6 +79,21 @@ class PosredApi:
             standartCommissionPercent = 6
 
         return {'value': standartCommissionPercent, 'key': CURRENCIES.percent}
+    
+    @staticmethod
+    def getСommissionForItemUSD():
+        """Получить комиссию для товара в USD
+
+        Returns:
+            dict: словарь: тип комиссии, форматируемая строка коммишки, функция расчета коммишки
+        """
+
+        def commission(price):
+            return 1.3 + price*0.02
+
+        return {'key': CURRENCIES.mixed,
+                'posredCommission': '1.3 + {}*0.02',
+                'posredCommissionValue': commission}
         
     @staticmethod
     def isPercentCommision(commission):

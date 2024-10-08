@@ -2,7 +2,7 @@ import threading
 from VkApi.VkInterface import VkApi as vk
 from traceback import print_exc
 from time import sleep
-from JpStoresApi.AmiAmiApi import AmiAmiApi
+from APIs.StoresApi.JpStoresApi.AmiAmiApi import AmiAmiApi
 from confings.Messages import Messages, MessageType
 from confings.Consts import MonitorStoresType
 from Logger import logger_stores
@@ -12,7 +12,7 @@ from SQLS.DB_Operations import insertNewSeenProducts
 from confings.Consts import STORE_MONITOR_CONF_PATH
 import json
 from APIs.utils import createItemPairs
-from JpStoresApi.HPoiApi import HPoiApi
+from APIs.StoresApi.JpStoresApi.HPoiApi import HPoiApi
 
 maxProxyTick = 10
 firstStart = [True, True, True]

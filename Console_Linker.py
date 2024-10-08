@@ -2,7 +2,7 @@ from VkApi.VkInterface import VkApi as vk
 from GoogleSheets.CollectOrdersSheet import CollectOrdersSheet as collect_table
 from traceback import format_exc, print_exc
 from pprint import pprint 
-from JpStoresApi.StoreSelector import StoreSelector
+from APIs.StoresApi.JpStoresApi.StoreSelector import StoreSelector
 from confings.Messages import Messages
 import re
 from confings.Consts import VkTopicCommentChangeType

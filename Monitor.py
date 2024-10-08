@@ -9,8 +9,8 @@ import datetime
 from APIs.webUtils import WebUtils
 from Logger import logger
 from traceback import print_exc
-from JpStoresApi.yahooApi import yahooApi
-from JpStoresApi.MercariApi import MercariApi
+from APIs.StoresApi.JpStoresApi.yahooApi import yahooApi
+from APIs.StoresApi.JpStoresApi.MercariApi import MercariApi
 from confings.Consts import MONITOR_CONF_PATH, PRIVATES_PATH, Stores
 from confings.Messages import MessageType, Messages
 from APIs.utils import getActiveMonitorChatsTypes, createItemPairs

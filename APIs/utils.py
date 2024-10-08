@@ -5,8 +5,7 @@ from confings.Consts import MONITOR_CONF_PATH, RegexType, STORE_MONITOR_CONF_PAT
 import re
 from itertools import chain
 from pprint import pprint
-from JpStoresApi.StoreSelector import StoreSelector
-from JpStoresApi.yahooApi import yahooApi
+from APIs.StoresApi.JpStoresApi.StoreSelector import StoreSelector
 from confings.Consts import Stores
 from dateutil.relativedelta import relativedelta
 
