@@ -68,7 +68,8 @@
 🌐 [animate](https://www.animate-onlineshop.jp)  
 🌐 [mercari](https://jp.mercari.com)  
 🌐 [mandarake](https://www.mandarake.co.jp)  
-🌐 [hpoi](https://www.hpoi.net)
+🌐 [hpoi](https://www.hpoi.net)  
+🌐 [youtooz](https://youtooz.com/) *(с 09.10.2024)*
 
 
 ## Что будет дорабатываться/добавляться?
