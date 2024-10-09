@@ -15,7 +15,6 @@ class YoutoozApi:
         Returns:
             dict: словарь соответсвий стоимости доставок к типам товаров
         """
-
         soup = WebUtils.getSoup('https://youtooz.com/pages/shipping-policy', )
 
         table = soup.find('tbody')
@@ -40,8 +39,6 @@ class YoutoozApi:
             else:
                 continue
             item_size = item_size.replace('\n', '').replace('*', '').lower()
-
-
 
             item_shipment_price = row.find('td', {'style': 'text-align: center; height: 22px; width: 93px;'}).text.lower()
             item_shipment_price = spt.free if item_shipment_price == 'free' else int(item_shipment_price.replace('$', ''))
@@ -116,7 +113,17 @@ class YoutoozApi:
         js = json.loads(js)
 
         item = {}
-        item['itemPrice'] = int(js['offers'][0]['price'])
+
+        offer_index = 0
+        if url.find('variant') > -1:
+            for i in range(len(js['offers'])):
+                if js['offers'][i]['url'] == url:
+                    offer_index = i
+                    break
+
+        item['itemPrice'] = js['offers'][offer_index]['price']
+        item['id'] = js['offers'][offer_index]['sku']
+
         item['tax'] = 0
         item['itemPriceWTax'] = 0
         item['shipmentPrice'] = YoutoozApi.setShipmentPrice(url = url)
@@ -125,7 +132,7 @@ class YoutoozApi:
         item['name'] = js['name']
         item['endTime'] = datetime.now() + relativedelta(years=3)
         item['siteName'] = Stores.youtooz
-        item['id'] = js['offers'][0]['sku']
+
 
         commission = PosredApi.getСommissionForItemUSD()
         if item['shipmentPrice'] == spt.free:
