@@ -4,7 +4,7 @@ from pprint import pprint
 from datetime import datetime
 import json
 from dateutil.relativedelta import relativedelta
-from confings.Consts import ShipmentPriceType as spt
+from confings.Consts import ShipmentPriceType as spt, Stores
 from selenium.webdriver.common.by import By
 from traceback import print_exc
 from APIs.posredApi import PosredApi
@@ -39,17 +39,17 @@ class SecondaryStoreApi:
         item['mainPhoto'] = js['images'][0]['url']
         item['endTime'] = datetime.now() + relativedelta(years=3)
 
-        posredCommission = PosredApi.getСommissionForItem(item['page'])
-        if PosredApi.isPercentCommision(posredCommission):
-            item['posredCommission'] = f"{int(item['itemPrice'])}*{posredCommission['value']/100 if posredCommission['value'] > 0 else 0}"
-            item['posredCommissionValue'] = item['itemPrice']*(posredCommission['value']/100)
-        else:
-            item['posredCommission'] = posredCommission['value']
+        commission = PosredApi.getСommissionForItem(item['page'])
+        item['posredCommission'] = commission['posredCommission'].format(item['itemPrice'])
+        item['posredCommissionValue'] = commission['posredCommissionValue'](item['itemPrice'])  
+
+        item['siteName'] = Stores.payPay
+        item['id'] = item_id   
 
         return item
     
     @staticmethod
-    def parseMandarake(url):
+    def parseMandarake(url, item_id):
         """Получение базовой информации о лоте со вторички Mandarake
 
         Args:
@@ -90,12 +90,12 @@ class SecondaryStoreApi:
                 item['mainPhoto'] = img 
                 item['endTime'] = datetime.now() + relativedelta(years=3)
 
-                posredCommission = PosredApi.getСommissionForItem(item['page'])
-                if PosredApi.isPercentCommision(posredCommission):
-                    item['posredCommission'] = f"{int(item['itemPriceWTax'])}*{posredCommission['value']/100 if posredCommission['value'] > 0 else 0}"
-                    item['posredCommissionValue'] = item['itemPriceWTax']*(posredCommission['value']/100)
-                else:
-                    item['posredCommission'] = posredCommission['value']
+                commission = PosredApi.getСommissionForItem(item['page'])
+                item['posredCommission'] = commission['posredCommission'].format(item['itemPrice'])
+                item['posredCommissionValue'] = commission['posredCommissionValue'](item['itemPrice'])  
+
+                item['siteName'] = Stores.mandarake
+                item['id'] = item_id   
         except:
             pprint('cant get item info.')
             print_exc()

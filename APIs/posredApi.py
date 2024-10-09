@@ -70,7 +70,6 @@ class PosredApi:
         """
         from APIs.StoresApi.JpStoresApi.StoreSelector import StoreSelector
         
-        #commissionFree = [Stores.mercari, Stores.payPay, Stores.yahooAuctions, Stores.amazon]
         ss = StoreSelector()
         ss.url = url
         if ss.getStoreName() == Stores.amiAmi and ss.isEngAmi(url=url):
@@ -78,7 +77,13 @@ class PosredApi:
         else:
             standartCommissionPercent = 6
 
-        return {'value': standartCommissionPercent, 'key': CURRENCIES.percent}
+        def commission(price):
+            return price*standartCommissionPercent/100
+
+        return {'key': CURRENCIES.percent,
+                'value': standartCommissionPercent,
+                'posredCommissionValue': commission, 
+                'posredCommission': '{}*'+f'{standartCommissionPercent/100}',}
     
     @staticmethod
     def getСommissionForItemUSD():
@@ -91,22 +96,5 @@ class PosredApi:
         def commission(price):
             return 1.3 + price*0.02
 
-        return {'key': CURRENCIES.mixed,
-                'posredCommission': '1.3 + {}*0.02',
-                'posredCommissionValue': commission}
-        
-    @staticmethod
-    def isPercentCommision(commission):
-        """В процентах ли коммишка посреда
-
-        Args:
-            commission (Dict[int, CURRENCIES]): коммишка
-
-        Returns:
-            boolean: результат проверки
-        """
-
-        return commission['key'] == CURRENCIES.percent
-
-
-        
+        return {'posredCommission': '1.3 + {}*0.02',
+                'posredCommissionValue': commission}        

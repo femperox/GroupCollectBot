@@ -275,9 +275,9 @@ class VkApi:
             except Exception as e:
                 pprint(e)
                 print_exc()
-                self._vk_image_upload(image_name, user, isWallServer)
+                #self._vk_image_upload(image_name, user, isWallServer)
         return {}
-
+    
     def _form_images_request_signature(self, image_urls: list, user, tag, isWallServer = False) -> str:
         """Получает строку для опубликования медиа-вложений
 
@@ -498,9 +498,12 @@ class VkApi:
             'conversation_message_ids': conv_id,
         }
 
-        result = self.__vk_message.messages.getByConversationMessageId(**params)
+        try:
+            result = self.__vk_message.messages.getByConversationMessageId(**params)
         
-        return result['items'][0]['attachments'][idx]['photo']
+            return result['items'][0]['attachments'][idx]['photo']
+        except:
+            return ''
     
     def get_chat_members(self, chat_id):
         """Получить список пользователей чата
@@ -650,7 +653,8 @@ class VkApi:
                             except:
                                 fav_item['attachement'] = self.get_attachemetns(peer_id=chat, conv_id=message_id, idx = item_index)
                                 
-                            fav_item['attachement'] = 'photo{}_{}_{}'.format(fav_item['attachement']['owner_id'], fav_item['attachement']['id'], fav_item['attachement']['access_key'])
+                            if fav_item['attachement']:
+                                fav_item['attachement'] = 'photo{}_{}_{}'.format(fav_item['attachement']['owner_id'], fav_item['attachement']['id'], fav_item['attachement']['access_key'])
                             
                             mess = Messages.mes_fav(fav_item = fav_item, fav_func = addFav).format(self.get_name(fav_item['usr']), f"{fav_item['siteName']}_{fav_item['id']}")
                             

@@ -1,5 +1,6 @@
 from APIs.webUtils import WebUtils 
 import requests
+from confings.Consts import Stores
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from time import sleep
@@ -39,12 +40,12 @@ class StoreApi:
         item['name'] = name
         item['endTime'] = datetime.now() + relativedelta(years=3)
 
-        posredCommission = PosredApi.getСommissionForItem(item['page'])
-        if PosredApi.isPercentCommision(posredCommission):
-            item['posredCommission'] = f"{int(item['itemPrice'])}*{posredCommission['value']/100 if posredCommission['value'] > 0 else 0}"
-            item['posredCommissionValue'] = item['itemPrice']*(posredCommission['value']/100)
-        else:
-            item['posredCommission'] = posredCommission['value']          
+        commission = PosredApi.getСommissionForItem(item['page'])
+        item['posredCommission'] = commission['posredCommission'].format(item['itemPrice'])
+        item['posredCommissionValue'] = commission['posredCommissionValue'](item['itemPrice'])
+
+        item['siteName'] = Stores.animate
+        item['id'] = item_id           
 
         return item
         

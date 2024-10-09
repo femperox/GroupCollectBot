@@ -126,7 +126,7 @@ def getFavInfo(text, item_index = 0, isPosredPresent = True):
     else:
         urls = re.findall(RegexType.regex_store_url_bot, text)
 
-    fav_item = storeSelector.selectStore(urls[item_index])
+    fav_item = storeSelector.selectStore(urls[item_index], not isPosredPresent)
     
     return fav_item
 

@@ -6,6 +6,8 @@ from APIs.StoresApi.JpStoresApi.SecondaryStoresApi import SecondaryStoreApi as s
 from APIs.StoresApi.JpStoresApi.StoresApi import StoreApi as sa
 from APIs.StoresApi.JpStoresApi.AmiAmiApi import AmiAmiApi
 from APIs.StoresApi.JpStoresApi.MercariApi import MercariApi
+from datetime import datetime
+from dateutil.relativedelta import relativedelta
 
 class StoreSelector(StoreSelectorParent):
 
@@ -29,7 +31,7 @@ class StoreSelector(StoreSelectorParent):
         elif store_type == Stores.yahooAuctions:
             return f'https://page.auctions.yahoo.co.jp/jp/auction/{item_id}'
 
-    def selectStore(self, url):
+    def selectStore(self, url, isLiteCalculate = False):
         """Определение магазина по заданной ссылке
 
         Args:
@@ -38,44 +40,46 @@ class StoreSelector(StoreSelectorParent):
         Returns:
             dict: информация о товаре по заданной ссылке
         """
+        yahooApi = ya()
 
         self.url = url
         site = self.getStoreName()
         item_id = self.getItemID()
         item = {}
 
-        if site == Stores.mercari:
+        if isLiteCalculate:
+            item['siteName'] = site
+            item['id'] = item_id
+            item['page'] = url
 
+            if site == Stores.yahooAuctions:
+                item['endTime'] = yahooApi.getEndTime(item_id)
+            else:
+                item['endTime'] = datetime.now() + relativedelta(years=3)
+
+            return item
+
+        if site == Stores.mercari:
             if url.find('/shops/') > -1:
                 item = MercariApi.parseMercariShopsPage(url, item_id.split('?')[0])
             else:
                 item = MercariApi.parseMercariPage(url, item_id)
-
         elif site == Stores.payPay:
             item = ssa.parsePayPay(url, item_id)
-
-        elif site == Stores.yahooAuctions:
-            yahooApi = ya()
+        elif site == Stores.yahooAuctions:  
             item = yahooApi.getAucInfo(id = item_id)
-
         elif site == Stores.amiAmi:
-            
             if url.find('/eng/')>0:
                 AmiAmiApi.startDriver(thread_index=0)
-                item = AmiAmiApi.parseAmiAmiEng(url, item_id.split("=")[-1])
+                item = AmiAmiApi.parseAmiAmiEng(url, item_id)
                 AmiAmiApi.stopDriver(thread_index=0)
             else:
-                item = AmiAmiApi.parseAmiAmiJp(url)
-            
+                item = AmiAmiApi.parseAmiAmiJp(url, item_id)  
         elif site == Stores.mandarake:
-            item = ssa.parseMandarake(url)
-
+            item = ssa.parseMandarake(url, item_id)
         elif site == Stores.animate:
             
             item = sa.parseAnimate(item_id)
-
-        item['siteName'] = site
-        item['id'] = item_id
         
         return item
     

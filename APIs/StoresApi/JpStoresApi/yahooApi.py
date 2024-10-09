@@ -8,6 +8,7 @@ from confings.Consts import PREFECTURE_CODE, CURRENT_POSRED, PRIVATES_PATH
 from traceback import print_exc
 from APIs.posredApi import PosredApi
 from confings.Consts import ShipmentPriceType
+from confings.Consts import Stores
 
 class yahooApi:
 
@@ -113,7 +114,33 @@ class yahooApi:
         except Exception as e:
             
             pprint(e)
-       
+
+    def getEndTime(self, id):
+        """Получение даты окончания лота
+        
+        Args:
+            id (string): айди лота
+
+        Returns:
+            date: дата окончания лота
+        """
+        try:
+            curl = f'https://auctions.yahooapis.jp/AuctionWebService/V2/auctionItem?appid={self.app_id}&auctionID={id}'
+
+            headers = WebUtils.getHeader()
+            page = requests.get(curl, headers=headers)
+            xml = xmltodict.parse(page.content)
+        
+            endTime = xml['ResultSet']['Result']['EndTime'].split('+')[0].replace('T', ' ')
+            endTime = datetime.datetime.strptime(endTime, '%Y-%m-%d %H:%M:%S') - datetime.timedelta(hours=6)
+
+            return endTime
+        
+        except Exception as e:
+            pprint(e)
+            print_exc()
+            return None
+
     def getAucInfo(self, id):
         """Получение базовой информации о лоте
 
@@ -176,17 +203,19 @@ class yahooApi:
             info['tax'] = float(xml['ResultSet']['Result']['TaxRate'])
             info['itemPriceWTax'] = float(xml['ResultSet']['Result']['TaxinPrice']) if 'itemPriceWTax' in xml['ResultSet']['Result'] else info['itemPrice']
 
-            posredCommission = PosredApi.getСommissionForItem(info['page'])
-            if PosredApi.isPercentCommision(posredCommission):
 
-                if info['shipmentPrice'] not in [ShipmentPriceType.free, ShipmentPriceType.undefined]:
-                    info['posredCommission'] = f"({int(info['itemPriceWTax'])} + {int(info['shipmentPrice'])})*{posredCommission['value']/100 if posredCommission['value'] > 0 else 0}"
-                    info['posredCommissionValue'] = (info['itemPriceWTax'] + info['shipmentPrice'])*(posredCommission['value']/100)
-                else:
-                    info['posredCommission'] = f"{int(info['itemPriceWTax'])}*{posredCommission['value']/100 if posredCommission['value'] > 0 else 0}"
-                    info['posredCommissionValue'] = info['itemPriceWTax']*(posredCommission['value']/100)
+            commission = PosredApi.getСommissionForItem(info['page'])
+            if info['shipmentPrice'] in [ShipmentPriceType.free, ShipmentPriceType.undefined]:
+                format_string = info['itemPrice']
+                format_number = info['itemPrice']
             else:
-                info['posredCommission'] = posredCommission['value']
+                format_string = f"( {info['itemPrice']} + {info['shipmentPrice']} )"
+                format_number = info['itemPrice'] + info['shipmentPrice']
+            info['posredCommission'] = commission['posredCommission'].format(format_string)
+            info['posredCommissionValue'] = commission['posredCommissionValue'](format_number)  
+
+            info['siteName'] = Stores.yahooAuctions
+            info['id'] = id   
 
             return info
             

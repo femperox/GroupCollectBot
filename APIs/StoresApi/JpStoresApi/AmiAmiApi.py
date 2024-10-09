@@ -11,6 +11,7 @@ from random import choice
 from confings.Consts import MonitorStoresType
 from pprint import pprint
 from requests_html import HTMLSession 
+from confings.Consts import Stores
 import cfscrape 
 from seleniumbase import Driver
 from APIs.posredApi import PosredApi
@@ -157,7 +158,7 @@ class AmiAmiApi():
         headers['Sec-Ch-Ua-Mobile'] = '?0'
        
         req1= f"""let [resolve] = arguments; fetch('{curl}'""" + """ , {method: 'GET', headers:""" + f"""{headers}""" + """}).then(r => resolve(r.json()))"""
-
+        
         result = AmiAmiApi.driver[thread_index].execute_async_script(req1)
 
         return result   
@@ -188,12 +189,17 @@ class AmiAmiApi():
         item['name'] = js['item']['gname']
         item['endTime'] = datetime.now() + relativedelta(years=3)
 
-        item['posredCommission'] = 0
+        commission = PosredApi.getСommissionForItem(item['page'])
+        item['posredCommission'] = commission['posredCommission'].format(item['itemPrice'])
+        item['posredCommissionValue'] = commission['posredCommissionValue'](item['itemPrice'])  
+
+        item['siteName'] = Stores.amiAmi
+        item['id'] = item_id   
 
         return item
 
     @staticmethod
-    def parseAmiAmiJp(url):
+    def parseAmiAmiJp(url, item_id):
         """Получение базовой информации о лоте с магазина AmiAmi Jp
 
         Args:
@@ -216,12 +222,12 @@ class AmiAmiApi():
         item['name'] = soup.find('h2', class_ = 'heading_10').text
         item['endTime'] = datetime.now() + relativedelta(years=3)
 
-        posredCommission = PosredApi.getСommissionForItem(item['page'])
-        if PosredApi.isPercentCommision(posredCommission):
-            item['posredCommission'] = f"{item['itemPrice']}*{posredCommission['value']/100 if posredCommission['value'] > 0 else 0}"
-            item['posredCommissionValue'] = item['itemPrice']*(posredCommission['value']/100)
-        else:
-            item['posredCommission'] = posredCommission['value']      
+        commission = PosredApi.getСommissionForItem(item['page'])
+        item['posredCommission'] = commission['posredCommission'].format(item['itemPrice'])
+        item['posredCommissionValue'] = commission['posredCommissionValue'](item['itemPrice'])  
+
+        item['siteName'] = Stores.amiAmi
+        item['id'] = item_id   
 
         return item
     

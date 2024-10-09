@@ -183,12 +183,13 @@ class MercariApi:
             item['itemStatus'] = MercariApi.MercariItemStatus.sold if len(js["productTags"]) else MercariApi.MercariItemStatus.on_sale 
             item['endTime'] = datetime.now() + relativedelta(years=3)
             
-            posredCommission = PosredApi.getСommissionForItem(item['page'])
-            if PosredApi.isPercentCommision(posredCommission):
-                item['posredCommission'] = f"{item['itemPrice']}*{posredCommission['value']/100 if posredCommission['value'] > 0 else 0}"
-                item['posredCommissionValue'] = item['itemPrice']*(posredCommission['value']/100)
-            else:
-                item['posredCommission'] = posredCommission['value']            
+            commission = PosredApi.getСommissionForItem(item['page'])
+            item['posredCommission'] = commission['posredCommission'].format(item['itemPrice'])
+            item['posredCommissionValue'] = commission['posredCommissionValue'](item['itemPrice'])
+
+            item['siteName'] = Stores.mercari
+            item['id'] = item_id     
+
         elif js['code'] == 5:
             item['itemStatus'] = MercariApi.MercariItemStatus.deleted   
         return item
@@ -225,13 +226,13 @@ class MercariApi:
             item['itemStatus'] = js['data']['status']
             item['endTime'] = datetime.now() + relativedelta(years=3)
             
+            commission = PosredApi.getСommissionForItem(item['page'])
+            item['posredCommission'] = commission['posredCommission'].format(item['itemPrice'])
+            item['posredCommissionValue'] = commission['posredCommissionValue'](item['itemPrice'])  
 
-            posredCommission = PosredApi.getСommissionForItem(item['page'])
-            if PosredApi.isPercentCommision(posredCommission):
-                item['posredCommission'] = f"{int(item['itemPrice'])}*{posredCommission['value']/100 if posredCommission['value'] > 0 else 0}"
-                item['posredCommissionValue'] = item['itemPrice']*(posredCommission['value']/100)
-            else:
-                item['posredCommission'] = posredCommission['value']            
+            item['siteName'] = Stores.mercari
+            item['id'] = item_id      
+
         elif js['result'] == "error":
             item['itemStatus'] = MercariApi.MercariItemStatus.deleted
             
