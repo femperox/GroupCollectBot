@@ -16,6 +16,9 @@ import cfscrape
 from seleniumbase import Driver
 from APIs.posredApi import PosredApi
 import random
+import sys
+from concurrent.futures import ThreadPoolExecutor
+sys.argv.append("-n")  # Tell SeleniumBase to do thread-locking as needed
 
 class AmiAmiApi():
 
@@ -26,7 +29,7 @@ class AmiAmiApi():
 
         AmiAmiApi.driver[thread_index] = WebUtils.getSelenium(isUC=True)
         AmiAmiApi.driver[thread_index].open('https://www.amiami.com/eng/')  #https://www.amiami.com/eng/
-        time.sleep(10)
+        time.sleep(30)
         AmiAmiApi.driver[thread_index].save_screenshot("screenshot.png")
 
     @staticmethod
@@ -156,11 +159,19 @@ class AmiAmiApi():
         headers['Referer'] = 'https://www.amiami.com/'
         headers['Origin'] = 'https://www.amiami.com'
         headers['Sec-Ch-Ua-Mobile'] = '?0'
+        headers['Allow-Control-Allow-Origin'] = '*'
        
-        req1= f"""let [resolve] = arguments; fetch('{curl}'""" + """ , {method: 'GET', headers:""" + f"""{headers}""" + """}).then(r => resolve(r.json()))"""
-        
-        result = AmiAmiApi.driver[thread_index].execute_async_script(req1)
+        #req1= f"""let [resolve] = arguments; fetch('{curl}'""" + """ , {method: 'GET', headers:""" + f"""{headers}""" + """}).then(r => resolve(r.json()))"""
+        req1= f"""let result = await fetch('{curl}'""" + """ , {method: 'GET', headers:""" + f"""{headers}""" + """}).then(r => r.json()); return result;"""
 
+        result = AmiAmiApi.driver[thread_index].execute_script(req1)
+
+        if not result['RSuccess']:
+            pprint('trying again')
+            AmiAmiApi.refreshDriver(thread_index=thread_index)
+            time.sleep(30)
+            AmiAmiApi.curlAmiAmiEng(curl=curl, thread_index=thread_index)
+            
         return result   
 
     @staticmethod

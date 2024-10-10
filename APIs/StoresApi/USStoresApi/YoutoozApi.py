@@ -5,6 +5,7 @@ from dateutil.relativedelta import relativedelta
 import json
 from confings.Consts import ShipmentPriceType as spt, Stores
 from APIs.posredApi import PosredApi
+import re 
 
 class YoutoozApi:
 
@@ -17,40 +18,51 @@ class YoutoozApi:
         """
         soup = WebUtils.getSoup('https://youtooz.com/pages/shipping-policy', )
 
-        table = soup.find('tbody')
-        rows = table.findAll("tr", {'data-mce-fragment': '1'})
+        try:
+            table = soup.find('tbody')
+            rows = table.findAll("tr", {'data-mce-fragment': '1'})
 
-        shipment_prices = {}
-        for row in rows[1:]:
-            if row.find('td', {'colspan': '5'}) is not None:
-                continue
-
-            item_shipment = row.find('td', {'style': 'text-align: center; height: 22px; width: 211.145px;'}).text
-            if item_shipment not in ['INTL', 'US']:
-                continue
-
-            if row.find('strong', {'data-mce-fragment': '1'}) is not None:
-                item_type = row.find('strong', {'data-mce-fragment': '1'}).text.lower()
-
-            if row.find('td', {'style': 'text-align: center; height: 22px; width: 142.855px;'}) is not None:
-                item_size = row.find('td', {'style': 'text-align: center; height: 22px; width: 142.855px;'}).text
-            elif row.find('td', {'rowspan' : True}) is not None:
-                item_size = row.find('td', {'rowspan' : True}).text
-            else:
-                continue
-            item_size = item_size.replace('\n', '').replace('*', '').lower()
-
-            item_shipment_price = row.find('td', {'style': 'text-align: center; height: 22px; width: 93px;'}).text.lower()
-            item_shipment_price = spt.free if item_shipment_price == 'free' else int(item_shipment_price.replace('$', ''))
-            
-            if item_type in shipment_prices.keys():
-                if item_size in shipment_prices[item_type].keys():
+            shipment_prices = {}
+            for row in rows[1:]:
+                pprint('row')
+                if row.find('td', {'colspan': '5'}) is not None:
                     continue
-                shipment_prices[item_type][item_size] = item_shipment_price
-            else:
-                shipment_prices[item_type] = {item_size: item_shipment_price}
+                
+                item_shipment = row.find('td', {'style': re.compile(r'text-align: center; height: 22px; width: 2')}).text
+                pprint(item_shipment)
+                if item_shipment not in ['INTL', 'US']:
+                    pprint('ok bye')
+                    continue
 
-        return shipment_prices
+                if row.find('strong', {'data-mce-fragment': '1'}) is not None:
+                    item_type = row.find('strong', {'data-mce-fragment': '1'}).text.lower()
+
+                if row.find('td', {'style': re.compile(r'text-align: center; height: 22px; width: 1')}) is not None:
+                    item_size = row.find('td', {'style': re.compile(r'text-align: center; height: 22px; width: 1')}).text
+                elif row.find('td', {'rowspan' : True}) is not None:
+                    item_size = row.find('td', {'rowspan' : True}).text
+                else:
+                    continue
+                item_size = item_size.replace('\n', '').replace('*', '').lower()
+                pprint(item_type)
+                try:
+                    item_shipment_price = row.find('td', {'data-sheets-value': re.compile(r'"1":3')}).text.lower()
+                except:
+                    item_shipment_price = row.find('td', {'data-sheets-value': re.compile(r'"1":2,"2":"Free"')}).text.lower()
+                item_shipment_price = spt.free if item_shipment_price == 'free' else int(item_shipment_price.replace('$', ''))
+                
+                if item_type in shipment_prices.keys():
+                    if item_size in shipment_prices[item_type].keys():
+                        continue
+                    shipment_prices[item_type][item_size] = item_shipment_price
+                else:
+                    shipment_prices[item_type] = {item_size: item_shipment_price}
+
+            pprint(shipment_prices)
+            return shipment_prices
+        
+        except Exception as e:
+            pprint(e)
         
     @staticmethod
     def setShipmentPrice(url):
@@ -107,9 +119,9 @@ class YoutoozApi:
         Returns:
             dict: словарь с информацией о товаре
         """
-        soup = WebUtils.getSoup(url)
 
-        js = soup.findAll('script', type='application/ld+json')[0].text.replace('\n','')
+        soup = WebUtils.getSoup(url)
+        js = soup.findAll('script', type='application/ld+json')[0].string.replace('\n','')
         js = json.loads(js)
 
         item = {}

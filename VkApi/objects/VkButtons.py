@@ -1,5 +1,5 @@
 from vk_api.keyboard import VkKeyboard, VkKeyboardColor
-from confings.Consts import VK_AUTOTAG_FORM_URL, PayloadType
+from confings.Consts import VK_AUTOTAG_FORM_URL, PayloadType, PayloadPriceCheckCountry
 from confings.Messages import MessageType
 
 class VkButtons:
@@ -29,7 +29,8 @@ class VkButtons:
             keyboard.add_openlink_button(link = VK_AUTOTAG_FORM_URL, label ='Добавиться к автотегам')
             keyboard.add_line()
             keyboard.add_callback_button(label='Узнать цену товара (Япония)', color=VkKeyboardColor.PRIMARY, payload= PayloadType.menu_check_price)
-
+            keyboard.add_line()
+            keyboard.add_callback_button(label='Узнать цену товара (США) (test)', color=VkKeyboardColor.PRIMARY, payload= {"type": PayloadType.menu_check_price["type"], "country": PayloadPriceCheckCountry.us } )
         return keyboard
     
     @staticmethod

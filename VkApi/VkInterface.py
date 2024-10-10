@@ -12,8 +12,8 @@ from vk_api.bot_longpoll import VkBotLongPoll, VkBotEventType
 from vk_api.longpoll import VkLongPoll, VkChatEventType, VkEventType, VkLongpollMode
 from confings.Messages import MessageType, Messages
 from Logger import logger, logger_fav, logger_utils
-from SQLS.DB_Operations import addFav, getFav, deleteFav, getFandoms, getTags, addBans, insertUpdateParcel, addBannedSellers, updateUserMenuStatus, getUserMenuStatus
-from confings.Consts import VkTopicCommentChangeType, TrackingTypes, ItemBuyStatus, VK_PROPOSED_CHAT_ID, VK_ERRORS_CHAT_ID, BanActionType, MAX_BAN_REASONS, RegexType, PayloadType, VkCommands, PRIVATES_PATH, VkCoverSize, Stores
+from SQLS.DB_Operations import addFav, getFav, deleteFav, getFandoms, getTags, addBans, insertUpdateParcel, addBannedSellers, updateUserMenuStatus, getUserMenuStatus, getUserMenuCountry
+from confings.Consts import VkTopicCommentChangeType, TrackingTypes, ItemBuyStatus, VK_PROPOSED_CHAT_ID, VK_ERRORS_CHAT_ID, BanActionType, MAX_BAN_REASONS, RegexType, PayloadType, VkCommands, PRIVATES_PATH, VkCoverSize, Stores, PayloadPriceCheckCountry
 from APIs.utils import getMonitorChats, getFavInfo, getStoreMonitorChats
 from APIs.TrackingAPIs.TrackingSelector import TrackingSelector
 from APIs.StoresApi.JpStoresApi.StoreSelector import StoreSelector
@@ -698,10 +698,10 @@ class VkApi:
                                     logger.info(f"\n[BAN-{category.split('_')[-1]}] Забанен продавец {seller}\n") 
 
                         # менюшка с чеком цены
-                        elif event.object['payload'] == PayloadType.menu_check_price:
+                        elif event.object['payload']["type"] == PayloadType.menu_check_price["type"]:
 
-                            updateUserMenuStatus(user_id = event.object.user_id, status = PayloadType.menu_check_price['type'])
-                            self.sendMes(mess = Messages.formJapCalcMes(), users = chat)     
+                            updateUserMenuStatus(user_id = event.object.user_id, status = PayloadType.menu_check_price['type'], country = event.object['payload']['country'])
+                            self.sendMes(mess = Messages.formCalcMes(event.object['payload']['country']), users = chat)     
 
                         # Челик поставил на выкуп товар
                         elif event.object['payload']["type"] == PayloadType.menu_bot_add_item["type"]:
@@ -789,16 +789,18 @@ class VkApi:
                     # ответ на менюшку
                     elif PayloadType.menu_check_price["type"] == getUserMenuStatus(user_id=sender):
                         updateUserMenuStatus(user_id=sender, status= PayloadType.menu_bot_none["type"])
+                        selected_country = getUserMenuCountry(user_id = sender)
+
                         url = event.obj.message['text']
                         try:
                             url = re.findall(RegexType.regex_store_url_bot, url)[0]  
-                            messText, pic = Messages.formPriceMes(url=url)
+                            messText, pic = Messages.formPriceMes(url = url, country = selected_country)
                             payload = event.obj.message['text'].split('?source=home_shops_flashsale_component')[0]
                             self.sendMes(mess = messText, users= chat, keyboard = VkButtons.form_menu_buttons(isAddButton = True, buttonPayloadText = payload), pic = [pic] if pic else [])
                             logger_utils.info(f"""[CHECK_PRICE] - Расчитана цена для пользователя {self.get_name(id = sender)} товара [{url}]""")
                         except Exception as e:
                             logger_utils.info(f"""[ERROR_CHECK_PRICE] - Не удалось посчитать цену для пользователя {self.get_name(id = sender)} товара [{url}] :: {e}""")
-                            self.sendMes(mess = "Возникла ошибка, попробуйте ещё раз! Убедитесь в правильности ссылки! Снова выберите в меню кнопку расчёта цены", users= chat) 
+                            self.sendMes(mess = "Возникла ошибка, попробуйте позже ещё раз! Убедитесь в правильности ссылки! Снова выберите в меню кнопку расчёта цены", users= chat) 
                             self.sendMes(mess = f"Сообщение:\n {url}\n\n\nОшибка:\n{e}", users=VK_ERRORS_CHAT_ID)                                 
                     
                     # получение избранного        

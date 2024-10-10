@@ -748,7 +748,33 @@ def getUserMenuStatus(user_id):
     
     return result[0]
 
-def updateUserMenuStatus(user_id, status):
+def getUserMenuCountry(user_id):
+    """Получить страну расчета для пользователя в чате с ботом
+
+    Args:
+        user_id (int): id пользователя
+
+    Returns:
+        string: страна расчета
+    """
+    
+    conn = getConnection(DbNames.collectDatabase)
+    cursor = conn.cursor()  
+
+    sql = f"""select country 
+        from USER_MENU_STATUS
+        where USER_ID = {user_id};
+    """
+
+    cursor.execute(sql)
+    result = cursor.fetchone() 
+
+    cursor.close()
+    conn.close()
+    
+    return result[0]
+
+def updateUserMenuStatus(user_id, status = '', country = ''):
     """Обновить статус меню бота
 
     Args:
@@ -760,7 +786,7 @@ def updateUserMenuStatus(user_id, status):
     conn = getConnection(DbNames.collectDatabase)
     cursor = conn.cursor()  
 
-    cursor.execute(f"CALL USER_MENU_STATUS_UPDATE({user_id}, '{status}')")
+    cursor.execute(f"CALL USER_MENU_STATUS_UPDATE({user_id}, '{status}', '{country}')")
    
     conn.commit() 
     cursor.close()

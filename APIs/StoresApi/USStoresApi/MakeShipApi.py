@@ -3,7 +3,7 @@ from pprint import pprint
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 import json
-from confings.Consts import ShipmentPriceType as Stores
+from confings.Consts import Stores
 from APIs.posredApi import PosredApi
 
 class MakeShipApi:

@@ -96,5 +96,7 @@ class PosredApi:
         def commission(price):
             return 1.3 + price*0.02
 
-        return {'posredCommission': '1.3 + {}*0.02',
+        return {'key': CURRENCIES.mixed,
+                'value': '1.3$ + 2%',
+                'posredCommission': '1.3 + {}*0.02',
                 'posredCommissionValue': commission}        
