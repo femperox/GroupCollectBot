@@ -206,11 +206,11 @@ class yahooApi:
 
             commission = PosredApi.getСommissionForItem(info['page'])
             if info['shipmentPrice'] in [ShipmentPriceType.free, ShipmentPriceType.undefined]:
-                format_string = info['itemPrice']
-                format_number = info['itemPrice']
+                format_string = info['itemPriceWTax']
+                format_number = info['itemPriceWTax']
             else:
-                format_string = f"( {info['itemPrice']} + {info['shipmentPrice']} )"
-                format_number = info['itemPrice'] + info['shipmentPrice']
+                format_string = f"( {info['itemPriceWTax']} + {info['shipmentPrice']} )"
+                format_number = info['itemPriceWTax'] + info['shipmentPrice']
             info['posredCommission'] = commission['posredCommission'].format(format_string)
             info['posredCommissionValue'] = commission['posredCommissionValue'](format_number)  
 

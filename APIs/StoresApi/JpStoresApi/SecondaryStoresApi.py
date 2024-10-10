@@ -91,8 +91,8 @@ class SecondaryStoreApi:
                 item['endTime'] = datetime.now() + relativedelta(years=3)
 
                 commission = PosredApi.getСommissionForItem(item['page'])
-                item['posredCommission'] = commission['posredCommission'].format(item['itemPrice'])
-                item['posredCommissionValue'] = commission['posredCommissionValue'](item['itemPrice'])  
+                item['posredCommission'] = commission['posredCommission'].format(item['itemPriceWTax'])
+                item['posredCommissionValue'] = commission['posredCommissionValue'](item['itemPriceWTax'])  
 
                 item['siteName'] = Stores.mandarake
                 item['id'] = item_id   
