@@ -48,8 +48,8 @@ def checkTime(usr_id):
             try:
                 now = datetime.now()
      
-                # Если лот уже закончился - удаляем 
-                if now > fav[-3]:
+                # Если лот уже закончился - удаляем
+                if now > fav[3]:
                     deleteFav(fav[0], fav[1], fav[-2])
                     if [fav[1], fav[4]] in checked_lots: checked_lots.remove([fav[1], fav[4]])
                     logger_fav.info(f"[DELETE_FAV-{fav[0]}] для пользователя {fav[0]} был удалён лот {fav[-2]}_{fav[1]} по причине его окончания!!!")
@@ -74,7 +74,7 @@ def checkTime(usr_id):
 
                 elif fav[4] == Stores.yahooAuctions:            
   
-                    diff = fav[-3] - now
+                    diff = fav[3] - now
                     diff = round(diff.total_seconds())
         
                     # окончание аукциона
