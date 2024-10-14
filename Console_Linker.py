@@ -564,7 +564,7 @@ def console():
                 DB_Operations.updateCollect(collectId = itemId, status = stat, parcel_id = parcel_id)
                 collectTopicInfo = DB_Operations.getCollectTopicComment(collect_id = itemId)
                 vk.edit_collects_activity_comment(topic_id = collectTopicInfo[0], comment_id = collectTopicInfo[1],
-                                           status = stat)
+                                           status_text = stat)
         elif choise == 9:
 
             status = flattenList(DB_Operations.getCollectStatuses())
@@ -578,7 +578,7 @@ def console():
             DB_Operations.updateInsertCollectParcel(parcel_id = parcel_id, status = stat)
             parcelInfo = DB_Operations.getCollectParcel(parcel_id = parcel_id) # index: -2 -1
             vk.edit_collects_activity_comment(topic_id = parcelInfo[-2], comment_id = parcelInfo[-1],
-                                       status= stat, typeChange = VkTopicCommentChangeType.parcel)
+                                       status_text= stat, typeChange = VkTopicCommentChangeType.parcel)
 
             collectList = DB_Operations.getAllCollectsInParcel(parcel_id = parcel_id)
             collectList = [collect[0] for collect in collectList]
@@ -589,7 +589,7 @@ def console():
                 DB_Operations.updateCollect(collectId = itemId, status = stat, parcel_id = parcel_id)
                 collectTopicInfo = DB_Operations.getCollectTopicComment(collect_id = itemId)
                 vk.edit_collects_activity_comment(topic_id = collectTopicInfo[0], comment_id = collectTopicInfo[1],
-                                           status = stat)
+                                           status_text = stat)
             
 
       except Exception as e:

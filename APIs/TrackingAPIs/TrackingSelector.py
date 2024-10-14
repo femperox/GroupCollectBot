@@ -18,15 +18,18 @@ class TrackingSelector():
                 dict: информация о трекинге по заданному треку
             """
 
+            yandex = YandexDeliveryApi()
+
             item = {}
             if type == TrackingTypes.ids[RegexType.regex_track]:
                 item = PochtaApi.getTracking(track)
 
             elif type == TrackingTypes.ids[RegexType.regex_track_yandex]:
-                YandexDeliveryApi.startDriver()
-                item = YandexDeliveryApi.getTracking(track)
-                if stopDriver: YandexDeliveryApi.stopDriver()
+                if not stopDriver:
+                    yandex.startDriver()
+                item = yandex.getTracking(track)
+                if stopDriver: 
+                     yandex.stopDriver()
   
-
             return item
     

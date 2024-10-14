@@ -43,6 +43,7 @@ def checkTime(usr_id):
         allFavs = getAllFavs(usr_id)
 
         for fav in allFavs:
+            pprint(fav)
             sleep(2)
             try:
                 now = datetime.now()
@@ -67,7 +68,7 @@ def checkTime(usr_id):
                         
                         deleteFav(fav[0], fav[1], fav[-2])
                         mess = Messages.formSoldOutReminderMes(vk.get_name(fav[0]), f'{fav[-2]}_{fav[1]}', item_url)
-                        vk.sendMes(mess=mess, users=fav[0], pic= [fav[2]])
+                        vk.sendMes(mess=mess, users=fav[0], pic= [fav[2]] if fav[2] else [])
                         
                         logger_fav.info(f"[NOTIFY_DELETE_FAV-{fav[0]}] для пользователя {fav[0]} отправлено уведомление о выкупе {fav[-2]}_{fav[1]}")
 

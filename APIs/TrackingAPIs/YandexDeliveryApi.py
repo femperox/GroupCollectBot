@@ -10,29 +10,42 @@ import locale
 
 class YandexDeliveryApi():
 
-    driver = {}
+    def __init__(self):
 
-    @staticmethod
-    def startDriver():
-        YandexDeliveryApi.driver = WebUtils.getSelenium()
+        self.driver = {}
 
-    @staticmethod
-    def stopDriver():
-        YandexDeliveryApi.driver.quit()
+    def startDriver(self):
+        """запустить драйвер
+        """
+        if not self.driver:
+            self.driver = WebUtils.getSelenium()
 
-    @staticmethod
-    def refreshDriver():
-        YandexDeliveryApi.driver.refresh()
+    def stopDriver(self):
+        """остановить драйвер
+        """
+        self.driver.quit()
 
-    @staticmethod
-    def getTracking(url):
+    def refreshDriver(self):
+        """перезагрузить драйвер
+        """
+        self.driver.refresh()
+
+    def getTracking(self, url):
+        """получить информацию об отправлении по ссылке
+
+        Args:
+            url (string): ссылка отправления
+
+        Returns:
+            dict: информация об отправлении
+        """
         
-        YandexDeliveryApi.refreshDriver()
-        YandexDeliveryApi.driver.open(url)
+        self.refreshDriver()
+        self.driver.open(url)
         time.sleep(7)
         info = ''
 
-        for request in YandexDeliveryApi.driver.requests:
+        for request in self.driver.requests:
             if request.url.find('shared-route/info') > 0:
                 info = request.response.body
 
