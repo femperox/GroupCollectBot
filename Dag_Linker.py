@@ -1,5 +1,5 @@
-from GoogleSheets.TagsSheet import TagsSheet as ts
-from GoogleSheets.CollectSheet import CollectSheet as cs
+from APIs.GoogleSheetsApi.TagsSheet import TagsSheet as ts
+from APIs.GoogleSheetsApi.CollectSheet import CollectSheet as cs
 from VkApi.VkInterface import VkApi as vk
 from SQLS.DB_Operations import addTags, getCurrentParcel, insertUpdateParcel, getParcelExpireDate, setParcelNotified
 from Logger import logger_utils
@@ -87,20 +87,13 @@ def updateTrackingStatuses():
 
     parcel_list = getCurrentParcel()
 
-    # чекаем сколько всего яндексов у нас
-    yandex_delivery_count = len(list(filter(lambda parcel: parcel[3] == TrackingTypes.ids[RegexType.regex_track_yandex], parcel_list)))
-    current_yandex_delivery_count = 0
-
     for parcel in parcel_list:
         
         pprint(parcel)
         try:
             message = ''
             
-            # счётчик для отключения драйвераа
-            current_yandex_delivery_count += 1 if parcel[3] == TrackingTypes.ids[RegexType.regex_track_yandex] else 0 
-
-            tracking_info = TrackingSelector.selectTracker(track = parcel[0], type = parcel[3], stopDriver = yandex_delivery_count == current_yandex_delivery_count)
+            tracking_info = TrackingSelector.selectTracker(track = parcel[0], type = parcel[3])
 
             tracking_info['rcpnVkId'] = parcel[1]
             tracking_info['trackingType'] = parcel[3]

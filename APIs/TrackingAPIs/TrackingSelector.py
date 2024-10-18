@@ -5,7 +5,7 @@ from confings.Consts import TrackingTypes, RegexType
 class TrackingSelector():
 
 
-    def selectTracker(track, type, stopDriver = True):
+    def selectTracker(track, type):
             
             """Определение службы доставки по типу и получение данных по треку
 
@@ -18,18 +18,15 @@ class TrackingSelector():
                 dict: информация о трекинге по заданному треку
             """
 
-            yandex = YandexDeliveryApi()
-
             item = {}
             if type == TrackingTypes.ids[RegexType.regex_track]:
                 item = PochtaApi.getTracking(track)
 
             elif type == TrackingTypes.ids[RegexType.regex_track_yandex]:
-                if not stopDriver:
-                    yandex.startDriver()
+                yandex = YandexDeliveryApi()
+                yandex.startDriver()
                 item = yandex.getTracking(track)
-                if stopDriver: 
-                     yandex.stopDriver()
+                yandex.stopDriver()
   
             return item
     

@@ -62,7 +62,7 @@ class WebUtils:
             browser = WebUtils.getSelenium(isUC=True)
             browser.get(url)
 
-            time.sleep(4)
+            time.sleep(15)
             soup = BeautifulSoup(browser.page_source, parser)
             browser.quit()
         else:    

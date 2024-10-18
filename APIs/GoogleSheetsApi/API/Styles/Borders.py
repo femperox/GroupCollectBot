@@ -1,4 +1,4 @@
-from GoogleSheets.API.Styles.Colors import Colors as c
+from APIs.GoogleSheetsApi.API.Styles.Colors import Colors as c
 
 class Borders:
 

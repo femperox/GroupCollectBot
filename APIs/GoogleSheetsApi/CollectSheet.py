@@ -1,7 +1,7 @@
-import GoogleSheets.API.Cells_Editor as ce
-from GoogleSheets.API.Styles.Borders import Borders as b
-from GoogleSheets.API.Styles.Colors import Colors as c
-from GoogleSheets.ParentSheetClass import ParentSheetClass
+import APIs.GoogleSheetsApi.API.Cells_Editor as ce
+from APIs.GoogleSheetsApi.API.Styles.Borders import Borders as b
+from APIs.GoogleSheetsApi.API.Styles.Colors import Colors as c
+from APIs.GoogleSheetsApi.ParentSheetClass import ParentSheetClass
 from pprint import pprint
 
 class CollectSheet(ParentSheetClass):

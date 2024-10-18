@@ -1,4 +1,5 @@
-from GoogleSheets.API.Styles.Borders import Borders as b
+from APIs.GoogleSheetsApi.API.Styles.Borders import Borders as b
+from APIs.GoogleSheetsApi.API.Styles.Colors import Colors as c
 
 def toRangeType(spId, range):
     '''
@@ -315,4 +316,24 @@ def setRowHeight(spId, range, height):
               }
             }
   
+  return request
+
+def addSheet(title):
+  """подготовка json запроса для добавлния листа 
+
+  Args:
+      title (string): название листа
+
+  Returns:
+      dict: json запрос
+  """
+
+  request = { "addSheet": 
+              {"properties": 
+                { "title": title,
+                  "tabColor": c.white
+                }
+              }
+            }
+
   return request

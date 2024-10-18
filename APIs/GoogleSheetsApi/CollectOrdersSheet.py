@@ -1,9 +1,9 @@
-from GoogleSheets.ParentSheetClass import ParentSheetClass
-from GoogleSheets.Spreadsheets.CollectOrdersSpreadsheet import CollectOrdersSpreadsheetClass
+from APIs.GoogleSheetsApi.ParentSheetClass import ParentSheetClass
+from APIs.GoogleSheetsApi.Spreadsheets.CollectOrdersSpreadsheet import CollectOrdersSpreadsheetClass
 import re
-import GoogleSheets.API.Cells_Editor as ce
-from GoogleSheets.API.Styles.Borders import Borders as b
-from GoogleSheets.API.Styles.Colors import Colors as c
+import APIs.GoogleSheetsApi.API.Cells_Editor as ce
+from APIs.GoogleSheetsApi.API.Styles.Borders import Borders as b
+from APIs.GoogleSheetsApi.API.Styles.Colors import Colors as c
 from APIs.utils import concatList
 
 class CollectOrdersSheet(ParentSheetClass):

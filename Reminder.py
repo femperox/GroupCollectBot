@@ -84,7 +84,7 @@ def checkTime(usr_id):
                         current_price = yahooApi.getCurrentPrice(fav[1])
                         mess = Messages.formAucReminderMes(vk.get_name(fav[0]), f'{fav[-2]}_{fav[1]}', current_price, item_url)
 
-                        vk.sendMes(mess=mess, users=fav[0], pic= [fav[2]])
+                        vk.sendMes(mess=mess, users=fav[0], pic= [fav[2]] if fav[2] else [])
                         logger_fav.info(f"[NOTIFY_FAV-{fav[0]}] для пользователя {fav[0]} отправлено уведомление о {fav[-2]}_{fav[1]}")
             except Exception as e:
                     logger_fav.info(f"[ERROR_FAV-{fav[0]}] для пользователя {fav[0]} {e} - {fav}")

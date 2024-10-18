@@ -158,7 +158,7 @@ class yahooApi:
             headers = WebUtils.getHeader()
             page = requests.get(curl, headers=headers)
             xml = xmltodict.parse(page.content)
-        
+       
             info['page'] = xml['ResultSet']['Result']['AuctionItemUrl']
             info['page'] = xml['ResultSet']['Result']['AuctionItemUrl']
             
@@ -201,7 +201,7 @@ class yahooApi:
 
             info['itemPrice'] = float(xml['ResultSet']['Result']['Price'])
             info['tax'] = float(xml['ResultSet']['Result']['TaxRate'])
-            info['itemPriceWTax'] = float(xml['ResultSet']['Result']['TaxinPrice']) if 'itemPriceWTax' in xml['ResultSet']['Result'] else info['itemPrice']
+            info['itemPriceWTax'] = float(xml['ResultSet']['Result']['TaxinPrice']) if 'TaxinPrice' in xml['ResultSet']['Result'] else info['itemPrice']
 
 
             commission = PosredApi.getСommissionForItem(info['page'])

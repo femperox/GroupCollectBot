@@ -7,7 +7,7 @@ class Colors:
     light_blue = {'blue': 0.9098039, 'green': 0.77254903, 'red': 0.62352943} #Результрующее число при расчётах
 
     white_blue = {'blue': 1, 'green': 0.98039216, 'red': 0.9254902} # даты отправки/получения
-
+    turquoise = {'blue': 0.68627451, 'green': 0.647058, 'red': 0.462745} # бирюзовый
     white = {'blue': 1, 'green': 1, 'red': 1}
     black = {'blue': 0, 'green': 0, 'red': 0}
     green = {'green': 1}

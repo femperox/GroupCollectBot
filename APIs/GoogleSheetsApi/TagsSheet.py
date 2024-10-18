@@ -1,5 +1,5 @@
-import GoogleSheets.API.Cells_Editor as ce
-from GoogleSheets.ParentSheetClass import ParentSheetClass
+import APIs.GoogleSheetsApi.API.Cells_Editor as ce
+from APIs.GoogleSheetsApi.ParentSheetClass import ParentSheetClass
 
 class TagsSheet(ParentSheetClass):
 

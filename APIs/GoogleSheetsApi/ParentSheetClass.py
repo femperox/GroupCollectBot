@@ -1,8 +1,11 @@
 import httplib2
 from googleapiclient import discovery
 from oauth2client.service_account import ServiceAccountCredentials
-import json
+import APIs.GoogleSheetsApi.API.Cells_Editor as ce
+import json 
 from confings.Consts import CREDENTIALS_FILE, SHEETS_ID_FILE
+from pprint import pprint
+from traceback import print_exc
 
 class ParentSheetClass:
 
@@ -14,6 +17,27 @@ class ParentSheetClass:
         httpAuth = credentials.authorize(httplib2.Http())
         self.service = discovery.build('sheets', 'v4', http=httpAuth)
         
+
+    def createSheetList(self, title):
+        """создать лист в таблице
+
+        Args:
+            title (string): название листа
+
+        Returns:
+            int: id листа
+        """
+
+        try:
+            result = self.service.spreadsheets().batchUpdate(  spreadsheetId=self.getSpreadsheetId(),
+                                                  body={"requests": ce.addSheet(title = title)}).execute()
+            return result['replies'][0]['addSheet']['properties']['sheetId']
+        
+        except Exception as e:
+            pprint(e)
+            print_exc()
+            return -1
+
 
     def setSpreadsheetId(self, sp_name):
 
@@ -65,6 +89,29 @@ class ParentSheetClass:
 
         spreadsheet = self.service.spreadsheets().get(spreadsheetId = self.__spreadsheet_id, includeGridData = includeGridData).execute()
         return spreadsheet.get('sheets')
+    
+    def getSheetListPropertiesById(self, listId, includeGridData = False):
+        """Получить информацию о конкретном листе
+
+        Args:
+            listId (int): id листа
+            includeGridData (bool, optional): флаг GridData. Defaults to False.
+
+        Returns:
+            dict: информация о конкретном листе
+        """
+
+        try:
+            spreadsheet = self.service.spreadsheets().get(spreadsheetId = self.__spreadsheet_id, includeGridData = includeGridData).execute()
+        
+            properties = spreadsheet.get('sheets')
+            for property in properties:
+                if property['properties']['sheetId'] == listId:
+                    return property
+            return {}
+        except Exception as e:
+            pprint(e)
+            return {}
     
     def getRowData(self, namedRange, typeCalling = 0, cell_point = 0):
         '''

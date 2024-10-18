@@ -42,7 +42,7 @@ class YandexDeliveryApi():
         
         self.refreshDriver()
         self.driver.open(url)
-        time.sleep(7)
+        time.sleep(15)
         info = ''
 
         for request in self.driver.requests:

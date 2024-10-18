@@ -8,6 +8,7 @@ from confings.Consts import ShipmentPriceType as spt, Stores
 from selenium.webdriver.common.by import By
 from traceback import print_exc
 from APIs.posredApi import PosredApi
+import time
 
 
 class SecondaryStoreApi:
@@ -62,12 +63,14 @@ class SecondaryStoreApi:
         item = {}
         
         ok = WebUtils.getSelenium()
-        ok.implicitly_wait(5)
 
         # у манды оч странная херота - просто открыть страницу без рефера не получится (либо я лохушка)
         ok.open("https://www.mandarake.co.jp")
-        ok.open("https://order.mandarake.co.jp/order/?lang=en")
+        time.sleep(5)
+        ok.open("https://www.mandarake.co.jp/index2.html")
+        time.sleep(5)
         ok.open(url)
+        time.sleep(5)      
 
         try:
             # хз как иначе вытащить картинку товара
@@ -96,6 +99,7 @@ class SecondaryStoreApi:
 
                 item['siteName'] = Stores.mandarake
                 item['id'] = item_id   
+                
         except:
             pprint('cant get item info.')
             print_exc()

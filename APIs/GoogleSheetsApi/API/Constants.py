@@ -1,4 +1,4 @@
-class ConditionType:
+class ConditionType: 
 
     # https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/other?hl=ru#conditiontype
     

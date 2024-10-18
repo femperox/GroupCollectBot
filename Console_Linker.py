@@ -1,5 +1,5 @@
 from VkApi.VkInterface import VkApi as vk
-from GoogleSheets.CollectOrdersSheet import CollectOrdersSheet as collect_table
+from APIs.GoogleSheetsApi.CollectOrdersSheet import CollectOrdersSheet as collect_table
 from traceback import format_exc, print_exc
 from pprint import pprint 
 from APIs.StoresApi.JpStoresApi.StoreSelector import StoreSelector
@@ -434,11 +434,10 @@ def console():
         elif choise == 2:
 
             lists = [ collect_table.sp.spreadsheetsIds['Дашины лоты (Архив)'][0],
-                    collect_table.sp.spreadsheetsIds['Дашины лоты (Едет в РФ)'][0],
                     collect_table.sp.spreadsheetsIds['ТестЛист'][0]
                     ]
             
-            lists_name = ['Дашины лоты (Архив)', 'Дашины лоты (Едет в РФ)', 'ТестЛист']
+            lists_name = ['Дашины лоты (Архив)', 'ТестЛист']
 
             print('\nВыберите лист из таблицы:\n' + Messages.formConsoleListMes(info_list = lists_name))
             choise1 = int(input('Выбор: '))

@@ -1,6 +1,6 @@
-import GoogleSheets.API.Cells_Editor as ce
-from GoogleSheets.API.Styles.Borders import Borders as b
-from GoogleSheets.API.Styles.Colors import Colors as c
+import APIs.GoogleSheetsApi.API.Cells_Editor as ce
+from APIs.GoogleSheetsApi.API.Styles.Borders import Borders as b
+from APIs.GoogleSheetsApi.API.Styles.Colors import Colors as c
 import re
 from pprint import pprint
 from datetime import datetime
@@ -8,7 +8,7 @@ from dateutil.relativedelta import *
 from multipledispatch import dispatch
 from confings.Consts import CollectOrdersSheetNames as sheetNames, ShipmentPriceType
 from APIs.posredApi import PosredApi
-from GoogleSheets.API.Constants import ConditionType
+from APIs.GoogleSheetsApi.API.Constants import ConditionType
 
 class CollectOrdersSpreadsheetClass():
 
@@ -19,7 +19,6 @@ class CollectOrdersSpreadsheetClass():
 
     def __init__(self, sheetList):
 
-        
         for i in range(len(sheetList)):
             self.spreadsheetsIds[sheetList[i]['properties']['title']] = (sheetList[i]['properties']['sheetId'], sheetList[i]['properties']['index'], sheetList[i]['properties']['title'])
         
