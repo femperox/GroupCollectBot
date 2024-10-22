@@ -2,6 +2,7 @@ from VkApi.VkInterface import VkApi as vk
 from APIs.GoogleSheetsApi.CollectOrdersSheet import CollectOrdersSheet as collect_table
 from traceback import format_exc, print_exc
 from pprint import pprint 
+from confings.Consts import OrderTypes
 from APIs.StoresApi.JpStoresApi.StoreSelector import StoreSelector
 from confings.Messages import Messages
 import re
@@ -399,7 +400,7 @@ def console():
       try: 
         choiseList = ['Сделать лот', 'Отправки в РФ', 'Выход', 'Забанить', 
                       'Уступки', 'Обновление статуса лотов', 'Удаление фотографий', 
-                      'Сформировать посылку', 'Обновление статуса посылки']
+                      'Сформировать посылку', 'Обновление статуса посылки', 'Сделать закупку']
         choise = int(input('\nВведите номер:\n' + Messages.formConsoleListMes(info_list = choiseList, offset = 2) + '\nВыбор: '))
 
         if choise == 1:
@@ -589,7 +590,16 @@ def console():
                 collectTopicInfo = DB_Operations.getCollectTopicComment(collect_id = itemId)
                 vk.edit_collects_activity_comment(topic_id = collectTopicInfo[0], comment_id = collectTopicInfo[1],
                                            status_text = stat)
+        elif choise == 10:
+
+            orderTypesList = [orderType.value for orderType in OrderTypes]
+            order_type = int(input(f'\nВыберите тип закупки:\n{Messages.formConsoleListMes(info_list = orderTypesList)}'))
+            order_type =  OrderTypes(orderTypesList[order_type-1])
+
+            order_title = input('\nВведите название закупки: ')
             
+            
+
 
       except Exception as e:
           print(f"\n===== ОШИБКА! \n{format_exc()} - {e}=====")

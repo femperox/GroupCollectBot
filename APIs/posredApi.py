@@ -1,4 +1,4 @@
-from confings.Consts import CURRENCY_API, CURRENT_POSRED, Stores, CURRENCIES, CURRENCY_USD_API, CURRENCY_API_JPY_AMI
+from confings.Consts import CURRENCY_API, CURRENT_POSRED, Stores, CURRENCIES, CURRENCY_USD_API, CURRENCY_API_JPY_AMI, OrderTypes
 from APIs.webUtils import WebUtils
 import requests
 import json
@@ -56,6 +56,23 @@ class PosredApi:
             if json_item['from'] == '643' and json_item['to'] == '840':
                 return json_item['rate'] + 4.7
         
+    @staticmethod
+    def getCurrentCurrencyRateByOrderType(order_type):
+        """Получить текущий курс в зависимости от типа закупки
+
+        Args:
+            order_type (OrderTypes): тип закупки
+
+        Returns:
+            float: курс рубля
+        """
+
+        if order_type == OrderTypes.ami:
+            return PosredApi.getCurrentAmiCurrencyRate()
+        elif order_type == OrderTypes.eng:
+            return PosredApi.getCurrentUSDCurrencyRate()
+        elif order_type == OrderTypes.jp:
+            return PosredApi.getCurrentCurrencyRate()
 
     @staticmethod
     def getСommissionForItem(url):
@@ -100,3 +117,21 @@ class PosredApi:
                 'value': '1.3$ + 2%',
                 'posredCommission': '1.3 + {}*0.02',
                 'posredCommissionValue': commission}        
+    
+    @staticmethod
+    def getCommissionForCollectOrder(order_type):
+        """Получить строку с расчётом коммишки для закупок
+
+        Args:
+            order_type (OrderTypes): тип закупки
+
+        Returns:
+            string: форматируемая строка с результатом
+        """
+
+        if order_type == OrderTypes.ami:
+            return '{}*0,1'
+        elif order_type == OrderTypes.eng:
+            return '{0}*0,1 + {0}*0,02 + 1,3/{1}'
+        elif order_type == OrderTypes.jp:
+            return '{0}*0,1 + {0}*0,038'

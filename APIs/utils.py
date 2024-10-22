@@ -9,6 +9,18 @@ from APIs.StoresApi.JpStoresApi.StoreSelector import StoreSelector
 from confings.Consts import Stores
 from dateutil.relativedelta import relativedelta
 
+def getChar(char, step):
+    """Получить след символ
+
+    Args:
+        char (char): символ
+        step (int): отступ от текущего символа
+
+    Returns:
+        char: след символ   
+    """
+    return chr(ord(char) + step)
+
 def getCurrentDate():
     """Получить текущую дату
 
