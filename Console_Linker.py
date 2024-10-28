@@ -3,7 +3,7 @@ from APIs.GoogleSheetsApi.CollectOrdersSheet import CollectOrdersSheet as collec
 from APIs.GoogleSheetsApi.StoresCollectOrdersSheets import StoresCollectOrdersSheets
 from traceback import format_exc, print_exc
 from pprint import pprint 
-from confings.Consts import OrderTypes, RegexType
+from confings.Consts import OrderTypes, RegexType, CollectTypes
 from APIs.StoresApi.JpStoresApi.StoreSelector import StoreSelector
 from APIs.StoresApi.USStoresApi.StoreSelector import StoreSelector as StoreSelectorUS
 from confings.Messages import Messages
@@ -26,6 +26,25 @@ def updateParticipantDB(participantList, collectId, isYstypka = False):
     list = flatTableParticipantList(particpantList = participantList) if isYstypka else flatTopicParticipantList(particpantList = participantList)
     for item in list:
         DB_Operations.updateInsertParticipantsCollect(collect_id = collectId, user_id = item['id'], items = item['items'], isYstypka = isYstypka)    
+
+def createOrderList(collectList = [], indList = [], storeCollectList = []):
+    """Сгенерить общий список заказов
+
+    Args:
+        collectList (list, optional): Список коллективок. Defaults to [].
+        indList (list, optional): Список инд. Defaults to [].
+        storeCollectList (list, optional): Список закупок. Defaults to [].
+
+    Returns:
+        list: общий список заказов с учётом их типа
+    """
+
+    orderList = [[f'C{collect}', CollectTypes.collect] for collect in collectList if collect != '']
+    orderList.extend([[f'I{ind}', CollectTypes.collect] for ind in indList if ind != ''])
+    orderList.extend([[store, CollectTypes.store] for store in storeCollectList if store != ''])
+
+    return orderList
+
 
 def createNamedRange(spId):
     """Генерирует именованный диапозон. Нужно доработать
@@ -319,8 +338,8 @@ def createTableTopic(post_url, site_url ='', spId=0, topic_id=0, items=0, img_ur
 
     collect_table.updateTable(namedRange, transformToTableFormat(participantsList), topicInfo[0])
 
-    DB_Operations.updateCollect(collectId = collect_id, namedRange = namedRange,
-                                topic_id = topicInfo[2]['topic_id'], comment_id = topicInfo[2]['comment_id'])
+    DB_Operations.updateCollectSelector(collectId = collect_id, namedRange = namedRange,
+                                        topic_id = topicInfo[2]['topic_id'], comment_id = topicInfo[2]['comment_id'])
     updateParticipantDB(participantList = participantsList, collectId = namedRange.replace('D', '').replace('nd', '').replace('ollect', ''))
 
 
@@ -340,24 +359,21 @@ def ShipmentToRussiaEvent(toSpId, collectList, indList):
             if lotList[key][i] != '':
                 collect_table.moveTable(toSpId, key + lotList[key][i])
 
-def changeStatus(stat, collectList, indList, payment):
+def changeStatus(stat, orderList, payment):
 
-    collect_list = [f'C{x}' if len(x)>0 else x for x in collectList if x != '']
-    collect_list.extend([f'I{x}' if len(x)>0 else x for x in indList if x != ''])
-
-    for collect_id in collect_list:
+    for item in orderList:
 
         pay = ''
         if payment == 'y':
-            namedRange = collect_id.replace('C', 'DCollect') if collect_id.find('C') > -1 else collect_id.replace('I', 'DInd')
+            namedRange = item[0].replace('C', 'DCollect') if item[0].find('C') > -1 else item[0].replace('I', 'DInd')
             pay = collect_table.getPaymentStatus(namedRange)
             participants = collect_table.getParticipantsList(namedRange)
             pay = tableToTopic(participants, pay)
         try:
-            collectTopicInfo = DB_Operations.getCollectTopicComment(collect_id = collect_id)
+            collectTopicInfo = DB_Operations.getCollectTopicComment(collect_id = item[0], collect_type = item[1])
             vk.edit_collects_activity_comment(topic_id = collectTopicInfo[0], comment_id = collectTopicInfo[1], 
                                               status_text = stat, participant_text = pay)
-            DB_Operations.updateCollect(collectId = collect_id, status = stat)
+            DB_Operations.updateCollectSelector(collectType = item[1], collectId = item[0], status = stat)
         except Exception as e:
             pprint(e)
             print_exc()
@@ -403,7 +419,7 @@ def console():
     while choise != 3:      
       try: 
         choiseList = ['Сделать лот', 'Отправки в РФ', 'Выход', 'Забанить', 
-                      'Уступки', 'Обновление статуса лотов', 'Удаление фотографий', 
+                      'Уступки', 'Обновление статуса заказов', 'Удаление фотографий', 
                       'Сформировать посылку', 'Обновление статуса посылки', 'Сделать закупку']
         choise = int(input('\nВведите номер:\n' + Messages.formConsoleListMes(info_list = choiseList, offset = 2) + '\nВыбор: '))
 
@@ -516,9 +532,14 @@ def console():
                     indList = input("Enter ind's num using comma(, ) (might be empty): ")
                     indList = indList.split(', ')
 
+                    storeCollectList = input("Enter storeCollect title using comma(, ) (might be empty): ")
+                    storeCollectList = storeCollectList.split(', ')
+
                     payment = input('Нужна ли информация об оплатах? y/n: ')
 
-                    changeStatus(stat, collectList, indList, payment)
+                    orderList = createOrderList(collectList = collectList, indList = indList, storeCollectList = storeCollectList)
+
+                    changeStatus(stat, orderList, payment)
 
         elif choise == 7:
 
@@ -548,6 +569,9 @@ def console():
             indList = input("Enter ind's num using comma(, ) (might be empty): ")
             indList = indList.split(', ')
 
+            storeCollectList = input("Enter storeCollect title using comma(, ) (might be empty): ")
+            storeCollectList = indList.split(', ')
+
             img = input('\nEnter the image url using comma(, ) (might be empty): ')
             img = img.split(', ')
 
@@ -559,14 +583,13 @@ def console():
             DB_Operations.updateInsertCollectParcel(parcel_id = parcel_id, status = stat,
                                                     topic_id = topicInfo[2]['topic_id'], comment_id = topicInfo[2]['comment_id'])
             
-            collectList = [f'C{collect}' for collect in collectList if collect != '']
-            indList = [f'I{ind}' for ind in indList if ind != '']
-            collectList.extend(indList)
+            orderList = createOrderList(collectList = collectList, indList = indList, storeCollectList = storeCollectList)
 
-            for itemId in collectList:
+            for item in orderList:
                 sleep(4)
-                DB_Operations.updateCollect(collectId = itemId, status = stat, parcel_id = parcel_id)
-                collectTopicInfo = DB_Operations.getCollectTopicComment(collect_id = itemId)
+                DB_Operations.updateCollectSelector(collectType = item[1], collectId = item[0], 
+                                                    status = stat, parcel_id = parcel_id)
+                collectTopicInfo = DB_Operations.getCollectTopicComment(collect_id = item[0], collect_type = item[1])
                 vk.edit_collects_activity_comment(topic_id = collectTopicInfo[0], comment_id = collectTopicInfo[1],
                                            status_text = stat)
         elif choise == 9:
@@ -585,15 +608,16 @@ def console():
                                        status_text= stat, typeChange = VkTopicCommentChangeType.parcel)
 
             collectList = DB_Operations.getAllCollectsInParcel(parcel_id = parcel_id)
-            collectList = [collect[0] for collect in collectList]
             
-            for itemId in collectList:
-                pprint(itemId)
+            for item in collectList:
+                pprint(item[1])
                 sleep(4)
-                DB_Operations.updateCollect(collectId = itemId, status = stat, parcel_id = parcel_id)
-                collectTopicInfo = DB_Operations.getCollectTopicComment(collect_id = itemId)
+                DB_Operations.updateCollectSelector(collectType = item[0], collectId = item[1], 
+                                                    status = stat, parcel_id = parcel_id)
+                collectTopicInfo = DB_Operations.getCollectTopicComment(collect_id = item[1], collect_type = item[0])
                 vk.edit_collects_activity_comment(topic_id = collectTopicInfo[0], comment_id = collectTopicInfo[1],
-                                           status_text = stat)
+                                                  status_text = stat)
+
         elif choise == 10:
 
             status = flattenList(DB_Operations.getCollectStatuses())
@@ -610,6 +634,7 @@ def console():
             topic_order = topicOrdersList[topic_order - 1]['id']          
             
             order_title = input('\nВведите название закупки: ')
+            order_title += f' #{DB_Operations.getMaxStoreCollectId(collect_title=order_title) + 1}'
 
             img = input('\nКартинки через запятую(, ) (might be empty): ')
             img = img.split(', ')
@@ -661,8 +686,9 @@ def console():
             storesCollectOrdersSheets.updateStoresCollect(list_id = list_id, participant_list = participant_list,
                                                           participant_count_old = len(participant_list))
             
-            DB_Operations.updateStoreCollect(collectId = order_title, title = order_title, sheet_id = list_id,
-                                             topic_id = topicInfo[2]['topic_id'], comment_id = topicInfo[2]['comment_id'])
+            DB_Operations.updateCollectSelector(collectType = CollectTypes.store, collectId = order_title, 
+                                                title = order_title, sheet_id = list_id,
+                                                topic_id = topicInfo[2]['topic_id'], comment_id = topicInfo[2]['comment_id'])
             for participant in participant_list:
                 if participant['user_url']:
                     DB_Operations.updateInsertParticipantsStoreCollect( collect_id = order_title, 

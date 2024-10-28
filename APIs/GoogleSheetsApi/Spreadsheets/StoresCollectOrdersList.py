@@ -3,6 +3,7 @@ from APIs.GoogleSheetsApi.API.Styles.Borders import Borders as b
 from APIs.GoogleSheetsApi.API.Styles.Colors import Colors as c
 from APIs.GoogleSheetsApi.API.Constants import ConditionType
 from confings.Consts import OrderTypes
+from APIs.utils import getExpiryDateString
 from APIs.posredApi import PosredApi
 from APIs.utils import getChar
 from pprint import pprint
@@ -15,6 +16,11 @@ class StoresCollectOrdersList:
         self.endRow = 14
 
     def setColumns(self, order_type):
+        """Проставить базовые значения колонок
+
+        Args:
+            order_type (OrderTypes): тип закупки.
+        """
 
         self.priceColumn = 'D'
         self.firstPaymentColumn = getChar(self.priceColumn, 2)
@@ -30,6 +36,16 @@ class StoresCollectOrdersList:
 
 
     def prepareTable(self, list_id, participant_count = 1, order_type = OrderTypes.ami):
+        """Подготовка таблицы. 
+
+        Args:
+            list_id (int): id листа
+            participant_count (int, optional): количество участников. Defaults to 1.
+            order_type (OrderTypes, optional): тип закупки. Defaults to OrderTypes.ami.
+
+        Returns:
+            list: список реквестов по оформлению таблицы
+        """
         
         request = []
         self.participantRowStart = self.endRow + 1
@@ -77,6 +93,17 @@ class StoresCollectOrdersList:
         return request
     
     def prepareTableValues(self, list_id, list_title, topic_url, order_type = OrderTypes.ami):
+        """Подготовка значений таблицы
+
+        Args:
+            list_id (int): id листа
+            list_title (string): название листа
+            topic_url (string): ссылка на обсуждение в вк
+            order_type (OrderTypes, optional): тип закупки. Defaults to OrderTypes.ami.
+
+        Returns:
+            list: список реквестов по заполнению таблицы данными
+        """
 
         body = {}
         body["valueInputOption"] = "USER_ENTERED"
@@ -160,6 +187,16 @@ class StoresCollectOrdersList:
         return body
     
     def updateTable(self, list_id, participant_count_new, participant_count_old):
+        """Обновить таблицу
+
+        Args:
+            list_id (int): id листа
+            participant_count_new (int): текущее кол-во участников
+            participant_count_old (int): старое кол-во участников
+
+        Returns:
+            list: список реквестов по оформлению таблицы
+        """
 
         request = []
 
@@ -177,6 +214,16 @@ class StoresCollectOrdersList:
         return request
     
     def updateTableValues(self, list_id, list_title, participant_list):
+        """Обновить значения таблицы
+
+        Args:
+            list_id (int): id листа
+            list_title (string): название листа
+            participant_list (list): текущий список участников
+
+        Returns:
+            list: список реквестов по заполнению таблицы данными
+        """
 
         body = {}
         body["valueInputOption"] = "USER_ENTERED"
@@ -190,6 +237,49 @@ class StoresCollectOrdersList:
                 data.append(ce.insertValue(list_id, valueRange.format('B', self.participantRowStart+i), f'''=HYPERLINK("{participant_list[i]['user_url']}"; "{participant_list[i]['user_name']}")'''))
             else:
                 data.append(ce.insertValue(list_id, valueRange.format('B', self.participantRowStart+i), participant_list[i]['user_name']))
+
+        body["data"] = data
+        return body
+    
+    def updateTableRecieved(self, list_id):
+        """Обновить таблицу как полученную закупку
+
+        Args:
+            list_id (int): id листа
+
+        Returns:
+            list: список реквестов по оформлению таблицы
+        """
+
+        request = []
+
+        request.append(ce.mergeCells(list_id, f"C{self.startRow}:D{self.startRow}"))
+        request.append(ce.mergeCells(list_id, f"E{self.startRow}:F{self.startRow}"))
+        request.append(ce.repeatCells(list_id, f"C{self.startRow}:F{self.startRow}", c.white_blue))
+
+        return request
+    
+    def updateTableValuesRecieved(self, list_id, list_title):
+        """Обновить значения в таблице как в полученной закупке
+
+        Args:
+            list_id (int): id листа
+            list_title (string): название листа
+
+        Returns:
+            list: список реквестов по заполнению таблицы данными
+        """
+
+        body = {}
+        body["valueInputOption"] = "USER_ENTERED"
+        data = []
+        valueRange = list_title + '!{0}{1}'
+
+        label = 'Получено - Забрать:'
+        expiry_date = getExpiryDateString()
+
+        data.append(ce.insertValue(list_id, valueRange.format('C', self.startRow), label))
+        data.append(ce.insertValue(list_id, valueRange.format('E', self.startRow), expiry_date))
 
         body["data"] = data
         return body

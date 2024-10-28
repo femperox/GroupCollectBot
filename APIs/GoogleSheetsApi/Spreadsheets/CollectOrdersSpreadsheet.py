@@ -9,6 +9,7 @@ from multipledispatch import dispatch
 from confings.Consts import CollectOrdersSheetNames as sheetNames, ShipmentPriceType
 from APIs.posredApi import PosredApi
 from APIs.GoogleSheetsApi.API.Constants import ConditionType
+from APIs.utils import getExpiryDateString
 
 class CollectOrdersSpreadsheetClass():
 
@@ -375,20 +376,15 @@ class CollectOrdersSpreadsheetClass():
         :return:
         '''
 
-        now = datetime.now()
-
         data = []
-        gotDate = now.strftime("%d.%m.%Y")
 
         print(namedRange)
 
         if spId == self.spreadsheetsIds[sheetNames.collectArchive][0]:
-            takeDate = (now + relativedelta(months=+1)).strftime("%d.%m.%Y")
-
-            info = '{0} - {1}'.format(gotDate, takeDate)
+            info = getExpiryDateString()
             label = 'Получено - Забрать:'
         else:
-            info = gotDate
+            info = ''
             label = 'Отправлено'
 
         sheetTitle, index = namedRange.split("!")

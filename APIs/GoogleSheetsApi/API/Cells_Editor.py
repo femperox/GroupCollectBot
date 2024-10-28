@@ -253,6 +253,25 @@ def deleteNamedRange(name):
     return request
 
 
+def deleteSheet(sheet_id):
+    """Удаляет лист из документа
+
+    Args:
+        sheet_id (int): id листа
+
+    Returns:
+        dict: json запрос
+    """
+
+    request = {
+      "deleteSheet": {
+        "sheetId": sheet_id
+      }
+    }
+
+    return request
+
+
 def insertValue(spId, range, text ="", majorDime = "ROWS"):
     '''
     подготовка json запроса для заполнения ячеек заданным текстом
@@ -272,15 +291,23 @@ def insertValue(spId, range, text ="", majorDime = "ROWS"):
 
     return data
 
-def updateSheetProperties(spId, addingRows):
+def updateSheetProperties(spId, newTitle = '', addingRows = 0, newIndex = 0):
 
+    if addingRows:
+        fields = 'gridProperties'
+    elif newTitle:
+        fields = 'title'
+    elif newIndex:
+        fields = 'index'
     request = {  "updateSheetProperties": {"properties":
                                                         { "sheetId": spId,
+                                                          "title": newTitle,
+                                                          "index": newIndex,
                                                           "gridProperties": {"rowCount" : addingRows,
                                                                              'columnCount': 24
                                                                              }
                                                         },
-                                                    "fields" : "gridProperties"
+                                                    "fields" : fields
                                                   }
     }
 

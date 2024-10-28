@@ -18,6 +18,58 @@ class ParentSheetClass:
         self.service = discovery.build('sheets', 'v4', http=httpAuth)
         
 
+    def renameSheetList(self, sheet_id, title):
+        """Изменить имя листа
+
+        Args:
+            sheet_id (int): id листа
+            title (string): новое название
+        """
+
+        self.service.spreadsheets().batchUpdate(spreadsheetId=self.getSpreadsheetId(), body={'requests': ce.updateSheetProperties(spId = sheet_id, newTitle = title)}).execute()
+
+    def changeSheetListIndex(self, sheet_id, new_index):
+        """Изменить расположение листа в документе
+
+        Args:
+            sheet_id (int): id листа
+            new_index (int): новый индекс
+        """
+
+        self.service.spreadsheets().batchUpdate(spreadsheetId=self.getSpreadsheetId(), body={'requests': ce.updateSheetProperties(spId = sheet_id, newIndex = new_index)}).execute()
+
+    def copySheetListTo(self, sheet_id, new_spreadsheet_id):
+        """Скопировать лист в другой документ
+
+        Args:
+            sheet_id (int): id листа
+            new_spreadsheet_id (string): id документа
+        """
+        
+        return self.service.spreadsheets().sheets().copyTo(spreadsheetId=self.getSpreadsheetId(), sheetId = sheet_id, body = {"destination_spreadsheet_id": new_spreadsheet_id}).execute()
+
+    def deleteSheetList(self, sheet_id):
+        """Удалить лист из документа
+
+        Args:
+            sheet_id (int): id листа
+        """
+
+        self.service.spreadsheets().batchUpdate(spreadsheetId=self.getSpreadsheetId(),
+                                                body={"requests": ce.deleteSheet(sheet_id = sheet_id)}).execute()        
+
+    def getSheetListName(self, sheet_id):
+        """Получить название листа
+
+        Args:
+            sheet_id (int): id листа
+
+        Returns:
+            string: название листа
+        """
+
+        return self.getSheetListPropertiesById(listId = sheet_id)['properties']['title']
+
     def createSheetList(self, title):
         """создать лист в таблице
 
@@ -29,7 +81,7 @@ class ParentSheetClass:
         """
 
         try:
-            result = self.service.spreadsheets().batchUpdate(  spreadsheetId=self.getSpreadsheetId(),
+            result = self.service.spreadsheets().batchUpdate(spreadsheetId=self.getSpreadsheetId(),
                                                   body={"requests": ce.addSheet(title = title)}).execute()
             return result['replies'][0]['addSheet']['properties']['sheetId']
         
@@ -37,7 +89,6 @@ class ParentSheetClass:
             pprint(e)
             print_exc()
             return -1
-
 
     def setSpreadsheetId(self, sp_name):
 

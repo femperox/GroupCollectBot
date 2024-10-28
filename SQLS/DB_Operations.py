@@ -2,7 +2,7 @@ import psycopg2
 import os
 import json
 from pprint import pprint
-from confings.Consts import DbNames
+from confings.Consts import DbNames, CollectTypes
 
 def getConnection(connection = DbNames.database):
     """Получить подключение к базе PostgreSQL
@@ -463,30 +463,8 @@ def insertNewSeenProducts(items_id, type_id):
     cursor.close()
     conn.close()
 
-
-def updateCollect(collectId, status = '', namedRange = '', parcel_id = -1, topic_id = 0, comment_id = 0):
-    """Обновить информацию о коллекте
-
-    Args:
-        collectType (_type_): тип коллекта
-        collectNum (_type_):номер коллекта
-        status (string): статус коллекта
-        parcel_id (int, optional): id посылки. Defaults to -1.
-        topic_id (int, optional): id обсуждения. Defaults to 0.
-        comment_id (int, optional): id комментария в обсуждении. Defaults to 0.
-    """
-
-    conn = getConnection(DbNames.collectDatabase)
-    cursor = conn.cursor()  
-
-    cursor.execute(f''' Call CollectInsertUpdate('{collectId}', '{status}', '{namedRange}', {parcel_id}, {topic_id}, {comment_id});''')
-
-    conn.commit() 
-    cursor.close()
-    conn.close()
-
-def updateStoreCollect(collectId, status = '', title = '', sheet_id = '', parcel_id = -1, topic_id = 0, comment_id = 0):
-    """Обновить информацию о закупке
+def updateCollectSelector(collectId, collectType = CollectTypes.collect, status = '', sheet_id = '', parcel_id = -1, topic_id = 0, comment_id = 0):
+    """Обновить информацию о коллекте определённого типа
 
     Args:
         collectType (_type_): тип коллекта
@@ -500,7 +478,7 @@ def updateStoreCollect(collectId, status = '', title = '', sheet_id = '', parcel
     conn = getConnection(DbNames.collectDatabase)
     cursor = conn.cursor()  
 
-    cursor.execute(f''' Call StoreCollectInsertUpdate('{collectId}', '{status}', '{title}', '{sheet_id}', {parcel_id}, {topic_id}, {comment_id});''')
+    cursor.execute(f''' Call CollectUpdateSelector('{collectType}', '{collectId}', '{status}', '{sheet_id}', {parcel_id}, {topic_id}, {comment_id});''')
 
     conn.commit() 
     cursor.close()
@@ -642,6 +620,26 @@ def getMaxCollectId(type):
     
     return result
 
+def getMaxStoreCollectId(collect_title):
+    """ Получить максимальное айди закупки, в зависимости от её названия
+
+    Returns:
+        int: id посылки
+    """
+    
+    conn = getConnection(DbNames.collectDatabase)
+    cursor = conn.cursor()
+    
+    cursor.execute(f'''select count(collect_id) from Stores_Collects
+                       where lower(collect_id) like lower('%{collect_title}%')'
+                   ''')
+    result = cursor.fetchone()[0]
+    
+    cursor.close()
+    conn.close()
+    
+    return result
+
 def getAllCollectsInParcel(parcel_id):
     """Получить все коллекты с посылки по parcel_id
 
@@ -655,9 +653,8 @@ def getAllCollectsInParcel(parcel_id):
     conn = getConnection(DbNames.collectDatabase)
     cursor = conn.cursor()  
     
-    sel = f'''SELECT * from collects
-              where PARCEL_ID = {parcel_id}
-              order by collect_id
+    sel = f'''SELECT * from get_collects_in_parcel({parcel_id});
+
            '''
     cursor.execute(sel)
     result = cursor.fetchall()
@@ -667,7 +664,7 @@ def getAllCollectsInParcel(parcel_id):
     
     return result
 
-def getCollectTopicComment(collect_id):
+def getCollectTopicComment(collect_id, collect_type = CollectTypes.collect):
     """Получить topic_id и comment_id коллекта по collect_id
 
     Args:
@@ -680,8 +677,7 @@ def getCollectTopicComment(collect_id):
     conn = getConnection(DbNames.collectDatabase)
     cursor = conn.cursor()  
     
-    sel = f'''SELECT topic_id, comment_id FROM collects 
-              where collect_id = '{collect_id}'
+    sel = f'''SELECT * from get_collect_topic_comment('{collect_type}', '{collect_id}');
            '''
     cursor.execute(sel)
     result = cursor.fetchone() 

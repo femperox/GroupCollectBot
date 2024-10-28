@@ -8,6 +8,7 @@ from pprint import pprint
 from APIs.StoresApi.JpStoresApi.StoreSelector import StoreSelector
 from confings.Consts import Stores
 from dateutil.relativedelta import relativedelta
+import locale
 
 def getChar(char, step):
     """Получить след символ
@@ -29,6 +30,30 @@ def getCurrentDate():
     """
     
     return datetime.now().strftime('%Y-%m-%d')
+
+def getCurrentMonthString():
+    """Получить текущий месяц на русском языке
+
+    Returns:
+        string: текущий месяц на русском языке
+    """
+
+    locale.setlocale(locale.LC_TIME, 'ru_RU.UTF-8')
+    month = datetime.strftime(datetime.now(), '%b %Y')
+    locale.setlocale(locale.LC_TIME, 'en_US.UTF-8')
+    return month
+
+def getExpiryDateString():
+    """Получить строчку срока хранения
+
+    Returns:
+        string: срок хранения
+    """
+
+    now = datetime.now()
+    gotDate = now.strftime("%d.%m.%Y")
+    takeDate = (now + relativedelta(months=+1)).strftime("%d.%m.%Y")
+    return '{0} - {1}'.format(gotDate, takeDate)
 
 def getMonitorChats():
     """Получить список всех чатов, где сообщество занимается рассылкой
