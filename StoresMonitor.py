@@ -121,7 +121,6 @@ def monitor_hpoi(rcpns, typeRRS, vk):
             print(e)
             logger_stores.info(f"\n[ERROR-{typeRRS}] {e} - {print_exc()}\n Последние айтемы теперь: {seen_ids}\n")    
             continue    
-
         sleep(10800)
 
 

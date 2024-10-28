@@ -59,10 +59,11 @@ class WebUtils:
             soup = BeautifulSoup(browser.page_source, parser)
             browser.quit()
         elif isUcSeleniumNeeded:
-            browser = WebUtils.getSelenium(isUC=True)
+            browser = WebUtils.getSelenium(isUC=True, proxy = proxyServer)
             browser.get(url)
 
             time.sleep(15)
+  
             soup = BeautifulSoup(browser.page_source, parser)
             browser.quit()
         else:    
@@ -76,7 +77,7 @@ class WebUtils:
         return soup
 
     @staticmethod
-    def getSelenium(isUC = False):
+    def getSelenium(isUC = False, proxy = ''):
         """получить веб-драйве
 
         Args:
@@ -85,8 +86,10 @@ class WebUtils:
         Returns:
             seleniumwire.webdriver.Chrome: веб-драйвер
         """
-        
-        return Driver(uc=True, incognito= True) if isUC else Driver(incognito= True, wire=True)
+        if proxy:
+            return Driver(uc=True, incognito= True, proxy = proxy) if isUC else Driver(incognito= True, wire=True, proxy  = proxy)
+        else:
+            return Driver(uc=True, incognito= True) if isUC else Driver(incognito= True, wire=True)
     
     @staticmethod
     def getScraperSessoin(session):

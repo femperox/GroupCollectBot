@@ -70,7 +70,7 @@ class SecondaryStoreApi:
         ok.open("https://www.mandarake.co.jp/index2.html")
         time.sleep(5)
         ok.open(url)
-        time.sleep(5)      
+        time.sleep(15)      
 
         try:
             # хз как иначе вытащить картинку товара

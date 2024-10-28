@@ -22,14 +22,12 @@ import time
 
 class VkApi:
 
-    def __init__(self, is_kz = False) -> None:
+    def __init__(self, key_token = 'access_token', key_group_id = 'group_id') -> None:
         tmp_dict = json.load(open(PRIVATES_PATH, encoding='utf-8'))
-        if is_kz:
-            self.__tok = tmp_dict['access_token_kz']
-            self.__group_id = tmp_dict['group_id_kz']
-        else:
-            self.__tok = tmp_dict['access_token']
-            self.__group_id = tmp_dict['group_id']
+        
+        self.__tok = tmp_dict[key_token]
+        self.__group_id = tmp_dict[key_group_id]
+
         auth_data = self._login_pass_get(tmp_dict)
         if auth_data[0] and auth_data[1]:
             self.__vk_session = vk_api.VkApi(

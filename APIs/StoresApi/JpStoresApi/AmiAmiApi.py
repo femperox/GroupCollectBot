@@ -22,7 +22,7 @@ sys.argv.append("-n")  # Tell SeleniumBase to do thread-locking as needed
 
 class AmiAmiApi():
 
-    driver = [0, 1, 2]
+    driver = [0, 1, 2, 3]
 
     @staticmethod
     def startDriver(thread_index):
@@ -166,16 +166,17 @@ class AmiAmiApi():
 
         result = AmiAmiApi.driver[thread_index].execute_script(req1)
 
+        '''
         if not result['RSuccess']:
             pprint('trying again')
             AmiAmiApi.refreshDriver(thread_index=thread_index)
             time.sleep(30)
             AmiAmiApi.curlAmiAmiEng(curl=curl, thread_index=thread_index)
-            
+        '''   
         return result   
 
     @staticmethod
-    def parseAmiAmiEng(url, item_id):
+    def parseAmiAmiEng(url, item_id, thread_index):
         """Получение базовой информации о лоте с магазина AmiAmi
 
         Args:
@@ -188,7 +189,7 @@ class AmiAmiApi():
 
         curl = AmiAmiApi.AMI_API_ITEM_INFO.format(item_id)
         
-        js = AmiAmiApi.curlAmiAmiEng(curl, thread_index = 0)
+        js = AmiAmiApi.curlAmiAmiEng(curl, thread_index = thread_index)
 
         item = {}
         item['itemPrice'] = js['item']['price']
@@ -208,6 +209,42 @@ class AmiAmiApi():
         item['id'] = item_id   
 
         return item
+
+    @staticmethod
+    def parseAmiAmiEngSimple(url, item_id):
+        """Получение базовой информации о лоте с магазина AmiAmi через html
+
+        Args:
+            url (string): ссылка на лот
+
+        Returns:
+            dict: словарь с информацией о лоте
+        """
+        soup = WebUtils.getSoup(url = url, isUcSeleniumNeeded = True)
+
+        pprint(soup.find('p', class_ = 'item-detail__price'))
+
+        item = {}
+        item['itemPrice'] = soup.find('span', class_ = 'item-detail__price_selling-price').text
+        item['itemPrice'] = int(item['itemPrice'].replace(',', ''))
+
+        item['tax'] = 0
+        item['itemPriceWTax'] = 0 # Всегда включена в цену
+        item['shipmentPrice'] = spt.undefined
+        item['page'] = url
+        item['mainPhoto'] = soup.find('a', class_ = 'nolink sponly')['src']
+        item['name'] = soup.find('h2', class_ = 'item-detail__section-title').text
+        item['endTime'] = datetime.now() + relativedelta(years=3)
+
+        commission = PosredApi.getСommissionForItem(item['page'])
+        item['posredCommission'] = commission['posredCommission'].format(item['itemPrice'])
+        item['posredCommissionValue'] = commission['posredCommissionValue'](item['itemPrice'])  
+
+        item['siteName'] = Stores.amiAmi
+        item['id'] = item_id   
+
+        return item
+    
 
     @staticmethod
     def parseAmiAmiJp(url, item_id):

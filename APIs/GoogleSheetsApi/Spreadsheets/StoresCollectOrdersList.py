@@ -21,7 +21,7 @@ class StoresCollectOrdersList:
 
         if order_type == OrderTypes.jp:
             self.endColumn = 'I'
-        elif order_type == OrderTypes.eng:
+        elif order_type in [OrderTypes.us, OrderTypes.eur]:
             self.endColumn = 'H'
         elif order_type == OrderTypes.ami:
             self.endColumn = 'L' 
@@ -88,7 +88,7 @@ class StoresCollectOrdersList:
         if order_type == OrderTypes.jp:
             headers.extend(["Позиция в йенах", "Позиция со всеми коммишками и дост по Японии в йенах", "В рублях", 
                  "Доставка до склада посреда в транзите", "Доставка до коллективщика", "Задолжность"])
-        elif order_type == OrderTypes.eng:
+        elif order_type == OrderTypes.us:
             headers.extend(["Позиция в долларах", "Позиция со всеми коммишками и дост в США в долларах", 
                        "В рублях", "Доставка до коллективщика", "Задолжность"])
         elif order_type == OrderTypes.ami:
@@ -148,7 +148,7 @@ class StoresCollectOrdersList:
             data.append(ce.insertValue(list_id, valueRange.format(self.endColumn, i), formula))
 
             commission_formula = PosredApi.getCommissionForCollectOrder(order_type = order_type)
-            if order_type == OrderTypes.eng:
+            if order_type == OrderTypes.us:
                 commission_formula = commission_formula.format(f'{self.priceColumn}{i}', self.participantCount)
             else:
                 commission_formula = commission_formula.format(f'{self.priceColumn}{i}')
@@ -163,10 +163,10 @@ class StoresCollectOrdersList:
 
         request = []
 
-        if participant_count_new <= participant_count_old:
+        if participant_count_new < participant_count_old:
             rangeToDelete = f"A{self.participantRowStart}:Z{self.participantRowStart + participant_count_new}"
             request.append(ce.deleteRange(list_id, rangeToDelete))
-        else:
+        elif participant_count_new > participant_count_old:
             difference = participant_count_new - participant_count_old
             rangeToAdd = f'A{self.participantRowStart+1}:Z{self.participantRowStart+difference}'
             request.append(ce.insertRange(list_id, rangeToAdd))

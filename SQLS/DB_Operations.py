@@ -485,6 +485,27 @@ def updateCollect(collectId, status = '', namedRange = '', parcel_id = -1, topic
     cursor.close()
     conn.close()
 
+def updateStoreCollect(collectId, status = '', title = '', sheet_id = '', parcel_id = -1, topic_id = 0, comment_id = 0):
+    """Обновить информацию о закупке
+
+    Args:
+        collectType (_type_): тип коллекта
+        collectNum (_type_):номер коллекта
+        status (string): статус коллекта
+        parcel_id (int, optional): id посылки. Defaults to -1.
+        topic_id (int, optional): id обсуждения. Defaults to 0.
+        comment_id (int, optional): id комментария в обсуждении. Defaults to 0.
+    """
+
+    conn = getConnection(DbNames.collectDatabase)
+    cursor = conn.cursor()  
+
+    cursor.execute(f''' Call StoreCollectInsertUpdate('{collectId}', '{status}', '{title}', '{sheet_id}', {parcel_id}, {topic_id}, {comment_id});''')
+
+    conn.commit() 
+    cursor.close()
+    conn.close()
+
 def setCollectCommentId(collect_id, comment_id):
     """Установить comment_id для коллекта
 
@@ -542,6 +563,50 @@ def updateInsertParticipantsCollect(collect_id, user_id, items, isYstypka = Fals
     conn.commit() 
     cursor.close()
     conn.close()
+
+def updateInsertParticipantsStoreCollect(collect_id, user_id, items, isYstypka = False):
+    """Внести изменения в таблицу закупа и участников
+
+    Args:
+        collect_id (string): id коллекта
+        user_id (int): id участника
+        items (string): список позиций
+        isYstypka (bool, optional): как часть уступки - нужно полностью переписывать весь коллект. Defaults to False.
+    """
+
+    if isYstypka:
+        deleteParticipantsCollect(collect_id = collect_id)
+    
+    conn = getConnection(DbNames.collectDatabase)
+    cursor = conn.cursor()  
+
+    cursor.execute(f''' Call ParticipantsStoresCollectUpdate('{collect_id}', {user_id}, '{items}');''')
+
+    conn.commit() 
+    cursor.close()
+    conn.close()
+
+def getParticipantItems(user_id):
+    """Получить все айтемы пользователя
+
+    Args:
+        user_id (int): id пользователя
+
+    Returns:
+        list of string: список коллектов и позиций пользователя
+    """
+
+    conn = getConnection(DbNames.collectDatabase)
+    cursor = conn.cursor()  
+
+    cursor.execute(f"select * from get_participant_items({user_id});")
+    result = cursor.fetchall()  
+
+    conn.commit()
+    cursor.close()
+    conn.close()
+    
+    return result   
 
 def getCollectStatuses():
 

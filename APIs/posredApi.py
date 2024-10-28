@@ -21,7 +21,7 @@ class PosredApi:
 
         for json_item in js:
             if json_item['codeTo'] in CURRENCIES.rub.value:
-                return float(json_item['rate'])+ 0.01
+                return float(json_item['rate']) - 0.01
             
     @staticmethod
     def getCurrentAmiCurrencyRate():
@@ -69,7 +69,7 @@ class PosredApi:
 
         if order_type == OrderTypes.ami:
             return PosredApi.getCurrentAmiCurrencyRate()
-        elif order_type == OrderTypes.eng:
+        elif order_type == OrderTypes.us:
             return PosredApi.getCurrentUSDCurrencyRate()
         elif order_type == OrderTypes.jp:
             return PosredApi.getCurrentCurrencyRate()
@@ -131,7 +131,7 @@ class PosredApi:
 
         if order_type == OrderTypes.ami:
             return '{}*0,1'
-        elif order_type == OrderTypes.eng:
+        elif order_type == OrderTypes.us:
             return '{0}*0,1 + {0}*0,02 + 1,3/{1}'
         elif order_type == OrderTypes.jp:
             return '{0}*0,1 + {0}*0,038'

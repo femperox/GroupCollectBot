@@ -70,9 +70,9 @@ class StoreSelector(StoreSelectorParent):
             item = yahooApi.getAucInfo(id = item_id)
         elif site == Stores.amiAmi:
             if url.find('/eng/')>0:
-                AmiAmiApi.startDriver(thread_index=0)
-                item = AmiAmiApi.parseAmiAmiEng(url, item_id)
-                AmiAmiApi.stopDriver(thread_index=0)
+                AmiAmiApi.startDriver(3)
+                item = AmiAmiApi.parseAmiAmiEng(url, item_id, thread_index = 3)
+                AmiAmiApi.startDriver(3)
             else:
                 item = AmiAmiApi.parseAmiAmiJp(url, item_id)  
         elif site == Stores.mandarake:
