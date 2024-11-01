@@ -89,6 +89,8 @@ def addConditionalFormatRuleColorChange(spId, range, ruleType, ruleValue, ruleCo
   return request
 
 
+
+
 def mergeCells(spId, range):
     '''
     подготовка json запроса для объединения ячеек таблицы по заданным параметрам
@@ -214,6 +216,30 @@ def CutPasteRange(spId, range, newRange, newSpId = None):
               }
 
     return request
+
+def copyPasteRange(spId, range, newRange, newSpId = None):
+  """Скопировать вставить диапозон
+
+  Args:
+      spId (int): id листа откуда
+      range (string): диапозон откуда
+      newRange (string): диапозон куда
+      newSpId (int, optional): id листа куда. Defaults to None.
+
+  Returns:
+      _type_: _description_
+  """
+  if newSpId is None:
+      newSpId = spId
+
+  request = { "copyPaste":
+              { "source": toRangeType(spId, range),
+                "destination": toRangeType(newSpId, newRange),
+                "pasteType": "PASTE_NORMAL"
+              }
+            }
+
+  return request
 
 
 def addNamedRange(spId, range, name):

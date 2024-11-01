@@ -24,14 +24,11 @@ class YoutoozApi:
 
             shipment_prices = {}
             for row in rows[1:]:
-                pprint('row')
                 if row.find('td', {'colspan': '5'}) is not None:
                     continue
                 
                 item_shipment = row.find('td', {'style': re.compile(r'text-align: center; height: 22px; width: 2')}).text
-                pprint(item_shipment)
                 if item_shipment not in ['INTL', 'US']:
-                    pprint('ok bye')
                     continue
 
                 if row.find('strong', {'data-mce-fragment': '1'}) is not None:
@@ -44,7 +41,6 @@ class YoutoozApi:
                 else:
                     continue
                 item_size = item_size.replace('\n', '').replace('*', '').lower()
-                pprint(item_type)
                 try:
                     item_shipment_price = row.find('td', {'data-sheets-value': re.compile(r'"1":3')}).text.lower()
                 except:
@@ -58,7 +54,6 @@ class YoutoozApi:
                 else:
                     shipment_prices[item_type] = {item_size: item_shipment_price}
 
-            pprint(shipment_prices)
             return shipment_prices
         
         except Exception as e:

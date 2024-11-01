@@ -5,10 +5,36 @@ from confings.Consts import MONITOR_CONF_PATH, RegexType, STORE_MONITOR_CONF_PAT
 import re
 from itertools import chain
 from pprint import pprint
-from APIs.StoresApi.JpStoresApi.StoreSelector import StoreSelector
+from APIs.StoresApi.JpStoresApi.StoreSelector import StoreSelector as StoreSelectorJp
+from APIs.StoresApi.USStoresApi.StoreSelector import StoreSelector as StoreSelectorUs
 from confings.Consts import Stores
 from dateutil.relativedelta import relativedelta
 import locale
+
+def formShortList(storeList):
+
+    store_selector = StoreSelectorJp()
+    storeListShort = []
+    for store in storeList:
+        store_selector.url = store
+        storeListShort.append(store_selector.getStoreName())
+    return storeListShort
+
+def pickRightStoreSelector(url):
+
+    store_selector = StoreSelectorJp()
+    store_selector_us = StoreSelectorUs()
+
+    store_selector.url = url
+    current_store_name = store_selector.getStoreName()
+
+    jpStores = formShortList(Stores.availableStoreJp)
+    usStores = formShortList(Stores.availableStoreUS)
+
+    if current_store_name in jpStores:
+        return store_selector
+    elif current_store_name in usStores:
+        return store_selector_us
 
 def getChar(char, step):
     """Получить след символ
@@ -154,7 +180,7 @@ def getFavInfo(text, item_index = 0, isPosredPresent = True):
     """
     fav_item = {}
 
-    storeSelector = StoreSelector()
+    storeSelector = StoreSelectorJp()
     storeSelector.url = CURRENT_POSRED
 
     if isPosredPresent:
@@ -163,6 +189,7 @@ def getFavInfo(text, item_index = 0, isPosredPresent = True):
     else:
         urls = re.findall(RegexType.regex_store_url_bot, text)
 
+    storeSelector = pickRightStoreSelector(url = urls[item_index])
     fav_item = storeSelector.selectStore(urls[item_index], not isPosredPresent)
     
     return fav_item

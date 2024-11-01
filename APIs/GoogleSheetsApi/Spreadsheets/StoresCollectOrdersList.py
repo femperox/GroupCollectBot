@@ -14,6 +14,7 @@ class StoresCollectOrdersList:
 
         self.startRow = 1
         self.endRow = 14
+        self.participantRowStart = self.endRow + 1
 
     def setColumns(self, order_type):
         """Проставить базовые значения колонок
@@ -48,7 +49,6 @@ class StoresCollectOrdersList:
         """
         
         request = []
-        self.participantRowStart = self.endRow + 1
         self.participantRowEnd = self.participantRowStart + participant_count - 1
         self.participantCount = participant_count
 
@@ -213,13 +213,28 @@ class StoresCollectOrdersList:
 
         return request
     
-    def updateTableValues(self, list_id, list_title, participant_list):
+    def updateTableCopyPaste(self, list_id, participant_list_count):
+
+        request = []
+
+        rangeToCopy = f'E{self.participantRowStart + participant_list_count + 1}:M{self.participantRowStart + participant_list_count + 1}'
+        rangeToPaste = 'E{0}:M{1}'
+
+        for i in range(1, participant_list_count + 1):
+            request.append(ce.copyPasteRange(spId = list_id, 
+                                             range = rangeToCopy, 
+                                             newRange = rangeToPaste.format(self.participantRowStart + i, self.participantRowStart + i)))
+
+        return request
+    
+    def updateTableValues(self, list_id, list_title, participant_list, addingParticipantsFlag = False):
         """Обновить значения таблицы
 
         Args:
             list_id (int): id листа
             list_title (string): название листа
             participant_list (list): текущий список участников
+            order_type (bool, optional): флаг добавления участников. Defaults to False.
 
         Returns:
             list: список реквестов по заполнению таблицы данными
@@ -232,14 +247,34 @@ class StoresCollectOrdersList:
         valueRange = list_title + '!{0}{1}'
 
         for i in range(len(participant_list)):
-            data.append(ce.insertValue(list_id, valueRange.format('A', self.participantRowStart+i), participant_list[i]['items']))
+            row_step = addingParticipantsFlag + i
+            data.append(ce.insertValue(list_id, valueRange.format('A', self.participantRowStart+row_step), participant_list[i]['items']))
             if participant_list[i]['user_url']:
-                data.append(ce.insertValue(list_id, valueRange.format('B', self.participantRowStart+i), f'''=HYPERLINK("{participant_list[i]['user_url']}"; "{participant_list[i]['user_name']}")'''))
+                data.append(ce.insertValue(list_id, valueRange.format('B', self.participantRowStart+row_step), f'''=HYPERLINK("{participant_list[i]['user_url']}"; "{participant_list[i]['user_name']}")'''))
             else:
-                data.append(ce.insertValue(list_id, valueRange.format('B', self.participantRowStart+i), participant_list[i]['user_name']))
+                data.append(ce.insertValue(list_id, valueRange.format('B', self.participantRowStart+row_step), participant_list[i]['user_name']))
 
         body["data"] = data
         return body
+    
+    def updateTableValuesAddingParticipants(self, list_id, list_title, participant_list):
+
+        body = {}
+        body["valueInputOption"] = "USER_ENTERED"
+
+        data = []
+        valueRange = list_title + '!{0}{1}'
+
+        for i in range(len(participant_list)):
+            data.append(ce.insertValue(list_id, valueRange.format('A', self.participantRowStart+i+1), participant_list[i]['items']))
+            if participant_list[i]['user_url']:
+                data.append(ce.insertValue(list_id, valueRange.format('B', self.participantRowStart+i+1), f'''=HYPERLINK("{participant_list[i]['user_url']}"; "{participant_list[i]['user_name']}")'''))
+            else:
+                data.append(ce.insertValue(list_id, valueRange.format('B', self.participantRowStart+i+1), participant_list[i]['user_name']))
+
+        body["data"] = data
+        return body        
+        
     
     def updateTableRecieved(self, list_id):
         """Обновить таблицу как полученную закупку

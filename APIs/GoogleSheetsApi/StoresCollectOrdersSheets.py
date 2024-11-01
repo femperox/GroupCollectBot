@@ -16,8 +16,7 @@ class StoresCollectOrdersSheets(ParentSheetClass):
     def __init__(self):
 
         super().__init__()
-        #self.setSpreadsheetId("storesCollectList")
-        self.setSpreadsheetId("testList")
+        self.setSpreadsheetId("storesCollectList")
         self.current_list = StoresCollectOrdersList()
 
     def archiveStoreCollect(self, list_id):
@@ -89,6 +88,26 @@ class StoresCollectOrdersSheets(ParentSheetClass):
                                                          body=self.current_list.updateTableValues(list_id = list_id,
                                                                                                   list_title = list_title,
                                                                                                   participant_list = participant_list)).execute()
+
+    def addParticipants(self, list_id, new_participant_list, participant_count_old):
+
+        list_title = self.getSheetListName(sheet_id = list_id)
+
+        request = self.current_list.updateTable(list_id = list_id, 
+                                                participant_count_new = len(new_participant_list) + participant_count_old,
+                                                participant_count_old = participant_count_old)
+        if request:
+            request.extend(self.current_list.updateTableCopyPaste(list_id = list_id, participant_list_count = len(new_participant_list)))
+            self.service.spreadsheets().batchUpdate(spreadsheetId=self.getSpreadsheetId(),
+                                                    body={"requests": request}).execute()
+            
+        self.service.spreadsheets().values().batchUpdate(spreadsheetId=self.getSpreadsheetId(),
+                                                         body=self.current_list.updateTableValues(list_id = list_id,
+                                                                                                  list_title = list_title,
+                                                                                                  participant_list = new_participant_list,
+                                                                                                  addingParticipantsFlag = True)).execute()
+
+
 
     def setStoresCollectRecieved(self, list_id):
         """Установить закупку полученной

@@ -463,7 +463,7 @@ def insertNewSeenProducts(items_id, type_id):
     cursor.close()
     conn.close()
 
-def updateCollectSelector(collectId, collectType = CollectTypes.collect, status = '', sheet_id = '', parcel_id = -1, topic_id = 0, comment_id = 0):
+def updateCollectSelector(collectId, collectType = CollectTypes.collect, status = '', sheet_or_range = '', parcel_id = -1, topic_id = 0, comment_id = 0):
     """Обновить информацию о коллекте определённого типа
 
     Args:
@@ -478,7 +478,7 @@ def updateCollectSelector(collectId, collectType = CollectTypes.collect, status 
     conn = getConnection(DbNames.collectDatabase)
     cursor = conn.cursor()  
 
-    cursor.execute(f''' Call CollectUpdateSelector('{collectType}', '{collectId}', '{status}', '{sheet_id}', {parcel_id}, {topic_id}, {comment_id});''')
+    cursor.execute(f''' Call CollectUpdateSelector('{collectType}', '{collectId}', '{status}', '{sheet_or_range}', {parcel_id}, {topic_id}, {comment_id});''')
 
     conn.commit() 
     cursor.close()
@@ -520,7 +520,7 @@ def deleteParticipantsCollect(collect_id):
     cursor.close()
     conn.close()
 
-def updateInsertParticipantsCollect(collect_id, user_id, items, isYstypka = False):
+def updateInsertParticipantsCollect(collect_id, user_id, items, isYstypka = False, collect_type = CollectTypes.collect):
     """Внести изменения в таблицу коллектов и участников
 
     Args:
@@ -536,29 +536,7 @@ def updateInsertParticipantsCollect(collect_id, user_id, items, isYstypka = Fals
     conn = getConnection(DbNames.collectDatabase)
     cursor = conn.cursor()  
 
-    cursor.execute(f''' Call ParticipantsCollectUpdate('{collect_id}', {user_id}, '{items}');''')
-
-    conn.commit() 
-    cursor.close()
-    conn.close()
-
-def updateInsertParticipantsStoreCollect(collect_id, user_id, items, isYstypka = False):
-    """Внести изменения в таблицу закупа и участников
-
-    Args:
-        collect_id (string): id коллекта
-        user_id (int): id участника
-        items (string): список позиций
-        isYstypka (bool, optional): как часть уступки - нужно полностью переписывать весь коллект. Defaults to False.
-    """
-
-    if isYstypka:
-        deleteParticipantsCollect(collect_id = collect_id)
-    
-    conn = getConnection(DbNames.collectDatabase)
-    cursor = conn.cursor()  
-
-    cursor.execute(f''' Call ParticipantsStoresCollectUpdate('{collect_id}', {user_id}, '{items}');''')
+    cursor.execute(f''' Call ParticipantsUpdateSelector('{collect_type}', '{collect_id}', {user_id}, '{items}');''')
 
     conn.commit() 
     cursor.close()
@@ -580,11 +558,53 @@ def getParticipantItems(user_id):
     cursor.execute(f"select * from get_participant_items({user_id});")
     result = cursor.fetchall()  
 
-    conn.commit()
     cursor.close()
     conn.close()
     
     return result   
+
+def getStoresCollectSheetId(collect_id):
+    """Получить id листа закупки
+
+    Args:
+        collect_id (string): id закупки
+
+    Returns:
+        string: id листа закупки
+    """
+
+    conn = getConnection(DbNames.collectDatabase)
+    cursor = conn.cursor()  
+
+    cursor.execute(f"select sheet_id from Participants_Stores_Collects where collect_id = '{collect_id}';")
+    result = cursor.fetchone()[0]
+    
+    cursor.close()
+    conn.close()
+    
+    return result
+
+
+def getParticipantsInStoreCollectCount(collect_id):
+    """Получить количество участников закупки
+
+    Args:
+        collect_id (string): id закупки
+
+    Returns:
+        int: количество участников закупки
+    """
+
+    conn = getConnection(DbNames.collectDatabase)
+    cursor = conn.cursor()  
+
+    cursor.execute(f"select count(*) from Participants_Stores_Collects where collect_id = '{collect_id}';")
+    result = cursor.fetchone()[0]
+    
+    cursor.close()
+    conn.close()
+    
+    return result
 
 def getCollectStatuses():
 
@@ -631,7 +651,7 @@ def getMaxStoreCollectId(collect_title):
     cursor = conn.cursor()
     
     cursor.execute(f'''select count(collect_id) from Stores_Collects
-                       where lower(collect_id) like lower('%{collect_title}%')'
+                       where lower(collect_id) like lower('%{collect_title}%')
                    ''')
     result = cursor.fetchone()[0]
     

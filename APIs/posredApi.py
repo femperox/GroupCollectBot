@@ -1,5 +1,6 @@
 from confings.Consts import CURRENCY_API, CURRENT_POSRED, Stores, CURRENCIES, CURRENCY_USD_API, CURRENCY_API_JPY_AMI, OrderTypes
 from APIs.webUtils import WebUtils
+from APIs.StoresApi.StoreSelectorParent import StoreSelectorParent
 import requests
 import json
 from pprint import pprint
@@ -55,7 +56,23 @@ class PosredApi:
         for json_item in js['result']:
             if json_item['from'] == '643' and json_item['to'] == '840':
                 return json_item['rate'] + 4.7
-        
+    
+    @staticmethod
+    def getCurrentCurrencyRateByUrl(url):
+        from APIs.utils import formShortList
+        store_selector = StoreSelectorParent()
+
+        store_selector.url = url
+        current_store_name = store_selector.getStoreName()
+
+        jpStores = formShortList(Stores.availableStoreJp)
+        usStores = formShortList(Stores.availableStoreUS)
+
+        if current_store_name in jpStores:
+            return PosredApi.getCurrentCurrencyRate()
+        elif current_store_name in usStores:
+            return PosredApi.getCurrentUSDCurrencyRate()       
+
     @staticmethod
     def getCurrentCurrencyRateByOrderType(order_type):
         """Получить текущий курс в зависимости от типа закупки

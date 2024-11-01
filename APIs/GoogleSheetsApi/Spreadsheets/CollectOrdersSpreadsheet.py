@@ -232,7 +232,7 @@ class CollectOrdersSpreadsheetClass():
         # Курс
         form = "!J{0}"
         ran = sheetTitle + form.format(self.startLotRow+5)
-        formula = f"={str(PosredApi.getCurrentCurrencyRate()).replace('.', ',')}"
+        formula = f"={str(PosredApi.getCurrentCurrencyRateByUrl(url = item['page'])).replace('.', ',')}"
         data.append(ce.insertValue(spId, ran, formula))
 
         for i in range(2):

@@ -16,6 +16,7 @@ class StoreSelectorParent:
         name = name.replace('jp','').replace('com','').replace('www', '').replace('co', '').replace('order.', '').replace('.','')
         return name
     
+    
     def getItemID(self):
         """Получить id товара в магазине
 
@@ -27,3 +28,4 @@ class StoreSelectorParent:
         id = id.replace('?source_location=share', '').replace('&utm_source=web&utm_medium=share', '').replace('detail.php?product_id=', '')
         id = id.replace('?scode=', '').replace('?gcode=', '').replace('item?itemCode=', '').replace('detail', '')
         return id
+

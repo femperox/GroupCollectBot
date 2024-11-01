@@ -4,15 +4,13 @@ from APIs.GoogleSheetsApi.StoresCollectOrdersSheets import StoresCollectOrdersSh
 from traceback import format_exc, print_exc
 from pprint import pprint 
 from confings.Consts import OrderTypes, RegexType, CollectTypes
-from APIs.StoresApi.JpStoresApi.StoreSelector import StoreSelector
-from APIs.StoresApi.USStoresApi.StoreSelector import StoreSelector as StoreSelectorUS
 from confings.Messages import Messages
 import re
 from confings.Consts import VkTopicCommentChangeType
 from time import sleep
 from datetime import datetime
 from SQLS import DB_Operations
-from APIs.utils import flattenList, flatTableParticipantList, flatTopicParticipantList
+from APIs.utils import flattenList, flatTableParticipantList, flatTopicParticipantList, pickRightStoreSelector
 
 def updateParticipantDB(participantList, collectId, isYstypka = False):
     """Обновить БД со списком участников и их позициями
@@ -22,10 +20,11 @@ def updateParticipantDB(participantList, collectId, isYstypka = False):
         collectId (string): id коллекта
         isYstypka (bool, optional): как часть уступки - нужно полностью переписывать весь коллект. Defaults to False.
     """
-
-    list = flatTableParticipantList(particpantList = participantList) if isYstypka else flatTopicParticipantList(particpantList = participantList)
+    isYstypkaFlag = isYstypka
+    list = flatTableParticipantList(particpantList = participantList) if isYstypkaFlag else flatTopicParticipantList(particpantList = participantList)
     for item in list:
-        DB_Operations.updateInsertParticipantsCollect(collect_id = collectId, user_id = item['id'], items = item['items'], isYstypka = isYstypka)    
+        DB_Operations.updateInsertParticipantsCollect(collect_id = collectId, user_id = item['id'], items = item['items'], isYstypka = isYstypkaFlag)    
+        isYstypkaFlag = False
 
 def createOrderList(collectList = [], indList = [], storeCollectList = []):
     """Сгенерить общий список заказов
@@ -301,6 +300,9 @@ def getCollectId(collectType, collectNum):
     letter = "C" if collectType == "Коллективка" else "I"
     return f"{letter}{collectNum}"
 
+
+
+
 def createTableTopic(post_url, site_url ='', spId=0, topic_id=0, items=0, img_url = ''):
     '''
     Создаёт таблицу и комент в обсуждении по заданным параметрам
@@ -316,9 +318,8 @@ def createTableTopic(post_url, site_url ='', spId=0, topic_id=0, items=0, img_ur
     item = {}
     siteName = ''
     if site_url != '':
-        item = store_selector.selectStore(site_url)
-        if not item:
-            item = store_selector_us.selectStore(site_url)
+        store_selector = pickRightStoreSelector(url = site_url)
+        item = store_selector.selectStore(url = site_url)
         if len(img_url) == 0:
             img_url = item['mainPhoto']
 
@@ -338,7 +339,7 @@ def createTableTopic(post_url, site_url ='', spId=0, topic_id=0, items=0, img_ur
 
     collect_table.updateTable(namedRange, transformToTableFormat(participantsList), topicInfo[0])
 
-    DB_Operations.updateCollectSelector(collectId = collect_id, namedRange = namedRange,
+    DB_Operations.updateCollectSelector(collectId = collect_id, sheet_or_range = namedRange,
                                         topic_id = topicInfo[2]['topic_id'], comment_id = topicInfo[2]['comment_id'])
     updateParticipantDB(participantList = participantsList, collectId = namedRange.replace('D', '').replace('nd', '').replace('ollect', ''))
 
@@ -382,28 +383,49 @@ def changePositions(userList):
     for ystypka in userList:
         collect_id = ''
         lot = ''
+        collect_type = CollectTypes.collect
+
 
         if ystypka['collect'].isdigit():
             lot = "Collect{}".format(int(ystypka['collect']))
             collect_id = 'C{}'.format(int(ystypka['collect']))
+        elif ystypka['collect'][1:].isdigit():
+            lot = "Ind{}".format(ystypka['collect'][1:])
+            collect_id = 'I{}'.format(ystypka['collect'][1:])
         else:
-            lot = "Ind{}".format(ystypka['collect'])
-            collect_id = 'I{}'.format(ystypka['collect'])
+            lot = ystypka['collect']
+            collect_id = ystypka['collect']
+            collect_type = CollectTypes.store
 
         #TO DO: Поменять логику, нахера делать ревёрс
-        user_info = list(vk.get_tuple_name(ystypka['url']))
-        user_info.reverse()
-        user_info = [[ystypka['collect_items'], user_info]]
+        if collect_type == CollectTypes.collect:
 
-        newParticipants = transformToTableFormat(user_info)
-        try:
-            actualParticipants, paymentInfo = collect_table.changePositions('D'+lot, newParticipants["participantList"], ystypka['payment_status'])
-        except:
-            actualParticipants, paymentInfo = collect_table.changePositions('L'+lot, newParticipants["participantList"], ystypka['payment_status'])
+            user_info = list(vk.get_tuple_name(ystypka['url']))
+            user_info.reverse()
+            user_info = [[ystypka['collect_items'], user_info]]
 
-        updateParticipantDB(participantList = actualParticipants, collectId = collect_id, isYstypka = True)
+            newParticipants = transformToTableFormat(user_info)
+            try:
+                actualParticipants, paymentInfo = collect_table.changePositions('D'+lot, newParticipants["participantList"], ystypka['payment_status'])
+            except:
+                actualParticipants, paymentInfo = collect_table.changePositions('L'+lot, newParticipants["participantList"], ystypka['payment_status'])
 
-        actualParticipants = tableToTopic(actualParticipants, paymentInfo)
+            updateParticipantDB(participantList = actualParticipants, collectId = collect_id, isYstypka = True)
+
+            actualParticipants = tableToTopic(actualParticipants, paymentInfo)
+        elif collect_type == CollectTypes.store:
+            user_info = {}
+            user_info['user_name'], user_info['user_url'] = vk.get_tuple_name(user_info['user_url'])
+            user_info['items'] = ystypka['collect_items']
+            user_info['id'] = user_info['user_url'].split('/')[-1]
+
+            
+            storesCollectOrdersSheets.addParticipants(list_id = DB_Operations.getStoresCollectSheetId(collect_id = collect_id), 
+                                                      new_participant_list = [user_info], 
+                                                      participant_count_old = DB_Operations.getParticipantsInStoreCollectCount(collect_id = collect_id))
+
+            DB_Operations.updateInsertParticipantsCollect(collect_type = collect_type, collect_id = collect_id, 
+                                                          user_id = user_info['id'], items = user_info['items'])    
 
         topicCollectInfo = DB_Operations.getCollectTopicComment(collect_id = collect_id)
         vk.edit_collects_activity_comment(topic_id = topicCollectInfo[0], comment_id = topicCollectInfo[1], 
@@ -496,6 +518,7 @@ def console():
             user_list = []
             print('\nTo stop enter any symbol\n')
             print('Если индивидуалка, то прицепить любой символ перед номером. Пример: и56')
+            print('Если закупка, то название закупки и позиции. Пример: PLUSH SHOP #1  - плюш №1')
             print('Запись в формате: 213 - 1, 2, 4\n')
 
             i = 0
@@ -676,7 +699,8 @@ def console():
                 participant_list.append(user_info.copy())
 
             mes = Messages.formStoresCollect(collect_title = order_title, status = status_text,
-                                              items_info = items_info, wall_post_url = wallPost)
+                                              items_info = items_info, wall_post_url = wallPost,
+                                              order_type = order_type)
             
             topicInfo = vk.post_comment(topic_id = topic_order, message = mes, img_urls=img)
             
@@ -687,13 +711,13 @@ def console():
                                                           participant_count_old = len(participant_list))
             
             DB_Operations.updateCollectSelector(collectType = CollectTypes.store, collectId = order_title, 
-                                                title = order_title, sheet_id = list_id,
+                                                sheet_or_range = list_id,
                                                 topic_id = topicInfo[2]['topic_id'], comment_id = topicInfo[2]['comment_id'])
             for participant in participant_list:
                 if participant['user_url']:
-                    DB_Operations.updateInsertParticipantsStoreCollect( collect_id = order_title, 
-                                                                        user_id = participant['user_url'].split('/')[-1].replace('id', ''), 
-                                                                        items = participant['items'])
+                    DB_Operations.updateInsertParticipantsCollect(  collect_type = CollectTypes.store, collect_id = order_title, 
+                                                                    user_id = participant['user_url'].split('/')[-1].replace('id', ''), 
+                                                                    items = participant['items'])
 
       except Exception as e:
           print(f"\n===== ОШИБКА! \n{format_exc()} - {e}=====")
@@ -705,8 +729,6 @@ if __name__ == '__main__':
     collect_table = collect_table()
     storesCollectOrdersSheets = StoresCollectOrdersSheets()
     vk = vk()
-    store_selector = StoreSelector()
-    store_selector_us = StoreSelectorUS()
 
     console()
 
