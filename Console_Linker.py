@@ -595,20 +595,17 @@ def console():
             indList.sort()
 
             storeCollectList = input("Enter storeCollect title using comma(, ) (might be empty): ")
-            storeCollectList = indList.split(', ')
+            storeCollectList = storeCollectList.split(', ')
 
             img = input('\nEnter the image url using comma(, ) (might be empty): ')
             img = img.split(', ')
 
-            mes = Messages.formParcelCollectMes(parcel_id=parcel_id, status = stat, 
-                                                collect_dict= {'collects': collectList, 'inds': indList})
-
-            topicInfo = vk.post_comment(topic_id = topicIdParcels, message=mes, img_urls=img)
-
-            DB_Operations.updateInsertCollectParcel(parcel_id = parcel_id, status = stat,
-                                                    topic_id = topicInfo[2]['topic_id'], comment_id = topicInfo[2]['comment_id'])
+            DB_Operations.updateInsertCollectParcel(parcel_id = parcel_id, status = stat)
             
             orderList = createOrderList(collectList = collectList, indList = indList, storeCollectList = storeCollectList)
+
+            collectListUrl = []
+            indListUrl = []
 
             for item in orderList:
                 sleep(4)
@@ -617,6 +614,22 @@ def console():
                 collectTopicInfo = DB_Operations.getCollectTopicComment(collect_id = item[0], collect_type = item[1])
                 vk.edit_collects_activity_comment(topic_id = collectTopicInfo[0], comment_id = collectTopicInfo[1],
                                            status_text = stat)
+                
+                topic_url_template = f'[https://vk.com/topic-{vk.get_current_group_id()}_{collectTopicInfo[0]}?post={collectTopicInfo[1]}|'+'{}]'
+                if item[1] == CollectTypes.store:
+                    collectListUrl.append(topic_url_template.format(item[0]))
+                elif item[1] == CollectTypes.collect:
+                    if item[0][0] == 'I':
+                        indListUrl.append(topic_url_template.format(item[0][1:]))
+                    elif item[0][0] == 'C':
+                        collectListUrl.append(topic_url_template.format(item[0][1:]))
+
+            mes = Messages.formParcelCollectMes(parcel_id=parcel_id, status = stat, 
+                                                collect_dict= {'collects': collectListUrl, 'inds': indListUrl })
+            topicInfo = vk.post_comment(topic_id = topicIdParcels, message=mes, img_urls=img)
+
+            DB_Operations.updateInsertCollectParcel(topic_id = topicInfo[2]['topic_id'], comment_id = topicInfo[2]['comment_id'])
+            
         elif choise == 9:
 
             status = flattenList(DB_Operations.getCollectStatuses())
