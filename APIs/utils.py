@@ -35,6 +35,7 @@ def pickRightStoreSelector(url):
         return store_selector
     elif current_store_name in usStores:
         return store_selector_us
+    else: return store_selector
 
 def getChar(char, step):
     """Получить след символ

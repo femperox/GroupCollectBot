@@ -49,8 +49,9 @@ class StoresCollectOrdersSheets(ParentSheetClass):
         Returns:
             int: id листа
         """
-
-        list_title = title + ' ' + getCurrentMonthString()
+        list_title = title
+        if order_type != OrderTypes.ami:
+            list_title += ' ' + getCurrentMonthString()
 
         list_id = self.createSheetList(title = list_title)
         

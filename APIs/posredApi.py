@@ -55,7 +55,7 @@ class PosredApi:
         
         for json_item in js['result']:
             if json_item['from'] == '643' and json_item['to'] == '840':
-                return json_item['rate'] + 4.7
+                return json_item['rate'] + 5.5
     
     @staticmethod
     def getCurrentCurrencyRateByUrl(url):
@@ -71,7 +71,9 @@ class PosredApi:
         if current_store_name in jpStores:
             return PosredApi.getCurrentCurrencyRate()
         elif current_store_name in usStores:
-            return PosredApi.getCurrentUSDCurrencyRate()       
+            return PosredApi.getCurrentUSDCurrencyRate()
+        else:
+            return PosredApi.getCurrentCurrencyRate()     
 
     @staticmethod
     def getCurrentCurrencyRateByOrderType(order_type):

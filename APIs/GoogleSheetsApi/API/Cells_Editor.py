@@ -371,7 +371,7 @@ def setRowHeight(spId, range, height):
   
   return request
 
-def addSheet(title):
+def addSheet(title, index = 0):
   """подготовка json запроса для добавлния листа 
 
   Args:
@@ -384,7 +384,8 @@ def addSheet(title):
   request = { "addSheet": 
               {"properties": 
                 { "title": title,
-                  "tabColor": c.white
+                  "tabColor": c.white,
+                  "index": index
                 }
               }
             }

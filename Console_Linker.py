@@ -588,9 +588,11 @@ def console():
 
             collectList = input("\nEnter collect's num using comma(, ) (might be empty): ")
             collectList = collectList.split(', ')
+            collectList.sort()
 
             indList = input("Enter ind's num using comma(, ) (might be empty): ")
             indList = indList.split(', ')
+            indList.sort()
 
             storeCollectList = input("Enter storeCollect title using comma(, ) (might be empty): ")
             storeCollectList = indList.split(', ')
@@ -657,7 +659,7 @@ def console():
             topic_order = topicOrdersList[topic_order - 1]['id']          
             
             order_title = input('\nВведите название закупки: ')
-            order_title += f' #{DB_Operations.getMaxStoreCollectId(collect_title=order_title) + 1}'
+            order_title += f' #{DB_Operations.getMaxStoreCollectId(collect_title = order_title.split(" ")[0]) + 1}'
 
             img = input('\nКартинки через запятую(, ) (might be empty): ')
             img = img.split(', ')
