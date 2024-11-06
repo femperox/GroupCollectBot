@@ -628,7 +628,7 @@ def console():
                                                 collect_dict= {'collects': collectListUrl, 'inds': indListUrl })
             topicInfo = vk.post_comment(topic_id = topicIdParcels, message=mes, img_urls=img)
 
-            DB_Operations.updateInsertCollectParcel(topic_id = topicInfo[2]['topic_id'], comment_id = topicInfo[2]['comment_id'])
+            DB_Operations.updateInsertCollectParcel(parcel_id = parcel_id, topic_id = topicInfo[2]['topic_id'], comment_id = topicInfo[2]['comment_id'])
             
         elif choise == 9:
 
