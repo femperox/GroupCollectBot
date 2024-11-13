@@ -431,6 +431,118 @@ def changePositions(userList):
         vk.edit_collects_activity_comment(topic_id = topicCollectInfo[0], comment_id = topicCollectInfo[1], 
                                           participant_text = actualParticipants)
 
+def storeCollectActivities(topicList):
+
+    order_title = input('\nВведите название закупки: ')
+    is_exists = DB_Operations.isStoreCollectIxists(collect_title = order_title)
+
+    if not is_exists:
+
+        status = flattenList(DB_Operations.getCollectStatuses())
+        status_text = status[0]
+
+        orderTypesList = [orderType.value for orderType in OrderTypes]
+        order_type = int(input(f'\nВыберите тип закупки:\n{Messages.formConsoleListMes(info_list = orderTypesList)}'))
+        order_type =  OrderTypes(orderTypesList[order_type-1])
+
+        topicOrdersList = [topic for topic in topicList 
+                        if re.search(RegexType.regex_collect_orders_topics, topic['title'].lower())]
+        
+        topic_order = int(input(f'\nВыберите обсуждение:\n{Messages.formConsoleListMes(info_list = [topic["title"] for topic in topicOrdersList])}\n'))
+        topic_order = topicOrdersList[topic_order - 1]['id']          
+        
+        order_title += f' #{DB_Operations.getMaxStoreCollectId(collect_title = order_title.split(" ")[0]) + 1}'
+
+        wallPost = input('\nВведите ссылку на набор. (might be empty): ')
+    
+    img = input('\nКартинки через запятую(, ) (might be empty): ')
+    img = [] if img.split(', ') == [''] else img.split(', ')
+    
+    print('\nПодготовим участников.')
+    print('\nTo stop enter any symbol\n')
+    participant_list = []
+    items_info = {}
+    
+    i = 0
+    while True:
+        user_info = {}
+        i += 1
+        user_info['user_url'] = input('user{0} URL: '.format(i))
+        if user_info['user_url'].find('https://vk.com') < 0 and user_info['user_url'].lower().find('мне') < 0: 
+            break
+        if user_info['user_url'].lower().find('мне') >= 0:
+            user_info['user_name'] = 'Мне'
+            user_info['user_url'] = ''
+        else:
+            user_info['user_name'], user_info['user_url'] = vk.get_tuple_name(user_info['user_url'])
+        
+        user_info['items'] = input('позиции через запятую(, ): ')
+        pprint(f'У пользователя {len(user_info["items"].split(", "))} позиций - разберём каждую')
+        for item in user_info["items"].split(","):
+            item_url = input(f'{item} url: ')
+            if item_url in items_info:
+                items_info[item_url]['users'].append(vk.get_name(user_info['user_url'].split('/')[-1]) if user_info['user_url'] else 'Мне')
+            else:
+                item_name = input(f'{item} название: ')
+                item_price = input(f'{item} цена: ')
+                items_info[item_url] = {'users': [vk.get_name(user_info['user_url'].split('/')[-1]) if user_info['user_url'] else 'Мне'],
+                                        'item_name': item_name,
+                                        'item_price': item_price}
+
+        participant_list.append(user_info.copy())
+    
+    if not is_exists:
+        mes = Messages.formStoresCollect(collect_title = order_title, status = status_text,
+                                        items_info = items_info, wall_post_url = wallPost)
+        
+        topicInfo = vk.post_comment(topic_id = topic_order, message = mes, img_urls=img)
+        
+        list_id = storesCollectOrdersSheets.createNewStoresCollect(title = order_title, topic_url = topicInfo[0],
+                                                        participant_count = len(participant_list),
+                                                        order_type = order_type)
+        storesCollectOrdersSheets.updateStoresCollect(list_id = list_id, participant_list = participant_list,
+                                                    participant_count_old = len(participant_list))
+        
+        DB_Operations.updateCollectSelector(collectType = CollectTypes.store, collectId = order_title, 
+                                            sheet_or_range = list_id,
+                                            topic_id = topicInfo[2]['topic_id'], comment_id = topicInfo[2]['comment_id'])
+        
+    else:
+        collectTopicInfo = DB_Operations.getCollectTopicComment(collect_id = order_title, collect_type = CollectTypes.store)
+        comment=vk.find_board_comment(topic_id = collectTopicInfo[0], comment_id = collectTopicInfo[1])
+        old_text = comment['text']
+
+        participants_start_part = re.search('\n\n\d', old_text).span()[1] - 1
+        participants_end_part = re.search('\n\nПоедет', old_text).span()[0] + 1
+
+        index_number = int(re.findall(r"\n\d+. ", old_text)[-1].replace('\n', '').replace('. ', ''))
+        participant_mes = old_text[participants_start_part:participants_end_part] + '\n' + Messages.formStoreCollectItemsList(items_info = items_info, index = index_number) + '\n'
+
+        vk.edit_collects_activity_comment(topic_id = collectTopicInfo[0], comment_id = collectTopicInfo[1],
+                                            participant_text = participant_mes, img_urls = img)
+        
+        # Проверяем есть ли в списке уже присутствующие 
+        existing_participants = [participant for participant in participant_list if participant['user_url'] and 
+                    DB_Operations.ifParticipantInStoreCollectExist(collect_id = order_title, 
+                                                                   user_id = participant['user_url'].split('/')[-1].replace('id', ''))]        
+        new_participant_list = [participant for participant in participant_list if participant['user_url'] and 
+                    not DB_Operations.ifParticipantInStoreCollectExist(collect_id = order_title, 
+                                                                   user_id = participant['user_url'].split('/')[-1].replace('id', ''))]        
+
+        sheet_id = DB_Operations.getStoresCollectSheetId(collect_id = order_title)
+        
+        if new_participant_list:
+            participant_count_old = DB_Operations.getParticipantsInStoreCollectCount(collect_id = order_title)
+            storesCollectOrdersSheets.addParticipants(list_id = sheet_id, new_participant_list = participant_list,
+                                                        participant_count_old = participant_count_old)
+        if existing_participants:
+            storesCollectOrdersSheets.updateParticipantItems(list_id = sheet_id, participant_list = existing_participants)
+
+    for participant in participant_list:
+        if participant['user_url']:
+            DB_Operations.updateInsertParticipantsCollect(  collect_type = CollectTypes.store, collect_id = order_title, 
+                                                            user_id = participant['user_url'].split('/')[-1].replace('id', ''), 
+                                                            items = participant['items'])
 
 def console():
 
@@ -442,7 +554,7 @@ def console():
       try: 
         choiseList = ['Сделать лот', 'Отправки в РФ', 'Выход', 'Забанить', 
                       'Уступки', 'Обновление статуса заказов', 'Удаление фотографий', 
-                      'Сформировать посылку', 'Обновление статуса посылки', 'Сделать закупку']
+                      'Сформировать посылку', 'Обновление статуса посылки', 'Сделать/Добавить_в закупку']
         choise = int(input('\nВведите номер:\n' + Messages.formConsoleListMes(info_list = choiseList, offset = 2) + '\nВыбор: '))
 
         if choise == 1:
@@ -657,82 +769,7 @@ def console():
                                                   status_text = stat)
 
         elif choise == 10:
-
-            status = flattenList(DB_Operations.getCollectStatuses())
-            status_text = status[0]
-
-            orderTypesList = [orderType.value for orderType in OrderTypes]
-            order_type = int(input(f'\nВыберите тип закупки:\n{Messages.formConsoleListMes(info_list = orderTypesList)}'))
-            order_type =  OrderTypes(orderTypesList[order_type-1])
-
-            topicOrdersList = [topic for topic in topicList 
-                              if re.search(RegexType.regex_collect_orders_topics, topic['title'].lower())]
-            
-            topic_order = int(input(f'\nВыберите обсуждение:\n{Messages.formConsoleListMes(info_list = [topic["title"] for topic in topicOrdersList])}\n'))
-            topic_order = topicOrdersList[topic_order - 1]['id']          
-            
-            order_title = input('\nВведите название закупки: ')
-            order_title += f' #{DB_Operations.getMaxStoreCollectId(collect_title = order_title.split(" ")[0]) + 1}'
-
-            img = input('\nКартинки через запятую(, ) (might be empty): ')
-            img = img.split(', ')
-
-            wallPost = input('\nВведите ссылку на набор. (might be empty): ')
-
-            print('\nПодготовим участников.')
-            print('\nTo stop enter any symbol\n')
-            participant_list = []
-            items_info = {}
-
-            i = 0
-
-            while True:
-                user_info = {}
-                i += 1
-                user_info['user_url'] = input('user{0} URL: '.format(i))
-                if user_info['user_url'].find('https://vk.com') < 0 and user_info['user_url'].lower().find('мне') < 0: 
-                    break
-                if user_info['user_url'].lower().find('мне') >= 0:
-                    user_info['user_name'] = 'Мне'
-                    user_info['user_url'] = ''
-                else:
-                    user_info['user_name'], user_info['user_url'] = vk.get_tuple_name(user_info['user_url'])
-                
-                user_info['items'] = input('позиции через запятую(, ): ')
-                pprint(f'У пользователя {len(user_info["items"].split(", "))} позиций - разберём каждую')
-                for item in user_info["items"].split(","):
-                    item_url = input(f'{item} url: ')
-                    if item_url in items_info:
-                        items_info[item_url]['users'].append(vk.get_name(user_info['user_url'].split('/')[-1]) if user_info['user_url'] else 'Мне')
-                    else:
-                        item_name = input(f'{item} название: ')
-                        item_price = input(f'{item} цена: ')
-                        items_info[item_url] = {'users': [vk.get_name(user_info['user_url'].split('/')[-1]) if user_info['user_url'] else 'Мне'],
-                                                'item_name': item_name,
-                                                'item_price': item_price}
-
-                participant_list.append(user_info.copy())
-
-            mes = Messages.formStoresCollect(collect_title = order_title, status = status_text,
-                                              items_info = items_info, wall_post_url = wallPost,
-                                              order_type = order_type)
-            
-            topicInfo = vk.post_comment(topic_id = topic_order, message = mes, img_urls=img)
-            
-            list_id = storesCollectOrdersSheets.createNewStoresCollect(title = order_title, topic_url = topicInfo[0],
-                                                             participant_count = len(participant_list),
-                                                             order_type = order_type)
-            storesCollectOrdersSheets.updateStoresCollect(list_id = list_id, participant_list = participant_list,
-                                                          participant_count_old = len(participant_list))
-            
-            DB_Operations.updateCollectSelector(collectType = CollectTypes.store, collectId = order_title, 
-                                                sheet_or_range = list_id,
-                                                topic_id = topicInfo[2]['topic_id'], comment_id = topicInfo[2]['comment_id'])
-            for participant in participant_list:
-                if participant['user_url']:
-                    DB_Operations.updateInsertParticipantsCollect(  collect_type = CollectTypes.store, collect_id = order_title, 
-                                                                    user_id = participant['user_url'].split('/')[-1].replace('id', ''), 
-                                                                    items = participant['items'])
+            storeCollectActivities(topicList = topicList)
 
       except Exception as e:
           print(f"\n===== ОШИБКА! \n{format_exc()} - {e}=====")

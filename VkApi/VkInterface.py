@@ -1225,7 +1225,8 @@ class VkApi:
 
     def edit_collects_activity_comment(self, topic_id, comment_id, status_text = '', 
                                        participant_text = '', 
-                                       typeChange = VkTopicCommentChangeType.collect):
+                                       typeChange = VkTopicCommentChangeType.collect,
+                                       img_urls=[]):
         """Изменить комментарий, относящийся к активности коллектов
 
         Args:
@@ -1234,11 +1235,11 @@ class VkApi:
             status_text (str, optional): текст статуса. Defaults to ''.
             participant_text (str, optional): текст участников. Defaults to ''.
             typeChange (VkTopicCommentChangeType, optional): тип активности. Defaults to VkTopicCommentChangeType.collect.
+            img_urls (list, optional): Подгружаемые новые фотографии. Defaults to [].
 
         Returns:
             int: успешность выполнения. 1 или -1
         """
-        #TO DO: логику payment не помню, пока менять не буду
 
         comment = self.find_board_comment(topic_id, comment_id)
         old_text = comment['text']
@@ -1266,8 +1267,10 @@ class VkApi:
                 new_text = old_text
             new_text = new_text[:participants_start_part] + participant_text + new_text[participants_end_part:]
 
-        attachments = self._get_previous_attachments(topic_id, comment_id)
-        
+        attachments = self._get_previous_attachments(topic_id, comment_id)[0]
+        if img_urls:
+            attachments = ','.join(item for item in [attachments, self._form_images_request_signature(img_urls, user= self.__group_id, tag = 'edit_store', isWallServer= True)[0]] if item)
+            
         params_edit = {
             'group_id': self.__group_id,
             'topic_id': topic_id,

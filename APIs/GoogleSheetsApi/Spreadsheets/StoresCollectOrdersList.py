@@ -31,9 +31,9 @@ class StoresCollectOrdersList:
         elif order_type in [OrderTypes.us, OrderTypes.eur]:
             self.endColumn = 'H'
         elif order_type == OrderTypes.ami:
-            self.endColumn = 'L' 
+            self.endColumn = 'K' 
             self.priceColumn = 'E'
-            self.firstPaymentColumn = 'J'
+            self.firstPaymentColumn = 'I'
 
 
     def prepareTable(self, list_id, participant_count = 1, order_type = OrderTypes.ami):
@@ -120,7 +120,7 @@ class StoresCollectOrdersList:
                        "В рублях", "Доставка до коллективщика", "Задолжность"])
         elif order_type == OrderTypes.ami:
             headers.extend(["Предоплата", "Позиция в йенах", "Позиция в йенах с коммишками", "В рублях",
-                       "Доставка йен", "Доставка до склада посреда в транзите", "Общее", "Доставка до коллективщика", "Задолжность"])
+                       "Доставка до склада посреда в транзите", "Общее", "Доставка до коллективщика", "Задолжность"])
 
         for i in range(len(headers)):
             currentLetter = getChar('A', i) if i < 2 else getChar('A', i+1)
@@ -174,6 +174,11 @@ class StoresCollectOrdersList:
                 formula = f'= {self.firstPaymentColumn}{i}'
             data.append(ce.insertValue(list_id, valueRange.format(self.endColumn, i), formula))
 
+            # Для Ами нужно в колонке общее сложить цены за позиции и дост в транзит
+            if order_type == OrderTypes.ami:
+                formula = f'= {getChar(self.firstPaymentColumn, -2)}{i} + {getChar(self.firstPaymentColumn, -1)}{i}'
+                data.append(ce.insertValue(list_id, valueRange.format(self.firstPaymentColumn, i), formula))
+                        
             commission_formula = PosredApi.getCommissionForCollectOrder(order_type = order_type)
             if order_type == OrderTypes.us:
                 commission_formula = commission_formula.format(f'{self.priceColumn}{i}', self.participantCount)
@@ -315,6 +320,41 @@ class StoresCollectOrdersList:
 
         data.append(ce.insertValue(list_id, valueRange.format('C', self.startRow), label))
         data.append(ce.insertValue(list_id, valueRange.format('E', self.startRow), expiry_date))
+
+        body["data"] = data
+        return body
+    
+    def updateParticipantItemsValue(self, list_id, list_title, rowInfo, participant_list):
+        """Обновить значения позиций участника
+
+        Args:
+            list_id (int): id листа
+            list_title (string): название листа
+            rowInfo (list): строки таблицы закупки - значения
+            participant_list (list): текущий список участников
+
+        Returns:
+            list: список реквестов по заполнению таблицы данными
+        """
+
+        body = {}
+        body["valueInputOption"] = "USER_ENTERED"
+        data = []
+        valueRange = list_title + '!{0}{1}'
+
+        for participant in participant_list:
+            rowIndex = self.endRow
+            participant_items = ''
+            for row in rowInfo[self.endRow:]:
+                rowIndex += 1
+                if row and row[1].find(participant['user_url']) >= 0:
+                    participant_items = row[0]
+                    break
+            
+            if participant['items']:
+                participant_items += f", {participant['items']}"
+
+            data.append(ce.insertValue(list_id, valueRange.format('A', rowIndex), participant_items))
 
         body["data"] = data
         return body

@@ -107,9 +107,6 @@ class StoresCollectOrdersSheets(ParentSheetClass):
                                                                                                   list_title = list_title,
                                                                                                   participant_list = new_participant_list,
                                                                                                   addingParticipantsFlag = True)).execute()
-
-
-
     def setStoresCollectRecieved(self, list_id):
         """Установить закупку полученной
 
@@ -129,3 +126,22 @@ class StoresCollectOrdersSheets(ParentSheetClass):
                                                                                                           list_title = list_title)).execute()
 
         self.changeSheetListIndex(sheet_id = list_id, new_index = len(self.get_sheets()))
+
+    def updateParticipantItems(self, list_id, participant_list):
+        """Обновить список позиций участника
+
+        Args:
+            list_id (int): id листа
+            participant_list (list): текущий список участников
+        """
+
+        list_title = self.getSheetListName(sheet_id = list_id)
+
+        rowInfo = self.getJsonNamedRange(f'{list_title}!A1:Z999', typeCalling=1)['values']
+
+        self.service.spreadsheets().values().batchUpdate(spreadsheetId=self.getSpreadsheetId(),
+                                                         body=self.current_list.updateParticipantItemsValue(list_id = list_id,
+                                                                                                            list_title = list_title,
+                                                                                                            participant_list = participant_list,
+                                                                                                            rowInfo = rowInfo)).execute()
+

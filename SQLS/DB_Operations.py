@@ -570,19 +570,19 @@ def getStoresCollectSheetId(collect_id):
         collect_id (string): id закупки
 
     Returns:
-        string: id листа закупки
+        int: id листа закупки
     """
 
     conn = getConnection(DbNames.collectDatabase)
     cursor = conn.cursor()  
 
-    cursor.execute(f"select sheet_id from Participants_Stores_Collects where collect_id = '{collect_id}';")
+    cursor.execute(f"select sheet_id from stores_collects where collect_id = '{collect_id}';")
     result = cursor.fetchone()[0]
     
     cursor.close()
     conn.close()
     
-    return result
+    return int(result)
 
 
 def getParticipantsInStoreCollectCount(collect_id):
@@ -599,6 +599,29 @@ def getParticipantsInStoreCollectCount(collect_id):
     cursor = conn.cursor()  
 
     cursor.execute(f"select count(*) from Participants_Stores_Collects where collect_id = '{collect_id}';")
+    result = cursor.fetchone()[0]
+    
+    cursor.close()
+    conn.close()
+    
+    return result
+
+def ifParticipantInStoreCollectExist(collect_id, user_id):
+    """Определить существования участника в закупке
+
+    Args:
+        collect_id (string): id закупки
+        user_id (int): id участника
+
+    Returns:
+        bool: результат
+    """
+
+    conn = getConnection(DbNames.collectDatabase)
+    cursor = conn.cursor()  
+
+    cursor.execute(f'''select EXISTS (select user_id from participants_stores_collects 
+                   where user_id = '{user_id}' and collect_id = '{collect_id}');''')
     result = cursor.fetchone()[0]
     
     cursor.close()
@@ -640,11 +663,34 @@ def getMaxCollectId(type):
     
     return result
 
+def isStoreCollectIxists(collect_title):
+    """Проверка существования закупки
+
+    Args:
+        collect_title (string): название закупки
+
+    Returns:
+        bool: результат
+    """
+
+    conn = getConnection(DbNames.collectDatabase)
+    cursor = conn.cursor()
+    
+    cursor.execute(f'''select EXISTS (select collect_id from stores_collects 
+                   where collect_id = '{collect_title}');
+                   ''')
+    result = cursor.fetchone()[0]
+    
+    cursor.close()
+    conn.close()
+    
+    return result    
+
 def getMaxStoreCollectId(collect_title):
     """ Получить максимальное айди закупки, в зависимости от её названия
 
     Returns:
-        int: id посылки
+        collect_title: id посылки
     """
     
     conn = getConnection(DbNames.collectDatabase)
@@ -706,6 +752,7 @@ def getCollectTopicComment(collect_id, collect_type = CollectTypes.collect):
     conn.close()
     
     return result
+
 
 #============================
 
