@@ -275,8 +275,6 @@ def tableToTopic(participantsList, paymentInfo):
 
     return topicFormat
 
-
-
 def makeDistinctList(post_url):
     '''
     Создаёт список уникальных пользователей с нескольких/одной записи
@@ -299,9 +297,6 @@ def getCollectId(collectType, collectNum):
 
     letter = "C" if collectType == "Коллективка" else "I"
     return f"{letter}{collectNum}"
-
-
-
 
 def createTableTopic(post_url, site_url ='', spId=0, topic_id=0, items=0, img_url = ''):
     '''
@@ -344,21 +339,61 @@ def createTableTopic(post_url, site_url ='', spId=0, topic_id=0, items=0, img_ur
     updateParticipantDB(participantList = participantsList, collectId = namedRange.replace('D', '').replace('nd', '').replace('ollect', ''))
 
 
-def ShipmentToRussiaEvent(toSpId, collectList, indList):
-    '''
-    Активирует переброс лота с одного листа на другой
-    :param toSpId:
-    :param collectList: список номеров коллективок
-    :param indList: список номеров индивидуалок
-    :return:
-    '''
+def ArchiveCollects():
 
-    lotList = {'DCollect': [x for x in collectList], 'DInd': [x for x in indList]}
+    def ShipmentToRussiaEvent(toSpId, collectList, indList):
+        '''
+        Активирует переброс лота с одного листа на другой
+        :param toSpId:
+        :param collectList: список номеров коллективок
+        :param indList: список номеров индивидуалок
+        :return:
+        '''
 
-    for key in lotList.keys():
-        for i in range(len(lotList[key])):
-            if lotList[key][i] != '':
-                collect_table.moveTable(toSpId, key + lotList[key][i])
+        lotList = {'DCollect': [x for x in collectList], 'DInd': [x for x in indList]}
+
+        for key in lotList.keys():
+            for i in range(len(lotList[key])):
+                if lotList[key][i] != '':
+                    collect_table.moveTable(toSpId, key + lotList[key][i])
+
+    print('\nВыберите:\n' + Messages.formConsoleListMes(info_list = ['коллекты/инды', 'закупки']))
+    choise = int(input('Выбор: '))
+    
+    if choise == 1:
+        lists = [ collect_table.sp.spreadsheetsIds['Дашины лоты (Архив)'][0],
+                collect_table.sp.spreadsheetsIds['ТестЛист'][0]
+                ]
+        
+        lists_name = ['Дашины лоты (Архив)', 'ТестЛист']
+
+        print('\nВыберите лист из таблицы:\n' + Messages.formConsoleListMes(info_list = lists_name))
+        choise1 = int(input('Выбор: '))
+
+        spId = lists[choise1 - 1]
+
+        collectList = input("Enter collect's num using comma(, ) (might be empty): ")
+        collectList = collectList.split(', ')
+
+        indList = input("Enter ind's num using comma(, ) (might be empty): ")
+        indList = indList.split(', ')
+
+        ShipmentToRussiaEvent(spId, collectList, indList)
+    elif choise == 2:
+    
+        order_title = input('\nВведите название закупки: ')
+        is_exists = DB_Operations.isStoreCollectIxists(collect_title = order_title)
+
+        if is_exists:
+            sheet_id = DB_Operations.getStoresCollectSheetId(collect_id = order_title)
+            storesCollectOrdersSheets.archiveStoreCollect(list_id = sheet_id)
+        else:
+            print('\nТакой закупки нет!\n')
+
+
+
+
+
 
 def changeStatus(stat, orderList, payment):
 
@@ -588,24 +623,7 @@ def console():
 
         elif choise == 2:
 
-            lists = [ collect_table.sp.spreadsheetsIds['Дашины лоты (Архив)'][0],
-                    collect_table.sp.spreadsheetsIds['ТестЛист'][0]
-                    ]
-            
-            lists_name = ['Дашины лоты (Архив)', 'ТестЛист']
-
-            print('\nВыберите лист из таблицы:\n' + Messages.formConsoleListMes(info_list = lists_name))
-            choise1 = int(input('Выбор: '))
-
-            spId = lists[choise1 - 1]
-
-            collectList = input("Enter collect's num using comma(, ) (might be empty): ")
-            collectList = collectList.split(', ')
-
-            indList = input("Enter ind's num using comma(, ) (might be empty): ")
-            indList = indList.split(', ')
-
-            ShipmentToRussiaEvent(spId, collectList, indList)
+            ArchiveCollects()
 
         elif choise == 4:
 
