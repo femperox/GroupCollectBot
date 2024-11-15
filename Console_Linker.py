@@ -338,31 +338,32 @@ def createTableTopic(post_url, site_url ='', spId=0, topic_id=0, items=0, img_ur
                                         topic_id = topicInfo[2]['topic_id'], comment_id = topicInfo[2]['comment_id'])
     updateParticipantDB(participantList = participantsList, collectId = namedRange.replace('D', '').replace('nd', '').replace('ollect', ''))
 
+def ShipmentToRussiaEvent(orderList, toSpId = ''):
+    """Активирует переброс лота с одного листа на другой
+
+    Args:
+        orderList (list): список заказов
+        toSpId (int, optional): id листа. Defaults to collect_table.sp.spreadsheetsIds['Дашины лоты (Архив)'][0].
+    """
+    if orderList:
+        toSpId = collect_table.sp.spreadsheetsIds['Дашины лоты (Архив)'][0]
+
+        namedRangeList = [f'DCollect{order_number}' for order_number in orderList if order_number.find('C')>-1]
+        namedRangeList.extend([f'DInd{order_number}' for order_number in orderList if order_number.find('I')>-1])
+
+        for namedRange in namedRangeList:
+            collect_table.moveTable(toSpId , namedRange)
 
 def ArchiveCollects():
-
-    def ShipmentToRussiaEvent(toSpId, collectList, indList):
-        '''
-        Активирует переброс лота с одного листа на другой
-        :param toSpId:
-        :param collectList: список номеров коллективок
-        :param indList: список номеров индивидуалок
-        :return:
-        '''
-
-        lotList = {'DCollect': [x for x in collectList], 'DInd': [x for x in indList]}
-
-        for key in lotList.keys():
-            for i in range(len(lotList[key])):
-                if lotList[key][i] != '':
-                    collect_table.moveTable(toSpId, key + lotList[key][i])
+    """Отправить заказ в архив
+    """
 
     print('\nВыберите:\n' + Messages.formConsoleListMes(info_list = ['коллекты/инды', 'закупки']))
     choise = int(input('Выбор: '))
     
     if choise == 1:
         lists = [ collect_table.sp.spreadsheetsIds['Дашины лоты (Архив)'][0],
-                collect_table.sp.spreadsheetsIds['ТестЛист'][0]
+                  collect_table.sp.spreadsheetsIds['ТестЛист'][0]
                 ]
         
         lists_name = ['Дашины лоты (Архив)', 'ТестЛист']
@@ -378,7 +379,9 @@ def ArchiveCollects():
         indList = input("Enter ind's num using comma(, ) (might be empty): ")
         indList = indList.split(', ')
 
-        ShipmentToRussiaEvent(spId, collectList, indList)
+        orderList = createOrderList(collectList = collectList, indList = indList)
+        ShipmentToRussiaEvent(toSpId = spId, orderList = orderList)
+
     elif choise == 2:
     
         order_title = input('\nВведите название закупки: ')
@@ -390,15 +393,21 @@ def ArchiveCollects():
         else:
             print('\nТакой закупки нет!\n')
 
+def changeStatus(stat, orderList, payment = ''):
+    
+    # на руках
+    if stat.lower().find('на руках') > -1:
+        collectIndList = [order for order in orderList if order[1] == CollectTypes.collect]
+        ShipmentToRussiaEvent(orderList = collectIndList)
 
+        storeList = [order for order in orderList if order[1] == CollectTypes.store]
+        for item in storeList:
+            list_id = DB_Operations.getStoresCollectSheetId(collect_id = item[0])
+            storesCollectOrdersSheets.setStoresCollectRecieved(list_id = list_id)
 
-
-
-
-def changeStatus(stat, orderList, payment):
-
+    # топики в вк
     for item in orderList:
-
+        sleep(3)
         pay = ''
         if payment == 'y':
             namedRange = item[0].replace('C', 'DCollect') if item[0].find('C') > -1 else item[0].replace('I', 'DInd')
@@ -734,17 +743,13 @@ def console():
             
             orderList = createOrderList(collectList = collectList, indList = indList, storeCollectList = storeCollectList)
 
+            changeStatus(stat, orderList)
             collectListUrl = []
             indListUrl = []
 
             for item in orderList:
-                sleep(4)
-                DB_Operations.updateCollectSelector(collectType = item[1], collectId = item[0], 
-                                                    status = stat, parcel_id = parcel_id)
                 collectTopicInfo = DB_Operations.getCollectTopicComment(collect_id = item[0], collect_type = item[1])
-                vk.edit_collects_activity_comment(topic_id = collectTopicInfo[0], comment_id = collectTopicInfo[1],
-                                           status_text = stat)
-                
+
                 topic_url_template = f'[https://vk.com/topic-{vk.get_current_group_id()}_{collectTopicInfo[0]}?post={collectTopicInfo[1]}|'+'{}]'
                 if item[1] == CollectTypes.store:
                     collectListUrl.append(topic_url_template.format(item[0]))
@@ -776,15 +781,7 @@ def console():
                                        status_text= stat, typeChange = VkTopicCommentChangeType.parcel)
 
             collectList = DB_Operations.getAllCollectsInParcel(parcel_id = parcel_id)
-            
-            for item in collectList:
-                pprint(item[1])
-                sleep(4)
-                DB_Operations.updateCollectSelector(collectType = item[0], collectId = item[1], 
-                                                    status = stat, parcel_id = parcel_id)
-                collectTopicInfo = DB_Operations.getCollectTopicComment(collect_id = item[1], collect_type = item[0])
-                vk.edit_collects_activity_comment(topic_id = collectTopicInfo[0], comment_id = collectTopicInfo[1],
-                                                  status_text = stat)
+            changeStatus(stat = stat, orderList = collectList)
 
         elif choise == 10:
             storeCollectActivities(topicList = topicList)
