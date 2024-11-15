@@ -1,7 +1,7 @@
 from pprint import pprint
 from confings.Consts import Stores
 from APIs.StoresApi.StoreSelectorParent import StoreSelectorParent
-from APIs.StoresApi.USStoresApi.MakeShipApi import MakeShipApi
+from APIs.StoresApi.USStoresApi.StoresApi import StoresApi
 from APIs.StoresApi.USStoresApi.YoutoozApi import YoutoozApi
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
@@ -22,6 +22,8 @@ class StoreSelector(StoreSelectorParent):
         item_id = self.getItemID()
         item = {}
 
+        pprint(site)
+
         if isLiteCalculate:
             item['siteName'] = site
             item['id'] = item_id
@@ -31,10 +33,11 @@ class StoreSelector(StoreSelectorParent):
             return item
 
         if site == Stores.makeship:
-            item = MakeShipApi.parseMakeshipItem(url = url)
+            item = StoresApi.parseMakeshipItem(url = url)
         elif site == Stores.youtooz:
             item = YoutoozApi.parseYoutoozItem(url = url)
-
+        elif site == Stores.plushshop:
+            item = StoresApi.parsePlushShopItem(url = url, item_id = item_id)
         
         return item
     

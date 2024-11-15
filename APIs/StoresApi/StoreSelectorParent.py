@@ -25,6 +25,7 @@ class StoreSelectorParent:
         """
 
         id = self.url.split('/')[-1]
+        id= id.split('?_')[0].split('?pr_prod_strat')[0]
         id = id.replace('?source_location=share', '').replace('&utm_source=web&utm_medium=share', '').replace('detail.php?product_id=', '')
         id = id.replace('?scode=', '').replace('?gcode=', '').replace('item?itemCode=', '').replace('detail', '')
         return id
