@@ -141,7 +141,7 @@ class ParentSheetClass:
         spreadsheet = self.service.spreadsheets().get(spreadsheetId = self.__spreadsheet_id, includeGridData = includeGridData).execute()
         return spreadsheet.get('sheets')
     
-    def getSheetListPropertiesById(self, listId, includeGridData = False):
+    def getSheetListPropertiesById(self, listId, includeGridData = False, ranges = []):
         """Получить информацию о конкретном листе
 
         Args:
@@ -153,7 +153,9 @@ class ParentSheetClass:
         """
 
         try:
-            spreadsheet = self.service.spreadsheets().get(spreadsheetId = self.__spreadsheet_id, includeGridData = includeGridData).execute()
+            spreadsheet = self.service.spreadsheets().get(spreadsheetId = self.__spreadsheet_id, 
+                                                          includeGridData = includeGridData,
+                                                          ranges = ranges).execute()
         
             properties = spreadsheet.get('sheets')
             for property in properties:

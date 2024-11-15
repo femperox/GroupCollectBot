@@ -11,3 +11,5 @@ class Colors:
     white = {'blue': 1, 'green': 1, 'red': 1}
     black = {'blue': 0, 'green': 0, 'red': 0}
     green = {'green': 1}
+
+    dark_pink = {'blue': 0.7411765, 'green': 0.6509804, 'red': 0.8352941} # запись на отправку/ состояние отправки

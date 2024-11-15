@@ -358,3 +358,30 @@ class StoresCollectOrdersList:
 
         body["data"] = data
         return body
+    
+    def checkDeliveryToParticipant(self, rowInfo, participantList):
+        """Проверить статус отправки позиций пользователя к нему
+
+        Args:
+            rowInfo (list): информация о строках
+            participant_list (list): текущий список участников
+
+        Returns:
+            list of dict: статус отправки позиций пользователя к нему - стоит ли в очереди, отправлено ли
+        """
+
+        delivery_status_list = []
+        for participant in participantList:
+
+            for row in rowInfo:
+                if 'hyperlink' in row['values'][1] and row['values'][1]['hyperlink'].find(str(participant)) > -1:
+                    is_sent = False
+                    is_in_queue = False
+                    is_in_queue = row['values'][0]['userEnteredFormat']['backgroundColor'] == c.dark_pink
+                    if is_in_queue:
+                        is_sent = row['values'][1]['userEnteredFormat']['backgroundColor'] == c.dark_pink
+                    
+                    delivery_status_list.append({'user': participant, 'is_in_queue': is_in_queue, 'is_sent': is_sent})
+                    
+
+        return delivery_status_list

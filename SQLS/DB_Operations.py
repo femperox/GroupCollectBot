@@ -520,6 +520,27 @@ def deleteParticipantsCollect(collect_id):
     cursor.close()
     conn.close()
 
+def updateSentStatusForParticipant(collect_id, user_id, collect_type = CollectTypes.collect):
+    """Обновить статус доставки позиций до участника
+
+    Args:
+        collect_id (string): id заказа
+        user_id (int): id пользователя
+        collect_type (CollectTypes, optional): тип заказа. Defaults to CollectTypes.collect.
+    """
+
+    conn = getConnection(DbNames.collectDatabase)
+    cursor = conn.cursor() 
+
+    cursor.execute(f'''Call updateSentStatusForParticipant('{collect_type}', '{collect_id}', {user_id});''')
+
+
+    conn.commit() 
+    cursor.close()
+    conn.close()
+
+    return
+
 def updateInsertParticipantsCollect(collect_id, user_id, items, isYstypka = False, collect_type = CollectTypes.collect):
     """Внести изменения в таблицу коллектов и участников
 
@@ -753,6 +774,46 @@ def getCollectTopicComment(collect_id, collect_type = CollectTypes.collect):
     
     return result
 
+def getRecievedActiveCollects():
+    """Получить все записи с коллектами, которые на руках и не нарушен срок хранения
+
+    Returns:
+        list of list: записи с посылками
+    """
+
+    conn = getConnection(DbNames.collectDatabase)
+    cursor = conn.cursor()  
+    
+    sel = f'''SELECT * from get_recieved_active_collects();
+           '''
+    cursor.execute(sel)
+    result = cursor.fetchall()
+        
+    cursor.close()
+    conn.close()
+    
+    return result
+
+def getOrderParticipants(collect_id, collect_type = CollectTypes.collect):
+    """Получить всех участников заказа
+
+    Returns:
+        list of list: записи с посылками
+    """
+
+    conn = getConnection(DbNames.collectDatabase)
+    cursor = conn.cursor()  
+ 
+    sel = f'''SELECT * from getOrderParticipants('{collect_type}', '{collect_id}');
+           '''
+    cursor.execute(sel)
+    result = cursor.fetchall()
+        
+    cursor.close()
+    conn.close()
+    
+    return result
+
 
 #============================
 
@@ -780,7 +841,6 @@ def updateInsertCollectParcel(parcel_id, status = '', topic_id = 0, comment_id =
     conn.close()
 
     return result
-
 
 def getAllCollectParcels():
     """Получить все записи с посылками
