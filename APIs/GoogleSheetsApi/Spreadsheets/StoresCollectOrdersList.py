@@ -372,7 +372,6 @@ class StoresCollectOrdersList:
 
         delivery_status_list = []
         for participant in participantList:
-
             for row in rowInfo:
                 if 'hyperlink' in row['values'][1] and row['values'][1]['hyperlink'].find(str(participant)) > -1:
                     is_sent = False
@@ -383,5 +382,4 @@ class StoresCollectOrdersList:
                     
                     delivery_status_list.append({'user': participant, 'is_in_queue': is_in_queue, 'is_sent': is_sent})
                     
-
         return delivery_status_list

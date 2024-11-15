@@ -364,3 +364,29 @@ class CollectOrdersSheet(ParentSheetClass):
 
         self.service.spreadsheets().values().batchUpdate(spreadsheetId=self.getSpreadsheetId(),
                                                            body=self.sp.replaceOldUrls(range_, urlList)).execute()
+        
+    def checkDeliveryToParticipants(self, namedRange, participantList):
+        """Проверить статус отправки позиций пользователя к нему
+
+        Args:
+            list_id (int): id листа
+            participant_list (list): текущий список участников
+
+        Returns:
+            list of dict: статус отправки позиций пользователя к нему - стоит ли в очереди, отправлено ли
+        """
+        
+        rowInfo = self.getSheetListProperties(includeGridData=True, ranges=[namedRange])[0]['data'][0]['rowData']
+        
+        return self.sp.checkDeliveryToParticipant(rowInfo = rowInfo,
+                                                  participantList = participantList)
+        '''
+        list_title = self.getSheetListName(sheet_id = list_id)
+
+        ranges = f'{list_title}!A{self.current_list.endRow +1 }:B{self.current_list.endRow + 3 + len(participantList)}'
+
+        rowInfo = self.getSheetListPropertiesById(listId=list_id, includeGridData=True, ranges=[ranges])
+
+        return self.current_list.checkDeliveryToParticipant(rowInfo = rowInfo['data'][0]['rowData'],
+                                                            participantList = participantList)
+        '''

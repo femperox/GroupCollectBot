@@ -128,17 +128,19 @@ class ParentSheetClass:
         except Exception as e:
            print(e)
            result = {"range": -1}
-
+        pprint(result.keys())
         if typeCalling == 0 : return result["range"]
         else: return result
 
-    def getSheetListProperties(self, includeGridData = False):
+    def getSheetListProperties(self, includeGridData = False, ranges = []):
         '''
 
         :return: Возвращает информацию о листах
         '''
 
-        spreadsheet = self.service.spreadsheets().get(spreadsheetId = self.__spreadsheet_id, includeGridData = includeGridData).execute()
+        spreadsheet = self.service.spreadsheets().get(spreadsheetId = self.__spreadsheet_id, 
+                                                      includeGridData = includeGridData,
+                                                      ranges = ranges).execute()
         return spreadsheet.get('sheets')
     
     def getSheetListPropertiesById(self, listId, includeGridData = False, ranges = []):

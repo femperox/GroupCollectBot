@@ -605,6 +605,27 @@ def getStoresCollectSheetId(collect_id):
     
     return int(result)
 
+def getCollectNamedRange(collect_id):
+    """Получить именованный диапозон коллекта
+
+    Args:
+        collect_id (string): id коллетка
+
+    Returns:
+        int: именованный диапозон
+    """
+
+    conn = getConnection(DbNames.collectDatabase)
+    cursor = conn.cursor()  
+
+    cursor.execute(f"select named_range from collects where collect_id = '{collect_id}';")
+    result = cursor.fetchone()[0]
+    
+    cursor.close()
+    conn.close()
+    
+    return result
+
 
 def getParticipantsInStoreCollectCount(collect_id):
     """Получить количество участников закупки

@@ -9,6 +9,8 @@ from confings.Messages import Messages as mess
 from confings.Consts import PochtaApiStatus, vkCoverTime, YandexTrackingApiStatus
 from confings.Consts import TrackingTypes, RegexType, CollectTypes
 from APIs.GoogleSheetsApi.StoresCollectOrdersSheets import StoresCollectOrdersSheets
+from APIs.GoogleSheetsApi.CollectOrdersSheet import CollectOrdersSheet
+import time
 
 from pprint import pprint
 import sys
@@ -128,14 +130,19 @@ def checkDeliveryStatusToParticipants():
 
     orderInfo = DB_Operations.getRecievedActiveCollects()
     for order in orderInfo:
+        time.sleep(2.5)
         try:
-            if order[0] == CollectTypes.collect:
-                continue
             participantInfo = DB_Operations.getOrderParticipants(collect_type = order[0], collect_id = order[1])
-            list_id = DB_Operations.getStoresCollectSheetId(collect_id = order[1])
+
             if participantInfo:
-                local_delivery_status_list = storesCollectOrdersSheets.checkDeliveryToParticipants(list_id = list_id, participantList = [p[0] for p in participantInfo])
-                
+                if order[0] == CollectTypes.collect:
+                    named_range = DB_Operations.getCollectNamedRange(collect_id = order[1])
+                    local_delivery_status_list = collectOrdersSheet.checkDeliveryToParticipants(namedRange = named_range, participantList = [p[0] for p in participantInfo])
+                     
+                elif order[0] == CollectTypes.store:
+                    list_id = DB_Operations.getStoresCollectSheetId(collect_id = order[1])
+                    local_delivery_status_list = storesCollectOrdersSheets.checkDeliveryToParticipants(list_id = list_id, participantList = [p[0] for p in participantInfo])
+                                
                 for local_delivery_status in local_delivery_status_list:
                     if local_delivery_status['is_sent']:
                         DB_Operations.updateSentStatusForParticipant(collect_id = order[1],
@@ -170,6 +177,7 @@ if __name__ == "__main__":
     vk = vk()
     ts = ts()
     cs = cs()
+    collectOrdersSheet = CollectOrdersSheet()
     storesCollectOrdersSheets = StoresCollectOrdersSheets()
 
     pprint(sys.argv)
@@ -183,3 +191,5 @@ if __name__ == "__main__":
         updateTrackingStatuses()
     elif sys.argv[1] == DagLinkerValues.updateCoverPhoto:
         updateCoverPhoto(sys.argv[2])
+    elif sys.argv[1] == DagLinkerValues.checkDeliveryStatusToParticipants:
+        checkDeliveryStatusToParticipants()
