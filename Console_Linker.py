@@ -38,9 +38,9 @@ def createOrderList(collectList = [], indList = [], storeCollectList = []):
         list: общий список заказов с учётом их типа
     """
 
-    orderList = [[f'C{collect}', CollectTypes.collect] for collect in collectList if collect != '']
-    orderList.extend([[f'I{ind}', CollectTypes.collect] for ind in indList if ind != ''])
-    orderList.extend([[store, CollectTypes.store] for store in storeCollectList if store != ''])
+    orderList = [[CollectTypes.collect, f'C{collect}'] for collect in collectList if collect != '']
+    orderList.extend([[CollectTypes.collect, f'I{ind}'] for ind in indList if ind != ''])
+    orderList.extend([[CollectTypes.store, store] for store in storeCollectList if store != ''])
 
     return orderList
 
@@ -348,8 +348,8 @@ def ShipmentToRussiaEvent(orderList, toSpId = ''):
     if orderList:
         toSpId = collect_table.sp.spreadsheetsIds['Дашины лоты (Архив)'][0]
 
-        namedRangeList = [f'DCollect{order_number}' for order_number in orderList if order_number.find('C')>-1]
-        namedRangeList.extend([f'DInd{order_number}' for order_number in orderList if order_number.find('I')>-1])
+        namedRangeList = [f'DCollect{order_number[1]}' for order_number in orderList if order_number[1].find('C')>-1]
+        namedRangeList.extend([f'DInd{order_number[1]}' for order_number in orderList if order_number[1].find('I')>-1])
 
         for namedRange in namedRangeList:
             collect_table.moveTable(toSpId , namedRange)
@@ -397,12 +397,12 @@ def changeStatus(stat, orderList, payment = ''):
     
     # на руках
     if stat.lower().find('на руках') > -1:
-        collectIndList = [order for order in orderList if order[1] == CollectTypes.collect]
+        collectIndList = [order for order in orderList if order[0] == CollectTypes.collect]
         ShipmentToRussiaEvent(orderList = collectIndList)
 
-        storeList = [order for order in orderList if order[1] == CollectTypes.store]
+        storeList = [order for order in orderList if order[0] == CollectTypes.store]
         for item in storeList:
-            list_id = DB_Operations.getStoresCollectSheetId(collect_id = item[0])
+            list_id = DB_Operations.getStoresCollectSheetId(collect_id = item[1])
             storesCollectOrdersSheets.setStoresCollectRecieved(list_id = list_id)
 
     # топики в вк
@@ -415,10 +415,10 @@ def changeStatus(stat, orderList, payment = ''):
             participants = collect_table.getParticipantsList(namedRange)
             pay = tableToTopic(participants, pay)
         try:
-            collectTopicInfo = DB_Operations.getCollectTopicComment(collect_id = item[0], collect_type = item[1])
+            collectTopicInfo = DB_Operations.getCollectTopicComment(collect_id = item[1], collect_type = item[0])
             vk.edit_collects_activity_comment(topic_id = collectTopicInfo[0], comment_id = collectTopicInfo[1], 
                                               status_text = stat, participant_text = pay)
-            DB_Operations.updateCollectSelector(collectType = item[1], collectId = item[0], status = stat)
+            DB_Operations.updateCollectSelector(collectType = item[0], collectId = item[1], status = stat)
         except Exception as e:
             pprint(e)
             print_exc()

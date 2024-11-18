@@ -125,9 +125,6 @@ def updateTrackingStatuses():
 def checkDeliveryStatusToParticipants():
     """Обновление состояния отправки позиций до участника
     """
-
-    # TODO: сделать для коллектов
-
     orderInfo = DB_Operations.getRecievedActiveCollects()
     for order in orderInfo:
         time.sleep(2.5)

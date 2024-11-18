@@ -534,7 +534,6 @@ def updateSentStatusForParticipant(collect_id, user_id, collect_type = CollectTy
 
     cursor.execute(f'''Call updateSentStatusForParticipant('{collect_type}', '{collect_id}', {user_id});''')
 
-
     conn.commit() 
     cursor.close()
     conn.close()
