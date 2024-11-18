@@ -78,8 +78,9 @@ class StoreSelector(StoreSelectorParent):
         elif site == Stores.mandarake:
             item = ssa.parseMandarake(url, item_id)
         elif site == Stores.animate:
-            
             item = sa.parseAnimate(item_id)
+        elif site == Stores.suruga:
+            item = ssa.parseSuruga(url = url)
         
         return item
     

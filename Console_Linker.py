@@ -418,7 +418,7 @@ def changeStatus(stat, orderList, payment = ''):
         sleep(3)
         pay = ''
         if payment == 'y':
-            namedRange = item[0].replace('C', 'DCollect') if item[0].find('C') > -1 else item[0].replace('I', 'DInd')
+            namedRange = item[1].replace('C', 'DCollect') if item[1].find('C') > -1 else item[1].replace('I', 'DInd')
             pay = collect_table.getPaymentStatus(namedRange)
             participants = collect_table.getParticipantsList(namedRange)
             pay = tableToTopic(participants, pay)

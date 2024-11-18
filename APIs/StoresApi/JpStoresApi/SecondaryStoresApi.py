@@ -49,6 +49,49 @@ class SecondaryStoreApi:
 
         return item
     
+    @staticmethod 
+    def parseSuruga(url):
+        """Получение базовой информации о лоте со вторички suruga-ya.jp
+
+        Args:
+            url (string): ссылка на товар
+
+        Returns:
+            dict: словарь с информацией о лоте
+        """
+        
+        item = {}
+        soup = WebUtils.getSoup(url, parser= WebUtils.Bs4Parsers.htmlParser)
+
+        try:
+            js = soup.findAll('script', type='application/ld+json')[1].text.replace('\n', '').replace('    ', '')
+            js = json.loads(js)[0]
+            
+            item['itemPrice'] = float(js['offers'][0]['price']) if isinstance(js['offers'], list) else float(js['offers']['price'])
+            item['id'] = js['productID']
+            item['mainPhoto'] = js['image']
+            item['name'] = js['name']
+        
+        except json.decoder.JSONDecodeError:
+            
+            item['itemPrice'] =  float(soup.find('span', class_ = 'text-price-detail price-buy').text.split('円')[0].replace(',', ''))
+            item['id'] = url.split('detail/')[-1].split('?')[0]
+            item['mainPhoto'] = soup.find('img', class_ = 'img-fluid main-pro-img cursor_pointer')['src']
+            item['name'] = soup.find('h1', class_ = 'h1_title_product').text.replace('\n', '').replace('         ', '')
+
+        item['shipmentPrice'] = spt.undefined
+        item['tax'] = 0
+        item['itemPriceWTax'] = 0
+        item['page'] = url
+        item['endTime'] = datetime.now() + relativedelta(years=3)
+        item['siteName'] = Stores.suruga
+        commission = PosredApi.getСommissionForItem(item['page'])
+        item['posredCommission'] = commission['posredCommission'].format(item['itemPrice'])
+        item['posredCommissionValue'] = commission['posredCommissionValue'](item['itemPrice']) 
+
+        return item
+        
+    
     @staticmethod
     def parseMandarake(url, item_id):
         """Получение базовой информации о лоте со вторички Mandarake
