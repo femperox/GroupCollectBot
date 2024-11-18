@@ -400,6 +400,14 @@ def changeStatus(stat, orderList, payment = ''):
         collectIndList = [order for order in orderList if order[0] == CollectTypes.collect]
         ShipmentToRussiaEvent(orderList = collectIndList)
 
+        # если сразу ехало на получателя
+        if stat.lower().find('y') > -1:
+            participants = DB_Operations.getOrderParticipants(collect_id = item[1], collect_type = item[0])
+            for participant in participants:
+                DB_Operations.updateSentStatusForParticipant(collect_id = item[1],
+                                                            collect_type = item[0],
+                                                            user_id = participant)            
+
         storeList = [order for order in orderList if order[0] == CollectTypes.store]
         for item in storeList:
             list_id = DB_Operations.getStoresCollectSheetId(collect_id = item[1])
