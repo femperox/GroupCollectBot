@@ -348,8 +348,8 @@ def ShipmentToRussiaEvent(orderList, toSpId = ''):
     if orderList:
         toSpId = collect_table.sp.spreadsheetsIds['Дашины лоты (Архив)'][0]
 
-        namedRangeList = [f'DCollect{order_number[1]}' for order_number in orderList if order_number[1].find('C')>-1]
-        namedRangeList.extend([f'DInd{order_number[1]}' for order_number in orderList if order_number[1].find('I')>-1])
+        namedRangeList = [f'DCollect{order_number[1][1:]}' for order_number in orderList if order_number[1][0].find('C')>-1]
+        namedRangeList.extend([f'DInd{order_number[1][1:]}' for order_number in orderList if order_number[1][0].find('I')>-1])
 
         for namedRange in namedRangeList:
             collect_table.moveTable(toSpId , namedRange)
@@ -398,7 +398,7 @@ def changeStatus(stat, orderList, payment = ''):
     # на руках
     if stat.lower().find('на руках') > -1:
         collectIndList = [order for order in orderList if order[0] == CollectTypes.collect]
-        ShipmentToRussiaEvent(orderList = collectIndList)
+        #ShipmentToRussiaEvent(orderList = collectIndList)
 
         # если сразу ехало на получателя
         if stat.lower().find('y') > -1:
@@ -530,7 +530,7 @@ def storeCollectActivities(topicList):
         
         user_info['items'] = input('позиции через запятую(, ): ')
         pprint(f'У пользователя {len(user_info["items"].split(", "))} позиций - разберём каждую')
-        for item in user_info["items"].split(","):
+        for item in user_info["items"].split(", "):
             item_url = input(f'{item} url: ')
             if item_url in items_info:
                 items_info[item_url]['users'].append(vk.get_name(user_info['user_url'].split('/')[-1]) if user_info['user_url'] else 'Мне')
@@ -656,9 +656,10 @@ def console():
 
                 commentary = input('user{0} commentary: '.format(i))
 
-                user_list.append({'id': url, 'comment': commentary })
+                user_list.append({'id': vk.get_id(url.replace('https://vk.com/', '')), 'comment': commentary })
 
-            vk.ban_users(user_list)
+            for user in user_list:
+                vk.ban_users(user)
 
         elif choise == 5:
 
@@ -756,16 +757,15 @@ def console():
             indListUrl = []
 
             for item in orderList:
-                collectTopicInfo = DB_Operations.getCollectTopicComment(collect_id = item[0], collect_type = item[1])
-
+                collectTopicInfo = DB_Operations.getCollectTopicComment(collect_id = item[1], collect_type = item[0])
                 topic_url_template = f'[https://vk.com/topic-{vk.get_current_group_id()}_{collectTopicInfo[0]}?post={collectTopicInfo[1]}|'+'{}]'
-                if item[1] == CollectTypes.store:
-                    collectListUrl.append(topic_url_template.format(item[0]))
-                elif item[1] == CollectTypes.collect:
-                    if item[0][0] == 'I':
-                        indListUrl.append(topic_url_template.format(item[0][1:]))
-                    elif item[0][0] == 'C':
-                        collectListUrl.append(topic_url_template.format(item[0][1:]))
+                if item[0] == CollectTypes.store:
+                    collectListUrl.append(topic_url_template.format(item[1]))
+                elif item[0] == CollectTypes.collect:
+                    if item[1][0] == 'I':
+                        indListUrl.append(topic_url_template.format(item[1][1:]))
+                    elif item[1][0] == 'C':
+                        collectListUrl.append(topic_url_template.format(item[1][1:]))
 
             mes = Messages.formParcelCollectMes(parcel_id=parcel_id, status = stat, 
                                                 collect_dict= {'collects': collectListUrl, 'inds': indListUrl })

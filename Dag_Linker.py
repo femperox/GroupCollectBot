@@ -105,7 +105,7 @@ def updateTrackingStatuses():
             if not parcel[2]:
                 if parcel[3] == TrackingTypes.ids[RegexType.regex_track]:
                     if tracking_info['operationAttr'] in [PochtaApiStatus.arrived, PochtaApiStatus.notice_arrived]:
-                        message = mess.mess_notify_arrival.format(tracking_info['barcode'], tracking_info['operationIndex'], getParcelExpireDate(tracking_info['barcode']))
+                        message = mess.mess_notify_arrival.format(tracking_info['barcode'], tracking_info['operationIndex'], DB_Operations.getParcelExpireDate(tracking_info['barcode']))
                 elif parcel[3] == TrackingTypes.ids[RegexType.regex_track_yandex]:
                     if tracking_info['operationType'] in [YandexTrackingApiStatus.arrived]:
                         message = mess.mess_notify_arrival_yandex.format(tracking_info['barcode'], tracking_info['operationAttr'], tracking_info['destinationIndex'], tracking_info['operationIndex'])

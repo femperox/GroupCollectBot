@@ -22,7 +22,7 @@ class PosredApi:
 
         for json_item in js:
             if json_item['codeTo'] in CURRENCIES.rub.value:
-                return float(json_item['rate']) #- 0.01
+                return float(json_item['rate']) - 0.04
             
     @staticmethod
     def getCurrentAmiCurrencyRate():
@@ -52,10 +52,8 @@ class PosredApi:
         headers = WebUtils.getHeader()
         page = requests.get(CURRENCY_USD_API, headers=headers)
         js = json.loads(page.text)
-        
-        for json_item in js['result']:
-            if json_item['from'] == '643' and json_item['to'] == '840':
-                return json_item['rate'] + 9.66
+
+        return js['Valute']['USD']['Value'] + 5.5
     
     @staticmethod
     def getCurrentCurrencyRateByUrl(url):

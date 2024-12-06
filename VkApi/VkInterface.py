@@ -797,6 +797,7 @@ class VkApi:
                             self.sendMes(mess = messText, users= chat, keyboard = VkButtons.form_menu_buttons(isAddButton = True, buttonPayloadText = payload), pic = [pic] if pic else [])
                             logger_utils.info(f"""[CHECK_PRICE] - Расчитана цена для пользователя {self.get_name(id = sender)} товара [{url}]""")
                         except Exception as e:
+                            pprint(e)
                             logger_utils.info(f"""[ERROR_CHECK_PRICE] - Не удалось посчитать цену для пользователя {self.get_name(id = sender)} товара [{url}] :: {e}""")
                             self.sendMes(mess = "Возникла ошибка, попробуйте позже ещё раз! Убедитесь в правильности ссылки! Снова выберите в меню кнопку расчёта цены", users= chat) 
                             self.sendMes(mess = f"Сообщение:\n {url}\n\n\nОшибка:\n{e}", users=VK_ERRORS_CHAT_ID)                                 
@@ -1022,7 +1023,7 @@ class VkApi:
             'group_id': self.__group_id,
             'comment_visible': 1
             }
-
+            
             params['owner_id'] = userBanReason['id']
             params['comment'] = userBanReason['comment']
 

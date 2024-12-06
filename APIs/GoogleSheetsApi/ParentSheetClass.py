@@ -128,7 +128,6 @@ class ParentSheetClass:
         except Exception as e:
            print(e)
            result = {"range": -1}
-        pprint(result.keys())
         if typeCalling == 0 : return result["range"]
         else: return result
 
