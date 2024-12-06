@@ -5,6 +5,19 @@ from confings.Messages import MessageType
 class VkButtons:
 
     @staticmethod
+    def form_back_button(payload):
+
+        settings = dict(one_time = False, inline=True)
+            
+        keyboard = ''
+
+        keyboard = VkKeyboard(**settings)
+
+        keyboard.add_callback_button(label='⏪ Назад', color=VkKeyboardColor.SECONDARY, payload = payload) 
+
+        return keyboard
+
+    @staticmethod
     def form_menu_buttons(isAddButton = False, buttonPayloadText = ''):
         """Подготовить кнопки для меню
 
@@ -16,7 +29,7 @@ class VkButtons:
             VkKeyboard: кнопки меню
         """
 
-        settings = dict(one_time= False, inline=True)
+        settings = dict(one_time = False, inline=True)
             
         keyboard = ''
 
@@ -30,7 +43,7 @@ class VkButtons:
             keyboard.add_line()
             keyboard.add_callback_button(label='Узнать цену товара (Япония)', color=VkKeyboardColor.PRIMARY, payload= PayloadType.menu_check_price)
             keyboard.add_line()
-            keyboard.add_callback_button(label='Узнать цену товара (США) (test)', color=VkKeyboardColor.PRIMARY, payload= {"type": PayloadType.menu_check_price["type"], "country": PayloadPriceCheckCountry.us } )
+            keyboard.add_callback_button(label='Узнать цену товара (США)', color=VkKeyboardColor.PRIMARY, payload= {"type": PayloadType.menu_check_price["type"], "country": PayloadPriceCheckCountry.us } )
         return keyboard
     
     @staticmethod

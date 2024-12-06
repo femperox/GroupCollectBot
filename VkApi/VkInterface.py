@@ -699,7 +699,21 @@ class VkApi:
                         elif event.object['payload']["type"] == PayloadType.menu_check_price["type"]:
 
                             updateUserMenuStatus(user_id = event.object.user_id, status = PayloadType.menu_check_price['type'], country = event.object['payload']['country'])
-                            self.sendMes(mess = Messages.formCalcMes(event.object['payload']['country']), users = chat)     
+                            self.sendMes(mess = Messages.formCalcMes(event.object['payload']['country']), 
+                                         users = chat,
+                                         keyboard = VkButtons.form_back_button(payload = PayloadType.menu_bot_call_menu))     
+                        # назад в меню
+                        elif event.object['payload'] == PayloadType.menu_bot_call_menu:
+                            updateUserMenuStatus(user_id = mes['items'][0]['peer_id'], status= PayloadType.menu_bot_none["type"])
+
+                            delete_params = {
+                                'peer_id' : mes['items'][0]['peer_id'],
+                                'group_id': self.__group_id,
+                                'cmids': mes['items'][0]['conversation_message_id'],
+                                'delete_for_all': 1,
+                            }
+
+                            self.__vk_message.messages.delete(**delete_params)
 
                         # Челик поставил на выкуп товар
                         elif event.object['payload']["type"] == PayloadType.menu_bot_add_item["type"]:
@@ -780,7 +794,7 @@ class VkApi:
                         self.removeChatUser(user = sender, chat = chat)
 
                     # менюшка
-                    elif chat not in not_dm_chats and event.obj.message['text'].lower() in  VkCommands.menuList:
+                    elif chat not in not_dm_chats and event.obj.message['text'].lower() in VkCommands.menuList:
                         # and (sender in whiteList)
                         self.sendMes(mess="Выберите пункт меню", users=chat, keyboard=VkButtons.form_menu_buttons())
 
