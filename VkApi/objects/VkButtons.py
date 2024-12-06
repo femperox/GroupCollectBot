@@ -36,14 +36,16 @@ class VkButtons:
         keyboard = VkKeyboard(**settings)
 
         if isAddButton:
-            keyboard.add_callback_button(label='Поставить на выкуп', color=VkKeyboardColor.POSITIVE, payload= {"type": PayloadType.menu_bot_add_item["type"],  "text": buttonPayloadText}) 
+            keyboard.add_callback_button(label='🔖 Поставить на выкуп', color=VkKeyboardColor.POSITIVE, payload= {"type": PayloadType.menu_bot_add_item["type"],  "text": buttonPayloadText}) 
 
         else:
-            keyboard.add_openlink_button(link = VK_AUTOTAG_FORM_URL, label ='Добавиться к автотегам')
+            keyboard.add_openlink_button(link = VK_AUTOTAG_FORM_URL, label ='📩 Добавиться к автотегам')
             keyboard.add_line()
-            keyboard.add_callback_button(label='Узнать цену товара (Япония)', color=VkKeyboardColor.PRIMARY, payload= PayloadType.menu_check_price)
+            keyboard.add_callback_button(label='📦 Мои позиции', color=VkKeyboardColor.SECONDARY, payload= PayloadType.menu_bot_get_orders)
             keyboard.add_line()
-            keyboard.add_callback_button(label='Узнать цену товара (США)', color=VkKeyboardColor.PRIMARY, payload= {"type": PayloadType.menu_check_price["type"], "country": PayloadPriceCheckCountry.us } )
+            keyboard.add_callback_button(label='🛒 Узнать цену товара (🇯🇵)', color=VkKeyboardColor.PRIMARY, payload= PayloadType.menu_check_price)
+            keyboard.add_line()
+            keyboard.add_callback_button(label='🛒 Узнать цену товара (🇺🇸)', color=VkKeyboardColor.PRIMARY, payload= {"type": PayloadType.menu_check_price["type"], "country": PayloadPriceCheckCountry.us } )
         return keyboard
     
     @staticmethod
