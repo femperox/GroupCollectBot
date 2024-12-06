@@ -75,12 +75,11 @@ def updateCurrencyStatus():
     """Обновление статуса с текущим курсом рубля к йене
     """    
     try: 
-        currency_rate_jpy_ami = PosredApi.getCurrentAmiCurrencyRate()
         currency_rate = PosredApi.getCurrentCurrencyRate()
         currency_rate_usd = PosredApi.getCurrentUSDCurrencyRate()
-        vk.edit_group_status(mess.mes_currency.format(currency_rate_jpy_ami, currency_rate, currency_rate_usd))
+        vk.edit_group_status(mess.mes_currency.format(currency_rate, currency_rate_usd))
 
-        logger_utils.info(f"""[UPDATE-CURRENCY] Курс япа ~ {currency_rate_jpy_ami} и {currency_rate}; Курс США ~ {currency_rate_usd}""") 
+        logger_utils.info(f"""[UPDATE-CURRENCY] Курс япа ~ {currency_rate}; Курс США ~ {currency_rate_usd}""") 
     except Exception as e:
         logger_utils.info(f"""[ERROR-CURRENCY] {e}""")
 
