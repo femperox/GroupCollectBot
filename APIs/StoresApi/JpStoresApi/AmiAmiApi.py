@@ -41,6 +41,7 @@ class AmiAmiApi():
         AmiAmiApi.driver[thread_index].refresh()
 
     AMI_API_ITEM_INFO = 'https://api.amiami.com/api/v1.0/item?gcode={}'
+    AMI_API_ITEM_INFO2 = 'https://api.amiami.com/api/v1.0/item?scode={}'
 
     # 9882 - Fashion
     wrongCategoriesNumbers = [9882]
@@ -161,9 +162,8 @@ class AmiAmiApi():
         headers['Sec-Ch-Ua-Mobile'] = '?0'
         headers['Allow-Control-Allow-Origin'] = '*'
        
-        #req1= f"""let [resolve] = arguments; fetch('{curl}'""" + """ , {method: 'GET', headers:""" + f"""{headers}""" + """}).then(r => resolve(r.json()))"""
-        req1= f"""let result = await fetch('{curl}'""" + """ , {method: 'GET', headers:""" + f"""{headers}""" + """}).then(r => r.json()); return result;"""
-
+        req1= f"""let result = await fetch('{curl}'""" + """ , {method: 'GET', headers:""" + f"""{headers}""" + """, referrerPolicy: 'strict-origin-when-cross-origin', mode: 'cors'}).then(r => r.json()); return result;"""
+        
         result = AmiAmiApi.driver[thread_index].execute_script(req1)
 
         '''
@@ -188,8 +188,14 @@ class AmiAmiApi():
         """
 
         curl = AmiAmiApi.AMI_API_ITEM_INFO.format(item_id)
+        curl_s_code = AmiAmiApi.AMI_API_ITEM_INFO2.format(item_id)
         
         js = AmiAmiApi.curlAmiAmiEng(curl, thread_index = thread_index)
+        
+        if not js['RSuccess']:
+            print('try again')
+            AmiAmiApi.refreshDriver(thread_index = thread_index)
+            js = AmiAmiApi.curlAmiAmiEng(curl_s_code, thread_index = thread_index)
 
         item = {}
         item['itemPrice'] = js['item']['price']

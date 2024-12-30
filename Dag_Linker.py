@@ -131,6 +131,8 @@ def checkDeliveryStatusToParticipants():
             participantInfo = DB_Operations.getOrderParticipants(collect_type = order[0], collect_id = order[1])
 
             if participantInfo:
+                pprint(f'Чекаем {order}')
+
                 if order[0] == CollectTypes.collect:
                     named_range = DB_Operations.getCollectNamedRange(collect_id = order[1])
                     local_delivery_status_list = collectOrdersSheet.checkDeliveryToParticipants(namedRange = named_range, participantList = [p[0] for p in participantInfo])

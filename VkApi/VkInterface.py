@@ -1100,21 +1100,15 @@ class VkApi:
             tuple: Возвращает url созданного / изменённого комментария + список url прикреплённых к нему изображений + словарь topic_id, comment_id
         """
         try:
-            params = {
-                'group_id': self.__group_id,
-                'topic_id': topic_id,
-                'message': message,
-                'from_group': from_group,
-                'guid': random.randint(0, 1000000000),
-            }
+
             attachments = self._form_images_request_signature(img_urls, user= self.__group_id, tag = 'collect', isWallServer= True)
-            attachments = attachments[0] if attachments != ('', []) else ''
+            attachment = attachments[0] if attachments != ('', []) else ''
 
             comm_id = self.vk.board.createComment(**VkParams.getBoardCreateComment( group_id = self.__group_id,
                                                                                     topic_id = topic_id,
                                                                                     message = message,
                                                                                     from_group = from_group,
-                                                                                    attachment = attachments))
+                                                                                    attachment = attachment))
         
             res_url = 'https://vk.com/topic-{}_{}?post={}'.format(self.__group_id, topic_id, comm_id)
             topic_info = {'topic_id': topic_id, 'comment_id': comm_id}
@@ -1207,7 +1201,8 @@ class VkApi:
                                                                         message = new_text,
                                                                         attachments = attachments))
             return 1
-        except:
+        except Exception as e:
+            pprint(e)
             return -1
         
     def _append_unique_user_id(self, comm: dict, admin_ids: set, user_ids) -> list:
@@ -1235,7 +1230,7 @@ class VkApi:
             )[0]['contacts']])
             user_ids = []
             commentators = []
-            last_comment_id = -1
+            last_comment_id = 0
             unique_commentators = []
             while (counter == 1 or len(commentators)):
                 vk_response = self.vk.wall.getComments(**VkParams.getWallGetCommentsParams( owner_id = f'-{self.__group_id}',

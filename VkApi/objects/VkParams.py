@@ -558,7 +558,7 @@ class VkParams:
                 'comment_id': comment_id,
         }
 
-        if params['message']:
+        if message:
             params['message'] = message
         if attachments:
             params['attachments'] = attachments     

@@ -329,7 +329,7 @@ def createTableTopic(post_url, site_url ='', spId=0, topic_id=0, items=0, img_ur
                                     lotWallUrl = post_url, siteName = item["siteName"])
 
     topicInfo = vk.post_comment(topic_id = topic_id, message=mes, img_urls=[img_url])
-
+ 
     collect_table.createTable(spId, namedRange, participants = items, image = topicInfo[1][0], item = item)
 
     collect_table.updateTable(namedRange, transformToTableFormat(participantsList), topicInfo[0])
@@ -394,11 +394,10 @@ def ArchiveCollects():
             print('\nТакой закупки нет!\n')
 
 def changeStatus(stat, orderList, payment = ''):
-    
     # на руках
     if stat.lower().find('на руках') > -1:
         collectIndList = [order for order in orderList if order[0] == CollectTypes.collect]
-        #ShipmentToRussiaEvent(orderList = collectIndList)
+        ShipmentToRussiaEvent(orderList = collectIndList)
 
         # если сразу ехало на получателя
         if stat.lower().find('y') > -1:
@@ -610,7 +609,6 @@ def console():
         choise = int(input('\nВведите номер:\n' + Messages.formConsoleListMes(info_list = choiseList, offset = 2) + '\nВыбор: '))
 
         if choise == 1:
-
             topicIdCollect = [topic['id'] for topic in topicList 
                               if topic['title'].lower().find('лоты') > -1][0]
 
@@ -772,6 +770,10 @@ def console():
             topicInfo = vk.post_comment(topic_id = topicIdParcels, message=mes, img_urls=img)
 
             DB_Operations.updateInsertCollectParcel(parcel_id = parcel_id, topic_id = topicInfo[2]['topic_id'], comment_id = topicInfo[2]['comment_id'])
+
+            for item in orderList:
+                DB_Operations.updateCollectSelector(collectType = item[0], collectId = item[1], parcel_id = parcel_id)
+
             
         elif choise == 9:
 
