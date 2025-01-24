@@ -395,6 +395,7 @@ def ArchiveCollects():
 
 def changeStatus(stat, orderList, payment = ''):
     # на руках
+    
     if stat.lower().find('на руках') > -1:
         collectIndList = [order for order in orderList if order[0] == CollectTypes.collect]
         ShipmentToRussiaEvent(orderList = collectIndList)
@@ -411,7 +412,7 @@ def changeStatus(stat, orderList, payment = ''):
         for item in storeList:
             list_id = DB_Operations.getStoresCollectSheetId(collect_id = item[1])
             storesCollectOrdersSheets.setStoresCollectRecieved(list_id = list_id)
-
+    
     # топики в вк
     for item in orderList:
         sleep(3)

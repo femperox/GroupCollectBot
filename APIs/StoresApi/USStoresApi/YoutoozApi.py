@@ -20,7 +20,8 @@ class YoutoozApi:
 
         try:
             table = soup.find('tbody')
-            rows = table.findAll("tr", {'data-mce-fragment': '1'})
+            #rows = table.findAll("tr", {'data-mce-fragment': '1'})
+            rows = table.findAll("tr")
 
             shipment_prices = {}
             for row in rows[1:]:
@@ -31,9 +32,8 @@ class YoutoozApi:
                 if item_shipment not in ['INTL', 'US']:
                     continue
 
-                if row.find('strong', {'data-mce-fragment': '1'}) is not None:
-                    item_type = row.find('strong', {'data-mce-fragment': '1'}).text.lower()
-
+                if row.find('strong') is not None:
+                    item_type = row.find('strong').text.lower()
                 if row.find('td', {'style': re.compile(r'text-align: center; height: 22px; width: 1')}) is not None:
                     item_size = row.find('td', {'style': re.compile(r'text-align: center; height: 22px; width: 1')}).text
                 elif row.find('td', {'rowspan' : True}) is not None:

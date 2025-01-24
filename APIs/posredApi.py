@@ -53,7 +53,7 @@ class PosredApi:
         page = requests.get(CURRENCY_USD_API, headers=headers)
         js = json.loads(page.text)
 
-        return js['Valute']['USD']['Value'] + 11
+        return js['Valute']['USD']['Value'] + 14.5
     
     @staticmethod
     def getCurrentCurrencyRateByUrl(url):
@@ -107,7 +107,7 @@ class PosredApi:
         ss = StoreSelector()
         ss.url = url
         if ss.getStoreName() == Stores.amiAmi and ss.isEngAmi(url=url):
-            standartCommissionPercent = 0
+            standartCommissionPercent = 2.2
         else:
             standartCommissionPercent = 6
 
@@ -117,7 +117,7 @@ class PosredApi:
         return {'key': CURRENCIES.percent,
                 'value': standartCommissionPercent,
                 'posredCommissionValue': commission, 
-                'posredCommission': '{}*'+f'{standartCommissionPercent/100}',}
+                'posredCommission': '{}*'+'{:0.3f}'.format(standartCommissionPercent/100)}
     
     @staticmethod
     def getСommissionForItemUSD():
