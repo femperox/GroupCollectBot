@@ -24,9 +24,7 @@ class TrackingSelector():
 
             elif type == TrackingTypes.ids[RegexType.regex_track_yandex]:
                 yandex = YandexDeliveryApi()
-                yandex.startDriver()
-                item = yandex.getTracking(track)
-                yandex.stopDriver()
+                item = yandex.getTrackingByApi(track)
   
             return item
     

@@ -11,7 +11,7 @@ class YoutoozApi:
 
     @staticmethod
     def getShipmentRates():
-        """Спарсить стоимости доставок youtooz
+        """DEPRECATED Спарсить стоимости доставок youtooz
 
         Returns:
             dict: словарь соответсвий стоимости доставок к типам товаров
@@ -59,6 +59,48 @@ class YoutoozApi:
         except Exception as e:
             pprint(e)
         
+
+    @staticmethod
+    def setStaticShipmentRates():
+        """_summary_
+
+        Returns:
+            _type_: _description_
+        """
+        shipment_prices = {}
+
+        shipment_prices['vinyl'] = {}
+        shipment_prices['vinyl']['5"'] = 7
+        shipment_prices['vinyl']['1ft'] = 20
+
+        shipment_prices['plush'] = {}
+        shipment_prices['plush']['4"/6"'] = 7
+        shipment_prices['plush']['4"/6"/9"/1ft*/16"'] = 7
+        shipment_prices['plush']['weighted 16"'] = 20
+        shipment_prices['plush']['2ft'] = 50
+        shipment_prices['plush']['plush bag'] = 10
+
+        shipment_prices['slippers'] = {}
+        shipment_prices['slippers']['slippers'] = 10
+
+        shipment_prices['jenga'] = {}
+        shipment_prices['jenga']['jenga'] = 10
+
+        shipment_prices['monopoly'] = {}
+        shipment_prices['monopoly']['monopoly'] = 10
+
+        shipment_prices['prints'] = {}
+        shipment_prices['prints']['prints'] = 20
+
+        shipment_prices['mugs'] = {}
+        shipment_prices['mugs']['mug'] = 7
+
+        shipment_prices['pins'] = {}
+        shipment_prices['pins']['set'] = 5
+
+        return shipment_prices
+    
+
     @staticmethod
     def setShipmentPrice(url):
         """Назначить цену доставки для товара
@@ -69,7 +111,7 @@ class YoutoozApi:
         Returns:
             int | ShipmentPriceType: цена доставки
         """
-        shipment_prices = YoutoozApi.getShipmentRates()
+        shipment_prices = YoutoozApi.setStaticShipmentRates()
 
         url_lower = url.lower()
         item_type = 'vinyl'

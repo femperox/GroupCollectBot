@@ -1124,8 +1124,8 @@ class VkApi:
         """
         captcha_url = captcha.get_url()
 
-        pprint(captcha_url)
         key = input("Enter captcha code {0}: ".format(captcha_url)).strip()
+        pprint(key)
 
         # Пробуем снова отправить запрос с капчей
         return captcha.try_again(key)

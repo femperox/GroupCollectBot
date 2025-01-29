@@ -53,7 +53,7 @@ class PosredApi:
         page = requests.get(CURRENCY_USD_API, headers=headers)
         js = json.loads(page.text)
 
-        return js['Valute']['USD']['Value'] + 14.5
+        return js['Valute']['USD']['Value'] + 9.5
     
     @staticmethod
     def getCurrentCurrencyRateByUrl(url):

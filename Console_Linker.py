@@ -415,7 +415,7 @@ def changeStatus(stat, orderList, payment = ''):
     
     # топики в вк
     for item in orderList:
-        sleep(3)
+        sleep(5)
         pay = ''
         if payment == 'y':
             namedRange = item[1].replace('C', 'DCollect') if item[1].find('C') > -1 else item[1].replace('I', 'DInd')
