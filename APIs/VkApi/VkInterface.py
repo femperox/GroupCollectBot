@@ -28,6 +28,8 @@ class VkApi:
         
         self.__tok = tmp_dict[key_token]
         self.__group_id = tmp_dict[key_group_id]
+        
+        self.path = '/APIs/VkApi/tmp/'
 
         auth_data = self._login_pass_get(tmp_dict)
         if auth_data[0] and auth_data[1]:
@@ -186,7 +188,7 @@ class VkApi:
             if extention != '':
                 filename = f'new_image{randint(0,15000)}_{tag}' + extention
                 response = requests.get(url)
-                image = open(os.getcwd()+'/VkApi/tmp/' + filename, 'wb')
+                image = open(os.getcwd()+ self.path + filename, 'wb')
                 image.write(response.content)
                 image.close()
             return filename
@@ -240,9 +242,9 @@ class VkApi:
             try:
                 vk_response = requests.post(
                     vk_url, 
-                    files={'photo': open(os.getcwd()+'/VkApi/tmp/{}'.format(image_name), 'rb')}
+                    files={'photo': open(os.getcwd()+ self.path + image_name, 'rb')}
                 ).json()
-                os.remove(os.getcwd()+'/VkApi/tmp/' + image_name)
+                os.remove(os.getcwd()+ self.path + image_name)
 
                 if vk_response['photo']:
                     if isWallServer:
