@@ -1,6 +1,6 @@
 from APIs.GoogleSheetsApi.TagsSheet import TagsSheet as ts
 from APIs.GoogleSheetsApi.CollectSheet import CollectSheet as cs
-from VkApi.VkInterface import VkApi as vk
+from APIs.VkApi.VkInterface import VkApi as vk
 from SQLS import DB_Operations
 from Logger import logger_utils
 from APIs.TrackingAPIs.TrackingSelector import TrackingSelector

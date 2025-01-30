@@ -1,13 +1,11 @@
 import threading
-from VkApi.VkInterface import VkApi as vk
+from APIs.VkApi.VkInterface import VkApi as vk
 from traceback import print_exc
 from time import sleep
 from APIs.StoresApi.JpStoresApi.AmiAmiApi import AmiAmiApi
 from confings.Messages import Messages, MessageType
 from confings.Consts import MonitorStoresType
 from Logger import logger_stores
-from APIs.webUtils import WebUtils
-import random
 from SQLS.DB_Operations import insertNewSeenProducts
 from confings.Consts import STORE_MONITOR_CONF_PATH
 import json

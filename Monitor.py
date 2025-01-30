@@ -1,7 +1,6 @@
 import json
-import os
 import threading
-from VkApi.VkInterface import VkApi as vk
+from APIs.VkApi.VkInterface import VkApi as vk
 from traceback import print_exc
 from time import sleep
 from pprint import pprint
@@ -11,11 +10,11 @@ from Logger import logger
 from traceback import print_exc
 from APIs.StoresApi.JpStoresApi.yahooApi import yahooApi
 from APIs.StoresApi.JpStoresApi.MercariApi import MercariApi
-from confings.Consts import MONITOR_CONF_PATH, PRIVATES_PATH, Stores
+from confings.Consts import MONITOR_CONF_PATH, Stores
 from confings.Messages import MessageType, Messages
 from APIs.utils import getActiveMonitorChatsTypes, createItemPairs
 from SQLS.DB_Operations import IsExistBannedSeller, insertNewSeenProducts
-from VkApi.objects.VkButtons import VkButtons
+from APIs.VkApi.objects.VkButtons import VkButtons
 
 threads = []
         

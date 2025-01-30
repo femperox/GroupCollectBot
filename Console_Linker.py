@@ -1,4 +1,4 @@
-from VkApi.VkInterface import VkApi as vk
+from APIs.VkApi.VkInterface import VkApi as vk
 from APIs.GoogleSheetsApi.CollectOrdersSheet import CollectOrdersSheet as collect_table
 from APIs.GoogleSheetsApi.StoresCollectOrdersSheets import StoresCollectOrdersSheets
 from traceback import format_exc, print_exc

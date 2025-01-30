@@ -1,4 +1,4 @@
-from VkApi.VkInterface import VkApi as vk
+from APIs.VkApi.VkInterface import VkApi as vk
 import threading
 from pprint import pprint
 from datetime import datetime
@@ -7,9 +7,7 @@ from SQLS.DB_Operations import getUsers, getAllFavs, deleteFav
 import threading
 from Logger import logger_fav
 from APIs.StoresApi.JpStoresApi.yahooApi import yahooApi as ya
-import json
-import os
-from confings.Consts import CURRENT_POSRED, Stores
+from confings.Consts import Stores
 from confings.Messages import Messages
 from APIs.StoresApi.JpStoresApi.StoreSelector import StoreSelector
 from APIs.StoresApi.JpStoresApi.MercariApi import MercariApi

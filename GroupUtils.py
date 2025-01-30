@@ -1,7 +1,5 @@
-from VkApi.VkInterface import VkApi as vk
+from APIs.VkApi.VkInterface import VkApi as vk
 from Logger import logger_utils
-from VkApi.VkInterface_MBO import VkApi_MBO as vk_mbo
-
 from traceback import print_exc
 import threading
 

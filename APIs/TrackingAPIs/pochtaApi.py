@@ -1,6 +1,5 @@
 from suds.client import Client
 from confings.Consts import PRIVATES_PATH
-import os
 import json
 
 class PochtaApi():

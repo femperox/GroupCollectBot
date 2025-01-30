@@ -17,8 +17,8 @@ from confings.Consts import VkTopicCommentChangeType, TrackingTypes, ItemBuyStat
 from APIs.utils import getMonitorChats, getFavInfo, getStoreMonitorChats
 from APIs.TrackingAPIs.TrackingSelector import TrackingSelector
 from APIs.StoresApi.JpStoresApi.StoreSelector import StoreSelector
-from VkApi.objects.VkButtons import VkButtons
-from VkApi.objects.VkParams import VkParams
+from APIs.VkApi.objects.VkButtons import VkButtons
+from APIs.VkApi.objects.VkParams import VkParams
 import time
 
 class VkApi:

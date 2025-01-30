@@ -1,16 +1,7 @@
 from bs4 import BeautifulSoup
-import undetected_chromedriver as uc
-from seleniumwire import webdriver
-from selenium.webdriver.chrome.options import Options
-#import chromedriver_autoinstaller as chromedriver old
-from pyvirtualdisplay import Display
-from selenium.webdriver.chrome.service import Service
-from webdriver_manager.chrome import ChromeDriverManager
 from confings.Consts import LINUX_USER_AGENT
 import cfscrape
-import pprint
 from seleniumbase import Driver
-import json
 import requests
 import time
 from pprint import pprint
