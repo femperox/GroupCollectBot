@@ -56,23 +56,22 @@ class YandexDeliveryApi():
 
         session = requests.session()
         req = session.post(url = curl, json=  params, headers=headers)
-        info = req.json() 
-
-        pprint(info)
+        info = req.json()
 
         parcel = {}
         parcel['barcode'] = url
         parcel['operationType'] = info['timeline']['current_item_id']
 
-        parcel['sndr'] = ''
-        parcel['rcpn'] = ''
+        phones = list(filter(lambda item: 'lead_icon' in item.keys() and item['lead_icon']['image_tag'] == 'delivery_phone',  info['content_sections'][0]['items']))
+        parcel['sndr'] = phones[0]['subtitle']['text']
+        parcel['rcpn'] = phones[1]['subtitle']['text']
         route_info = info['timeline']['bubble']['button']['action']['vertical']
         parcel['destinationIndex'] = list(filter(lambda item: item['title'] == 'Принят пунктом выдачи', route_info))[0]['subtitle']
         
-        id = url.split('/')[-1]
+        order_id = list(filter(lambda item: 'trail_text' in item.keys(),  info['content_sections'][0]['items']))[0]['trail_text']['text']
         lastOperation = list(filter(lambda item: item['status'] == 'passed', route_info))[-1]
 
-        parcel['operationAttr'] = id + ' ' + lastOperation['title'].lower()
+        parcel['operationAttr'] = order_id + ' ' + lastOperation['title'].lower()
         parcel['operationIndex'] = lastOperation['subtitle'] if 'subtitle' in lastOperation.keys() else parcel['destinationIndex']
 
         locale.setlocale(locale.LC_TIME, 'ru_RU.UTF-8')
