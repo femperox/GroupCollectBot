@@ -62,13 +62,21 @@ class YandexDeliveryApi():
         parcel['barcode'] = url
         parcel['operationType'] = info['timeline']['current_item_id']
 
-        phones = list(filter(lambda item: 'lead_icon' in item.keys() and item['lead_icon']['image_tag'] == 'delivery_phone',  info['content_sections'][0]['items']))
+
+
+        content_sections = [content_section['items'] for content_section in info['content_sections']]
+        phones = []
+        for content_section in content_sections:
+            phones.extend(list(filter(lambda item: 'lead_icon' in item.keys() and item['lead_icon']['image_tag'] == 'delivery_phone',  content_section)))
+            #route_info = list(filter(lambda item: 'lead_icon' in item.keys() and item['lead_icon']['image_tag'] == 'delivery_point',  content_section))[1]['subtitle']['text']
+
         parcel['sndr'] = phones[0]['subtitle']['text']
         parcel['rcpn'] = phones[1]['subtitle']['text']
         route_info = info['timeline']['bubble']['button']['action']['vertical']
         parcel['destinationIndex'] = list(filter(lambda item: item['title'] == 'Принят пунктом выдачи', route_info))[0]['subtitle']
         
-        order_id = list(filter(lambda item: 'trail_text' in item.keys(),  info['content_sections'][0]['items']))[0]['trail_text']['text']
+        order_id = list(filter(lambda item: 'trail_text' in item.keys(),  info['content_sections'][0]['items']))
+        order_id = order_id[1]['trail_text']['text'] if len(order_id) > 1 else order_id[0]['trail_text']['text']
         lastOperation = list(filter(lambda item: item['status'] == 'passed', route_info))[-1]
 
         parcel['operationAttr'] = order_id + ' ' + lastOperation['title'].lower()

@@ -75,7 +75,7 @@ class YoutoozApi:
 
         shipment_prices['plush'] = {}
         shipment_prices['plush']['4"/6"'] = 7
-        shipment_prices['plush']['4"/6"/9"/1ft*/16"'] = 7
+        shipment_prices['plush']['4"/6"/9"/1ft/16"'] = 7
         shipment_prices['plush']['weighted 16"'] = 20
         shipment_prices['plush']['2ft'] = 50
         shipment_prices['plush']['plush bag'] = 10
