@@ -488,7 +488,7 @@ class AmiAmiApi():
         
         curl = 'https://api.amiami.com/api/v1.0/items?pagemax=50&pagecnt={}&lang=eng&mcode=&ransu=&age_confirm=&s_sortkey=preowned&s_st_condition_flg=1&s_st_list_newitem_available=1'
       
-        js = AmiAmiApi.curlManyPages(curl, 15, thread_index)
+        js = AmiAmiApi.curlManyPages(curl, 25, thread_index)
 
         item_list = []
         item_list_ids = []

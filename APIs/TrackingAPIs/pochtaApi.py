@@ -4,6 +4,9 @@ import json
 
 class PochtaApi():
 
+    arrived_status = "Прибыло в место вручения"
+    notice_arrived_status = "Доставлено извещение"
+
     def getClient():
         """Получение suds-клиента для работы с API ПР
 

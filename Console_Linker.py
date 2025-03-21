@@ -773,7 +773,7 @@ def console():
             DB_Operations.updateInsertCollectParcel(parcel_id = parcel_id, topic_id = topicInfo[2]['topic_id'], comment_id = topicInfo[2]['comment_id'])
 
             for item in orderList:
-                DB_Operations.updateCollectSelector(collectType = item[0], collectId = item[1], parcel_id = parcel_id)
+                DB_Operations.updateCollectSelector(collectType = item[0], collectId = item[1], parcel_id = parcel_id, status = stat)
 
             
         elif choise == 9:

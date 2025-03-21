@@ -304,6 +304,8 @@ def insertUpdateParcel(parcelInfo):
     conn = getConnection(DbNames.collectDatabase)
     cursor = conn.cursor() 
 
+    print(parcelInfo)
+
     cursor.execute(f'''Call ParcelInsertUpdate( '{parcelInfo['barcode']}', '{parcelInfo['sndr']}', '{parcelInfo['rcpn']}', 
                        '{parcelInfo['destinationIndex']}', '{parcelInfo['operationIndex']}', '{parcelInfo['operationDate']}', 
                        '{parcelInfo['operationType']}', '{parcelInfo['operationAttr']}', 

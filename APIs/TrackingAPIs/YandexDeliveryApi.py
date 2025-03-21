@@ -10,6 +10,8 @@ import locale
 
 class YandexDeliveryApi():
 
+    arrived_status = 'delivered_to_pickup_point'
+
     def __init__(self):
 
         self.driver = {}
@@ -30,7 +32,7 @@ class YandexDeliveryApi():
         """
         self.driver.refresh()
 
-    def getTrackingByApi(self, url):
+    def getTrackingByApi(url):
         """получить информацию об отправлении по ссылке.
 
         Args:
@@ -44,31 +46,38 @@ class YandexDeliveryApi():
         #'https://ya-authproxy.taxi.yandex.com/4.0/cargo-c2c/v1/shared-route/info'
                
         params = {'key': url.split('/')[-1]}
-        #token = requests.post(url = 'https://ya-authproxy.taxi.yandex.ru/csrf_token').json() 
 
         headers = {
             'Accept-Language': 'ru',
             'Content-Type': 'application/json',
             'x-platform': 'web',
             'timezone': 'Europe/Moscow',
-            #'x-csrf-token': token['sk']
         }
 
         session = requests.session()
-        req = session.post(url = curl, json=  params, headers=headers)
+        req = session.post(url = curl, json =  params, headers=headers)
         info = req.json()
 
         parcel = {}
         parcel['barcode'] = url
+
+        if 'code' in info.keys():
+            parcel['operationType'] = 'delivered'
+            parcel['sndr'] = ''
+            parcel['rcpn'] = ''
+            parcel['destinationIndex'] = ''
+            parcel['operationAttr'] = ''
+            parcel['operationIndex'] = ''
+            parcel['operationDate'] = datetime.now()
+            parcel['mass'] = 0
+            return parcel
+        
         parcel['operationType'] = info['timeline']['current_item_id']
-
-
 
         content_sections = [content_section['items'] for content_section in info['content_sections']]
         phones = []
         for content_section in content_sections:
             phones.extend(list(filter(lambda item: 'lead_icon' in item.keys() and item['lead_icon']['image_tag'] == 'delivery_phone',  content_section)))
-            #route_info = list(filter(lambda item: 'lead_icon' in item.keys() and item['lead_icon']['image_tag'] == 'delivery_point',  content_section))[1]['subtitle']['text']
 
         parcel['sndr'] = phones[0]['subtitle']['text']
         parcel['rcpn'] = phones[1]['subtitle']['text']

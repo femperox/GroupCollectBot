@@ -3,11 +3,11 @@ from APIs.GoogleSheetsApi.CollectSheet import CollectSheet as cs
 from APIs.VkApi.VkInterface import VkApi as vk
 from SQLS import DB_Operations
 from Logger import logger_utils
-from APIs.TrackingAPIs.TrackingSelector import TrackingSelector
+from APIs.TrackingAPIs.TrackingSelector import TrackingSelector, TrackingTypes
 from APIs.posredApi import PosredApi
 from confings.Messages import Messages as mess
-from confings.Consts import PochtaApiStatus, vkCoverTime, YandexTrackingApiStatus
-from confings.Consts import TrackingTypes, RegexType, CollectTypes
+from confings.Consts import vkCoverTime
+from confings.Consts import RegexType, CollectTypes
 from APIs.GoogleSheetsApi.StoresCollectOrdersSheets import StoresCollectOrdersSheets
 from APIs.GoogleSheetsApi.CollectOrdersSheet import CollectOrdersSheet
 import time
@@ -102,13 +102,12 @@ def updateTrackingStatuses():
 
             DB_Operations.insertUpdateParcel(tracking_info)
             if not parcel[2]:
-                if parcel[3] == TrackingTypes.ids[RegexType.regex_track]:
-                    if tracking_info['operationAttr'] in [PochtaApiStatus.arrived, PochtaApiStatus.notice_arrived]:
+                if parcel[3] == TrackingTypes.ids[RegexType.regex_track] and tracking_info['operationAttr'] in TrackingSelector.selectArrivedStatuses(parcel[3]):
                         message = mess.mess_notify_arrival.format(tracking_info['barcode'], tracking_info['operationIndex'], DB_Operations.getParcelExpireDate(tracking_info['barcode']))
-                elif parcel[3] == TrackingTypes.ids[RegexType.regex_track_yandex]:
-                    if tracking_info['operationType'] in [YandexTrackingApiStatus.arrived]:
+                elif parcel[3] == TrackingTypes.ids[RegexType.regex_track_yandex] and tracking_info['operationType'] in TrackingSelector.selectArrivedStatuses(parcel[3]):
                         message = mess.mess_notify_arrival_yandex.format(tracking_info['barcode'], tracking_info['operationAttr'], tracking_info['destinationIndex'], tracking_info['operationIndex'])
-
+                elif parcel[3] == TrackingTypes.ids[RegexType.regex_track_cdek] and tracking_info['operationType'] in TrackingSelector.selectArrivedStatuses(parcel[3]):
+                        message = mess.mess_notify_arrival_cdek.format(tracking_info['barcode'], tracking_info['destinationIndex'], DB_Operations.getParcelExpireDate(tracking_info['barcode']))
                 if message:            
                     vk.sendMes(mess = message, users = tracking_info['rcpnVkId'])
                     DB_Operations.setParcelNotified(tracking_info['barcode'])

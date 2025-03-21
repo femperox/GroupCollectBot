@@ -13,9 +13,9 @@ from vk_api.longpoll import VkLongPoll, VkChatEventType, VkEventType, VkLongpoll
 from confings.Messages import MessageType, Messages
 from Logger import logger, logger_fav, logger_utils
 from SQLS import DB_Operations
-from confings.Consts import VkTopicCommentChangeType, TrackingTypes, ItemBuyStatus, VK_PROPOSED_CHAT_ID, VK_ERRORS_CHAT_ID, BanActionType, MAX_BAN_REASONS, RegexType, PayloadType, VkCommands, PRIVATES_PATH, Stores
+from confings.Consts import VkTopicCommentChangeType, ItemBuyStatus, VK_PROPOSED_CHAT_ID, VK_ERRORS_CHAT_ID, BanActionType, MAX_BAN_REASONS, RegexType, PayloadType, VkCommands, PRIVATES_PATH, Stores
 from APIs.utils import getMonitorChats, getFavInfo, getStoreMonitorChats
-from APIs.TrackingAPIs.TrackingSelector import TrackingSelector
+from APIs.TrackingAPIs.TrackingSelector import TrackingSelector, TrackingTypes
 from APIs.StoresApi.JpStoresApi.StoreSelector import StoreSelector
 from APIs.VkApi.objects.VkButtons import VkButtons
 from APIs.VkApi.objects.VkParams import VkParams
@@ -37,7 +37,7 @@ class VkApi:
                 auth_data[0],
                 auth_data[1],
                 auth_handler=self._two_factor_auth,
-                captcha_handler=self.captcha_handler 
+                captcha_handler=self.captcha_handler,
             )
         self.__vk_session.auth(token_only=True)
         self.vk = self.__vk_session.get_api()
@@ -47,7 +47,6 @@ class VkApi:
         
         vk_session = vk_api.VkApi(token=self.__tok)
         self.__vk_message = vk_session.get_api()
-        
 
         self.lang = 100
 
@@ -148,7 +147,6 @@ class VkApi:
                 password = self._encode_decode_str(key, new_pass)
                 privates.setdefault('login', login)
                 privates.setdefault('password', password)
-
                 json.dump(privates, open(PRIVATES_PATH, 'w'))
                 return new_login, new_pass
             new_login = self._encode_decode_str(key, login, encode=False)
@@ -211,7 +209,7 @@ class VkApi:
             try:
                 vk_response = requests.post(
                     vk_url, 
-                    files={'photo': open(os.getcwd()+'/VkApi/covers/{}'.format(image_name), 'rb')}
+                    files={'photo': open(os.getcwd()+'/APIs/VkApi/covers/{}'.format(image_name), 'rb')}
                 ).json()
 
                 if vk_response['photo']:
