@@ -52,7 +52,7 @@ class StoreSelector(StoreSelectorParent):
             item['id'] = item_id
             item['page'] = url
 
-            if site == Stores.yahooAuctions:
+            if site in [Stores.yahooAuctions, Stores.yahooAuctionsShort]:
                 item['endTime'] = yahooApi.getEndTime(item_id)
             else:
                 item['endTime'] = datetime.now() + relativedelta(years=3)
@@ -66,7 +66,7 @@ class StoreSelector(StoreSelectorParent):
                 item = MercariApi.parseMercariPage(url, item_id)
         elif site == Stores.payPay:
             item = ssa.parsePayPay(url, item_id)
-        elif site == Stores.yahooAuctions:  
+        elif site in [Stores.yahooAuctions, Stores.yahooAuctionsShort]:  
             item = yahooApi.getAucInfo(id = item_id)
         elif site == Stores.amiAmi:
             if url.find('/eng/')>0:
