@@ -128,6 +128,7 @@ class AmiAmiApi():
             time.sleep(3)
             try:
                 js_raw = AmiAmiApi.curlAmiAmiEng(curl.format(i+1), thread_index)
+                pprint(js_raw)
                 if i == 0:
                     js = js_raw
                 else:            
@@ -160,10 +161,9 @@ class AmiAmiApi():
         headers['Referer'] = 'https://www.amiami.com/'
         headers['Origin'] = 'https://www.amiami.com'
         headers['Sec-Ch-Ua-Mobile'] = '?0'
-        headers['Allow-Control-Allow-Origin'] = '*'
+        #headers['Allow-Control-Allow-Origin'] = '*'
        
         req1= f"""let result = await fetch('{curl}'""" + """ , {method: 'GET', headers:""" + f"""{headers}""" + """, referrerPolicy: 'strict-origin-when-cross-origin', mode: 'cors'}).then(r => r.json()); return result;"""
-        
         result = AmiAmiApi.driver[thread_index].execute_script(req1)
 
         '''
