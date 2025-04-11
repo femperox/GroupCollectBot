@@ -26,9 +26,11 @@ class TagsSheet(ParentSheetClass):
         self.lastFree = len(fandomList)+1
 
         for usr in fandomList:
-            usr[0]= usr[0].split('@')[-1] if usr[0].find('@') >= 0 else usr[0].split('/')[-1]
-            usr[1] = usr[1].replace(' ', '').split(',')
-
+            try:
+                usr[0]= usr[0].split('@')[-1] if usr[0].find('@') >= 0 else usr[0].split('/')[-1]
+                usr[1] = usr[1].replace(' ', '').split(',')
+            except:
+                continue
 
         return fandomList
     

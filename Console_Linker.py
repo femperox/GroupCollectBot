@@ -363,10 +363,9 @@ def ArchiveCollects():
     
     if choise == 1:
         lists = [ collect_table.sp.spreadsheetsIds['Дашины лоты (Архив)'][0],
-                  collect_table.sp.spreadsheetsIds['ТестЛист'][0]
                 ]
         
-        lists_name = ['Дашины лоты (Архив)', 'ТестЛист']
+        lists_name = ['Дашины лоты (Архив)']
 
         print('\nВыберите лист из таблицы:\n' + Messages.formConsoleListMes(info_list = lists_name))
         choise1 = int(input('Выбор: '))
@@ -401,7 +400,7 @@ def changeStatus(stat, orderList, payment = ''):
         ShipmentToRussiaEvent(orderList = collectIndList)
 
         # если сразу ехало на получателя
-        if stat.lower().find('y') > -1:
+        if stat.lower().find(' y ') > -1:
             participants = DB_Operations.getOrderParticipants(collect_id = item[1], collect_type = item[0])
             for participant in participants:
                 DB_Operations.updateSentStatusForParticipant(collect_id = item[1],
@@ -615,9 +614,8 @@ def console():
 
             lists = [ collect_table.sp.spreadsheetsIds['Дашины лоты'][0],
                     collect_table.sp.spreadsheetsIds['Дашины индивидуалки'][0],
-                    collect_table.sp.spreadsheetsIds['ТестЛист'][0]
                     ]
-            lists_name = ['Дашины лоты', 'Дашины индивидуалки', 'ТестЛист']
+            lists_name = ['Дашины лоты', 'Дашины индивидуалки']
             
 
             print('\nВыберите лист из таблицы:\n' + Messages.formConsoleListMes(info_list = lists_name))
