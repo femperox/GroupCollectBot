@@ -70,18 +70,18 @@ class YoutoozApi:
         shipment_prices = {}
 
         shipment_prices['vinyl'] = {}
-        shipment_prices['vinyl']['5"'] = 7
+        shipment_prices['vinyl']['5"'] = 9
         shipment_prices['vinyl']['1ft'] = 20
 
         shipment_prices['plush'] = {}
-        shipment_prices['plush']['4"/6"'] = 7
-        shipment_prices['plush']['4"/6"/9"/1ft/16"'] = 7
+        shipment_prices['plush']['4"/6"'] = 9
+        shipment_prices['plush']['4"/6"/9"/1ft/16"'] = 9
         shipment_prices['plush']['weighted 16"'] = 20
         shipment_prices['plush']['2ft'] = 50
         shipment_prices['plush']['plush bag'] = 10
 
         shipment_prices['slippers'] = {}
-        shipment_prices['slippers']['slippers'] = 10
+        shipment_prices['slippers']['slippers'] = 12
 
         shipment_prices['jenga'] = {}
         shipment_prices['jenga']['jenga'] = 10
@@ -93,10 +93,10 @@ class YoutoozApi:
         shipment_prices['prints']['prints'] = 20
 
         shipment_prices['mugs'] = {}
-        shipment_prices['mugs']['mug'] = 7
+        shipment_prices['mugs']['mug'] = 9
 
         shipment_prices['pins'] = {}
-        shipment_prices['pins']['set'] = 5
+        shipment_prices['pins']['set'] = 7
 
         return shipment_prices
     
