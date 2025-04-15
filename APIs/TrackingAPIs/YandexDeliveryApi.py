@@ -71,8 +71,6 @@ class YandexDeliveryApi():
             parcel['operationDate'] = datetime.now()
             parcel['mass'] = 0
             return parcel
-        
-        parcel['operationType'] = info['timeline']['current_item_id']
 
         content_sections = [content_section['items'] for content_section in info['content_sections']]
         phones = []
@@ -86,15 +84,21 @@ class YandexDeliveryApi():
         
         order_id = list(filter(lambda item: 'trail_text' in item.keys(),  info['content_sections'][0]['items']))
         order_id = order_id[1]['trail_text']['text'] if len(order_id) > 1 else order_id[0]['trail_text']['text']
-        lastOperation = list(filter(lambda item: item['status'] == 'passed', route_info))[-1]
-
-        parcel['operationAttr'] = order_id + ' ' + lastOperation['title'].lower()
-        parcel['operationIndex'] = lastOperation['subtitle'] if 'subtitle' in lastOperation.keys() else parcel['destinationIndex']
-
-        locale.setlocale(locale.LC_TIME, 'ru_RU.UTF-8')
-        operationDate = datetime.strptime(lastOperation['lead_title'], '%d %b')
-        operationDate = datetime(day=operationDate.day, month=operationDate.month, year=datetime.now().year)
-        parcel['operationDate'] = operationDate
+        
+        if info['summary'].lower() == 'доставлено':
+            parcel['operationType'] = 'delivered'
+            parcel['operationAttr'] = info['summary']
+            parcel['operationIndex'] = parcel['destinationIndex']
+            parcel['operationDate'] = datetime.today()
+        else:
+            parcel['operationType'] = info['timeline']['current_item_id']
+            lastOperation = list(filter(lambda item: item['status'] == 'passed', route_info))[-1]
+            parcel['operationAttr'] = order_id + ' ' + lastOperation['title'].lower()
+            parcel['operationIndex'] = lastOperation['subtitle'] if 'subtitle' in lastOperation.keys() else parcel['destinationIndex']
+            locale.setlocale(locale.LC_TIME, 'ru_RU.UTF-8')
+            operationDate = datetime.strptime(lastOperation['lead_title'], '%d %b')
+            operationDate = datetime(day=operationDate.day, month=operationDate.month, year=datetime.now().year)
+            parcel['operationDate'] = operationDate
 
         parcel['mass'] = 0
         
