@@ -38,6 +38,7 @@ def checkCollects():
 
     for collect in collectList:
         if collect:
+            print(collect)
             collect[0] = vk.get_name(collect[0]).split('(')
             collect[0][0] = collect[0][0].replace('@id', '')
             collect[0][1] = collect[0][1].replace(')', '')
@@ -59,10 +60,9 @@ def checkCollects():
         cList = []
         full_list = {}
         for rawCollect in collectList:
-            admin_info = [rawCollect[0][0], rawCollect[0][1], rawCollect[-2]]
+            admin_info = [rawCollect[0][0], rawCollect[0][1], rawCollect[-1]]
             if collect == rawCollect[1][0] and admin_info not in cList:
                 cList.append(admin_info)
-                full_list["samurai"] = rawCollect[-1]
                 full_list["group_name"] = rawCollect[1][1]
 
             full_list["admins"] = cList.copy()

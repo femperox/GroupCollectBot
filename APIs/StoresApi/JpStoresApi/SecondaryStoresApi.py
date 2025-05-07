@@ -106,15 +106,15 @@ class SecondaryStoreApi:
         item = {}
         
         ok = WebUtils.getSelenium()
-
         # у манды оч странная херота - просто открыть страницу без рефера не получится (либо я лохушка)
         ok.open("https://www.mandarake.co.jp")
         time.sleep(5)
         ok.open("https://www.mandarake.co.jp/index2.html")
+        print('ok3')
         time.sleep(5)
         ok.open(url)
-        time.sleep(15)      
-
+        time.sleep(15) 
+        
         try:
             # хз как иначе вытащить картинку товара
             img = ok.find_element(By.ID, "elevate_zoom").get_attribute("src")

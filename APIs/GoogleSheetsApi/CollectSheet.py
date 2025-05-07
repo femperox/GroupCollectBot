@@ -24,7 +24,7 @@ class CollectSheet(ParentSheetClass):
         spId = 1403720531
         sheetName = self.get_sheets()[spId]
 
-        range = f"'{sheetName}'!B:E"
+        range = f"'{sheetName}'!B:D"
         
         collectList = self.service.spreadsheets().values().get(spreadsheetId = self.getSpreadsheetId(), range=range).execute()['values'][1:]
 
@@ -34,7 +34,7 @@ class CollectSheet(ParentSheetClass):
             if collect:
                 collect_first = collect[0].split('@')[-1] if collect[0].find('@')>=0 else collect[0].split('/')[-1]
                 collect_second = collect[1].split('@')[-1] if collect[1].find('@')>=0 else collect[1].split('/')[-1]
-                newCollectList.append([collect_first, collect_second, collect[2], collect[3]])
+                newCollectList.append([collect_first, collect_second, collect[2]])
 
         return newCollectList
     
@@ -71,10 +71,6 @@ class CollectSheet(ParentSheetClass):
                 info = url[2]
                 data.append(ce.insertValue(spId, ran, info))
 
-                ran = ran.replace('!D', '!E')
-                info = url[3]
-                data.append(ce.insertValue(spId, ran, info))
-
             row += 1
 
         body["data"] = data
@@ -103,13 +99,13 @@ class CollectSheet(ParentSheetClass):
         request_bold = []
         
         self.service.spreadsheets().values().clear(spreadsheetId = self.getSpreadsheetId(),
-                                                     range = f"'{sheetTitle}'!A2:D").execute()
+                                                     range = f"'{sheetTitle}'!A2:C").execute()
         
         rowHeightRange = {"start":0, "end": 1000}
         
-        request.append(ce.unmergeCells(spId, "A2:D1000"))
-        request.append(ce.setCellBorder(spId, "A2:D1000"))
-        request.append(ce.repeatCells(spId, "A2:D1000", color= c.white))
+        request.append(ce.unmergeCells(spId, "A2:C1000"))
+        request.append(ce.setCellBorder(spId, "A2:C1000"))
+        request.append(ce.repeatCells(spId, "A2:C1000", color= c.white))
         request.append(ce.setRowHeight(spId, rowHeightRange, height=35))
 
 
@@ -130,35 +126,29 @@ class CollectSheet(ParentSheetClass):
             collect_url = f'''=HYPERLINK("https://vk.com/club{key}"; "{collectList[key]['group_name']}")'''
             data.append(ce.insertValue(spId, ran, collect_url))
 
-            # ник на самурае
-            ran = ran.replace("!A", "!B")
-            data.append(ce.insertValue(spId, ran, collectList[key]['samurai']))
-            
             # инфо про админов
             for admin in collectList[key]['admins']:
-               
-                ran = f"'{sheetTitle}'!C{row}"
+                
+                ran = f"'{sheetTitle}'!B{row}"
                 admin_url = f'''=HYPERLINK("https://vk.com/id{admin[0]}"; "{admin[1]}")''' 
                 data.append(ce.insertValue(spId, ran, admin_url))
-                ran = ran.replace("!C", "!D")
+                ran = ran.replace("!B", "!C")
                 data.append(ce.insertValue(spId, ran, admin[2]))
                 row +=1
             
             #обединение ячеек
             if start_row < row - 1:
                 request.append(ce.mergeCells(spId, f"A{start_row}:A{row-1}"))
-                request.append(ce.mergeCells(spId, f"B{start_row}:B{row-1}"))
 
             # рамки ячеек
-            request.append(ce.setCellBorder(spId, f"A{start_row}:D{row}", bstyleList=b.plain_black))
-            request_bold.append(ce.setCellBorder(spId, f"A{start_row}:D{row}", all_same=False, bstyleList=[b.medium_black, b.plain_black, b.plain_black, b.plain_black, b.plain_black, b.plain_black]))
+            request.append(ce.setCellBorder(spId, f"A{start_row}:C{row}", bstyleList=b.plain_black))
+            request_bold.append(ce.setCellBorder(spId, f"A{start_row}:C{row}", all_same=False, bstyleList=[b.medium_black, b.plain_black, b.plain_black, b.plain_black, b.plain_black, b.plain_black]))
             
             if cellColorFlag:
-                request.append(ce.repeatCells(spId, f"A{start_row}:D{row-1}", color= c.white_blue))
+                request.append(ce.repeatCells(spId, f"A{start_row}:C{row-1}", color= c.white_blue))
             
             cellColorFlag = not cellColorFlag    
-            
-        
+
         body["data"] = data
 
         request.extend(request_bold)

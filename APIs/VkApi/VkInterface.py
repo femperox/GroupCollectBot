@@ -32,12 +32,14 @@ class VkApi:
         self.path = '/APIs/VkApi/tmp/'
 
         auth_data = self._login_pass_get(tmp_dict)
+
         if auth_data[0] and auth_data[1]:
             self.__vk_session = vk_api.VkApi(
                 auth_data[0],
                 auth_data[1],
                 auth_handler=self._two_factor_auth,
                 captcha_handler=self.captcha_handler,
+                api_version = 5.199
             )
         self.__vk_session.auth(token_only=True)
         self.vk = self.__vk_session.get_api()
@@ -46,7 +48,7 @@ class VkApi:
         self.__admins = tmp_dict['admins']
         
         vk_session = vk_api.VkApi(token=self.__tok)
-        self.__vk_message = vk_session.get_api()
+        self.__token_session = vk_session.get_api()
 
         self.lang = 100
 
@@ -204,7 +206,7 @@ class VkApi:
             dict: В случае успешного выполнения запроса вернёт словарь с представлением медиа Вконтакте
         """
         if image_name != '':
-            vk_response = self.vk.photos.getOwnerCoverPhotoUploadServer(**VkParams.getOwnerCoverPhotoUploadServerParams(group_id = self.__group_id))
+            vk_response = self.__token_session.photos.getOwnerCoverPhotoUploadServer(**VkParams.getOwnerCoverPhotoUploadServerParams(group_id = self.__group_id))
             vk_url = vk_response['upload_url']
             try:
                 vk_response = requests.post(
@@ -213,7 +215,7 @@ class VkApi:
                 ).json()
 
                 if vk_response['photo']:
-                    vk_image = self.vk.photos.saveOwnerCoverPhoto(**VkParams.getPhotosSaveParams(photo = vk_response['photo'],
+                    vk_image = self.__token_session.photos.saveOwnerCoverPhoto(**VkParams.getPhotosSaveParams(photo = vk_response['photo'],
                                                                                                  hash = vk_response['hash']))
                     return vk_image
             except:
@@ -234,14 +236,15 @@ class VkApi:
             if isWallServer:
                 vk_response = self.vk.photos.getWallUploadServer(group_id=self.__group_id)
             else:
-                vk_response = self.vk.photos.getMessagesUploadServer()
-            
+                vk_response = self.__token_session.photos.getMessagesUploadServer()
             vk_url = vk_response['upload_url']
             try:
                 vk_response = requests.post(
                     vk_url, 
                     files={'photo': open(os.getcwd()+ self.path + image_name, 'rb')}
-                ).json()
+                )
+
+                vk_response = vk_response.json()
                 os.remove(os.getcwd()+ self.path + image_name)
 
                 if vk_response['photo']:
@@ -254,7 +257,7 @@ class VkApi:
                         )
                     else:
 
-                        vk_image = self.vk.photos.saveMessagesPhoto(
+                        vk_image = self.__token_session.photos.saveMessagesPhoto(
                             **VkParams.getPhotosSaveParams(photo = vk_response['photo'],
                                                            server = vk_response['server'],
                                                            hash = vk_response['hash'])
@@ -384,7 +387,7 @@ class VkApi:
         :return:
         '''
 
-        group = self.vk.groups.getById(**VkParams.getGroupsParams(group_id = id, lang = self.lang))
+        group = self.vk.groups.getById(**VkParams.getGroupsParams(group_id = id, lang = self.lang))['groups']
         return "@club{0}({1})".format(group[0]['id'], group[0]['name']) 
     
 
@@ -410,7 +413,7 @@ class VkApi:
             dict: словарь информации о сообщении
         """
 
-        return self.__vk_message.messages.getByConversationMessageId(
+        return self.__token_session.messages.getByConversationMessageId(
             **VkParams.getConversationMessageIdParams(  peer_id = chat_id,
                                                         group_id = self.__group_id,
                                                         conversation_message_ids = mess_id)
@@ -424,7 +427,7 @@ class VkApi:
             user (int): id пользователя
         """
 
-        self.__vk_message.messages.removeChatUser(**VkParams.getRemoveChatUserParams(   chat_id = chat % 2000000000,
+        self.__token_session.messages.removeChatUser(**VkParams.getRemoveChatUserParams(   chat_id = chat % 2000000000,
                                                                                         user = user,
                                                                                         member_id = user))
 
@@ -450,7 +453,7 @@ class VkApi:
                     if attachments != ('', []):
                         params_attachment = attachments[0]
 
-            self.__vk_message.messages.send(**VkParams.getSendMessageParams(group_id = self.__group_id,
+            self.__token_session.messages.send(**VkParams.getSendMessageParams(group_id = self.__group_id,
                                                                             peer_ids = users,
                                                                             message = mess,
                                                                             reply_to = reply_to,
@@ -474,7 +477,7 @@ class VkApi:
         """
 
         try:
-            result = self.__vk_message.messages.getByConversationMessageId(
+            result = self.__token_session.messages.getByConversationMessageId(
                 **VkParams.getConversationMessageIdParams(  peer_id = peer_id,
                                                             group_id = self.__group_id,
                                                             conversation_message_ids = conv_id)
@@ -494,7 +497,7 @@ class VkApi:
             list of int: список id участников беседы
         """
 
-        result = self.__vk_message.messages.getConversationMembers(peer_id = chat_id)
+        result = self.__token_session.messages.getConversationMembers(peer_id = chat_id)
         result = [profile['id'] for profile in result['profiles']]
 
         return result
@@ -685,7 +688,7 @@ class VkApi:
                             
                             DB_Operations.updateUserMenuStatus(user_id = chat, status= PayloadType.menu_bot_none["type"])
 
-                            self.__vk_message.messages.delete(**VkParams.getDeleteMessageParams(peer_id = chat, 
+                            self.__token_session.messages.delete(**VkParams.getDeleteMessageParams(peer_id = chat, 
                                                                                                 group_id = self.__group_id,
                                                                                                 cmids = mes['items'][0]['conversation_message_id']))
                         # Челик поставил на выкуп товар
@@ -703,7 +706,7 @@ class VkApi:
                                          pic = [attachment] if attachment else [],
                                          keyboard=VkButtons.form_menu_buying_buttons(userId = event.object.user_id, userMesId = mes['items'][0]['id']))
 
-                            self.__vk_message.messages.edit(**VkParams.getEditMessageParams(peer_id = mes['items'][0]['peer_id'],
+                            self.__token_session.messages.edit(**VkParams.getEditMessageParams(peer_id = mes['items'][0]['peer_id'],
                                                                                             message = mes['items'][0]['text'],
                                                                                             group_id = self.__group_id,
                                                                                             conversation_message_id = mes['items'][0]['conversation_message_id'],
@@ -727,7 +730,7 @@ class VkApi:
                                 attachment =  mes['items'][0]['attachments'][0]['photo']
                                 attachment = 'photo{}_{}_{},'.format(attachment['owner_id'], attachment['id'], attachment['access_key'])
 
-                            self.__vk_message.messages.edit(**VkParams.getEditMessageParams(peer_id = mes['items'][0]['peer_id'],
+                            self.__token_session.messages.edit(**VkParams.getEditMessageParams(peer_id = mes['items'][0]['peer_id'],
                                                                                             message = Messages.set_mes_buying_status(itemStatus) + mes['items'][0]['text'],
                                                                                             group_id =  self.__group_id,
                                                                                             conversation_message_id = mes['items'][0]['conversation_message_id'],
@@ -735,7 +738,7 @@ class VkApi:
 
                             self.sendMes(mess = mess, users = event.object['payload']['user'], reply_to = event.object['payload']['userMes'])           
 
-                        self.__vk_message.messages.sendMessageEventAnswer(
+                        self.__token_session.messages.sendMessageEventAnswer(
                             **VkParams.getSendMessageEventAnswerParams( user_id = event.object.user_id,
                                                                         peer_id = event.object.peer_id,
                                                                         event_id = event.object.event_id)
@@ -774,7 +777,7 @@ class VkApi:
                         except Exception as e:
                             pprint(e)
                             logger_utils.info(f"""[ERROR_CHECK_PRICE] - Не удалось посчитать цену для пользователя {self.get_name(id = sender)} товара [{url}] :: {e}""")
-                            self.sendMes(mess = "Возникла ошибка, попробуйте позже ещё раз! Убедитесь в правильности ссылки! Снова выберите в меню кнопку расчёта цены", users= chat) 
+                            self.sendMes(mess = "Возникла ошибка, попробуйте позже ещё раз! Убедитесь в правильности ссылки! Убедитесь, что товар доступен для покупки! Снова выберите в меню кнопку расчёта цены", users= chat) 
                             self.sendMes(mess = f"Сообщение:\n {url}\n\n\nОшибка:\n{e}", users=VK_ERRORS_CHAT_ID)                                 
                     
                     # получение избранного        
@@ -931,7 +934,7 @@ class VkApi:
             from_group (int, optional): от лица группы. Defaults to 1
         """
         try:
-            self.__vk_message.wall.createComment(**VkParams.getWallCreateCommentParams(owner_id = f'-{self.__group_id}',
+            self.__token_session.wall.createComment(**VkParams.getWallCreateCommentParams(owner_id = f'-{self.__group_id}',
                                                                                         post_id = post_id,
                                                                                         message = mess,
                                                                                         from_group = from_group))
