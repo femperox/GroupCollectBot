@@ -11,7 +11,7 @@ from confings.Consts import RegexType, CollectTypes
 from APIs.GoogleSheetsApi.StoresCollectOrdersSheets import StoresCollectOrdersSheets
 from APIs.GoogleSheetsApi.CollectOrdersSheet import CollectOrdersSheet
 import time
-
+from APIs.GoogleSheetsApi.CollectSheet import CollectSheet
 from pprint import pprint
 import sys
 from traceback import print_exc
@@ -31,45 +31,78 @@ def addNewUsers():
     ts.updateURLS(list)
 
 def checkCollects():
-    """Проверить список коллектов
+    """Проверить список коллектов/шопов
     """
+    def checkCollectsWrapper(type, rawSheetIdKey: CollectSheet.SheetIdClass, publicSheetIdKey: CollectSheet.SheetIdClass):
+        """Обертка checkCollects
 
-    collectList = cs.getSheetListProperties()
+        Args:
+            type (string): шоп/коллект
+            rawSheetIdKey (CollectSheet.SheetIdClass): ключ от листа с сырыми данными
+            publicSheetIdKey (CollectSheet.SheetIdClass): ключ от листа с обработанными данными
+        """
+        start_row = DB_Operations.getRawCollectsShopsSeenRows(type = type)
+        info = collects.getSheetListProperties(spId = collects.getSheetId(sheet_id_key = rawSheetIdKey), startRow = start_row)
+        next_seen_row = info['nextSeenRow']
+        info = info['collectList']
 
-    for collect in collectList:
-        if collect:
-            print(collect)
-            collect[0] = vk.get_name(collect[0]).split('(')
-            collect[0][0] = collect[0][0].replace('@id', '')
-            collect[0][1] = collect[0][1].replace(')', '')
+        if info:
+            for inf in info:
+                current_gr_id = vk.get_group_id(id = inf['group_id'].replace('club', ''))
+                if current_gr_id in DB_Operations.getAllCollectsShopsList(type):
+                    continue
+                else:
+                    DB_Operations.updateInsertPublicCollectsShopsList(vk_group_id = current_gr_id,
+                                                        type = type,
+                                                        city = inf['city'],
+                                                        countries = inf['countries'],
+                                                        shops = inf['shops'],
+                                                        fandoms = inf['fandoms'])                  
+                    vk_admin_id = vk.get_id(inf['admin_id'])
+                    DB_Operations.updateInsertPublicCollectsShopsAdminsList(vk_admin_id = vk_admin_id,
+                                                            vk_group_id = current_gr_id,
+                                                            admin_role = inf['admin_role'],
+                                                            )
+                    
+            collectList = DB_Operations.getAllCollectsShopsList(type = type)
+            if collectList:
+                formatedList = []
+                for collect in collectList:
+                    info = {}
+                    adminsList = DB_Operations.getCollectsShopsAdminsList(vk_group_id = collect[0])
+                    groupInfo = DB_Operations.getCollectsShopsList(vk_group_id = collect[0])[0]
+                    groupInfoVk = vk.get_group_info(id = collect[0])['groups'][0]
+                    info['groupId'] = groupInfoVk['id']
+                    info['pictureUrl'] = groupInfoVk['photo_200']
+                    info['groupName'] = groupInfoVk['name']
+                    info['groupInfo'] = {
+                        'city': groupInfo[3],
+                        'countries': groupInfo[4],
+                        'shops': groupInfo[5],
+                        'fandoms': groupInfo[6]
+                    }.copy()
+                    info['admins'] = []
+                    for admin in adminsList:
+                        adminInfo = {}
+                        adminInfo['adminId'] = admin[0]
+                        adminInfo['adminRole'] = admin[2]
+                        adminInfo['adminName'] = vk.get_name(id = admin[0]).split('(')[-1].replace(')', '')
+                        info['admins'].append(adminInfo.copy())
+                    formatedList.append(info.copy())
+                    time.sleep(2)
 
-            collect[1] = vk.get_group_name(collect[1]).split('(')
-            collect[1][0] = collect[1][0].replace('@club', '')
-            collect[1][1] = collect[1][1].replace(')', '')
+                formatedList.sort(key = lambda x:x['groupName'].lower())
+                publicCollectList = CollectSheet(spreadsheetKey = CollectSheet.SpreadsheetKeyClass.publicShopsCollectsList)
+                publicCollectList.createCollectView(collectList = formatedList, spId = collects.getSheetId(sheet_id_key = publicSheetIdKey))
+                DB_Operations.UpdateRawCollectsShopsSeenRows(type = type, next_seen_row = next_seen_row)
     
-    
-    cs.updateURLS(collectList)
-        
-    distinct_collects = set([collect[1][0] for collect in collectList])
-    
-    new_list = {}
-    # сортировка по коллеткам
-    for collect in distinct_collects:
-
-        # cList вида - [ [ id, name, role ], ...  ]
-        cList = []
-        full_list = {}
-        for rawCollect in collectList:
-            admin_info = [rawCollect[0][0], rawCollect[0][1], rawCollect[-1]]
-            if collect == rawCollect[1][0] and admin_info not in cList:
-                cList.append(admin_info)
-                full_list["group_name"] = rawCollect[1][1]
-
-            full_list["admins"] = cList.copy()
-
-        new_list[collect] = full_list.copy()
-        
-    cs.createCollectView(new_list)
+    collects = CollectSheet(spreadsheetKey = CollectSheet.SpreadsheetKeyClass.rawShopsCollectsList)
+    checkCollectsWrapper(type = 'коллект', 
+                         rawSheetIdKey = CollectSheet.SheetIdClass.rawCollectsSheetId,
+                         publicSheetIdKey = CollectSheet.SheetIdClass.publicCollectsSheetId)
+    checkCollectsWrapper(type = 'шоп', 
+                            rawSheetIdKey = CollectSheet.SheetIdClass.rawShopsSheetId,
+                            publicSheetIdKey = CollectSheet.SheetIdClass.publicShopsSheetId)
 
 def updateCurrencyStatus():
     """Обновление статуса с текущим курсом рубля к йене

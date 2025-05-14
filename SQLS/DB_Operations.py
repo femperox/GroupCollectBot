@@ -998,3 +998,166 @@ def updateUserMenuStatus(user_id, status = '', country = ''):
     conn.commit() 
     cursor.close()
     conn.close()
+
+
+#============================
+
+def updateInsertPublicCollectsShopsList(vk_group_id, type = '', is_active = 1, city = '', countries = '', shops = '', fandoms = ''):
+    """Обновить таблицу со списком шопов/коллектов
+
+    Args:
+        vk_group_id (int): id группы
+        type (string, optional): тип посредничества. Defaults to ''.
+        is_active (int, optional): активность сообщества. Defaults to 1.
+        city (string, city): город. Defaults to ''.
+        countries (string, city): страны. Defaults to ''.
+        shops (string, city): магазины. Defaults to ''.
+        fandoms (string, city): фандомы. Defaults to ''.
+
+    Returns:
+        int: результат обновления таблицы. 0 - запись существует, 1 - запись добавлена.
+    """
+
+    conn = getConnection(DbNames.collectDatabase)
+    cursor = conn.cursor()  
+    cursor.execute(f'''SELECT InsertUpdatePublicCollectsShopsList({vk_group_id}, '{type}', cast({is_active} as bool), '{city}', '{countries}', '{shops}', '{fandoms}');''')
+    result = cursor.fetchone()[0]
+   
+    conn.commit() 
+    cursor.close()
+    conn.close()
+
+    return result
+
+def updateInsertPublicCollectsShopsAdminsList(vk_admin_id, vk_group_id, admin_role = ''):
+    """Обновить таблицу со списком админов шопов/коллектов
+
+    Args:
+        vk_admin_id (int): id админа
+        vk_group_id (int): id группы
+        admin_role (string, optional): роль админа. Defaults to ''.
+
+    Returns:
+        int: результат обновления таблицы. 0 - запись существует, 1 - запись добавлена, -1 - группы не существует.
+    """
+
+    conn = getConnection(DbNames.collectDatabase)
+    cursor = conn.cursor()  
+
+    cursor.execute(f'''SELECT InsertUpdatePublicCollectsShopsAdminList({vk_admin_id}, {vk_group_id}, '{admin_role}');''')
+    result = cursor.fetchone()[0]
+   
+    conn.commit() 
+    cursor.close()
+    conn.close()
+
+    return result
+
+def getAllCollectsShopsList(type):
+    """Получить все группы шопов/коллектов по типу
+
+    Args:
+        type (string): тип посредничества.
+
+    Returns:
+        list of list: записи с группами
+    """
+
+    conn = getConnection(DbNames.collectDatabase)
+    cursor = conn.cursor()  
+ 
+    sel = f'''SELECT DISTINCT vk_group_id from PUBLIC_COLLECTS_SHOPS_LIST where type = '{type}';
+           '''
+    cursor.execute(sel)
+    result = cursor.fetchall()
+        
+    cursor.close()
+    conn.close()
+    
+    return result
+
+def getCollectsShopsList(vk_group_id):
+    """Получить инфо о группе шопа/коллекта по id группы
+
+    Args:
+        vk_group_id (int): id группы.
+
+    Returns:
+        list of list: записи с инфой о группе
+    """
+
+    conn = getConnection(DbNames.collectDatabase)
+    cursor = conn.cursor()  
+ 
+    sel = f'''SELECT * from PUBLIC_COLLECTS_SHOPS_LIST where vk_group_id = {vk_group_id};
+           '''
+    cursor.execute(sel)
+    result = cursor.fetchall()
+        
+    cursor.close()
+    conn.close()
+    
+    return result
+
+def getCollectsShopsAdminsList(vk_group_id):
+    """Получить админов коллекта/шопа по id группы
+
+    Args:
+        vk_group_id (int): id группы.
+
+    Returns:
+        list of list: записи с инфой об админах группы
+    """
+
+    conn = getConnection(DbNames.collectDatabase)
+    cursor = conn.cursor()  
+ 
+    sel = f'''SELECT * from PUBLIC_COLLECTS_SHOPS_ADMINS_LIST where vk_group_id = {vk_group_id};
+           '''
+    cursor.execute(sel)
+    result = cursor.fetchall()
+        
+    cursor.close()
+    conn.close()
+    
+    return result
+
+def getRawCollectsShopsSeenRows(type):
+    """_summary_
+
+    Args:
+        type (_type_): _description_
+
+    Returns:
+        _type_: _description_
+    """
+    conn = getConnection(DbNames.collectDatabase)
+    cursor = conn.cursor()  
+ 
+    sel = f'''SELECT next_seen_row from RAW_COLLECTS_SHOPS_SEEN_ROWS where type = '{type}';'''
+    cursor.execute(sel)
+    result = cursor.fetchone()
+        
+    cursor.close()
+    conn.close()
+    
+    return result[0]
+
+def UpdateRawCollectsShopsSeenRows(type, next_seen_row):
+    """Обновить значение последней строки для анализа
+
+    Args:
+        type (string): тип шоп/коллект
+        next_seen_row (int): новое значение
+    """
+
+    conn = getConnection(DbNames.collectDatabase)
+    cursor = conn.cursor() 
+
+    cursor.execute(f'''Call UpdateRawCollectsShopsSeenRows('{type}', {next_seen_row});''')
+
+    conn.commit() 
+    cursor.close()
+    conn.close()
+
+    return

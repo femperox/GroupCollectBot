@@ -354,7 +354,7 @@ class VkApi:
         :param id: ссылка на пользователя в произвольном формате
         :return:
         '''
-
+        
         return self.vk.users.get(**VkParams.getUsersParams(user_ids = id, lang = self.lang))[0]['id']
     
     def get_tuple_name(self, id):
@@ -377,7 +377,7 @@ class VkApi:
         :return:
         '''
 
-        return self.vk.groups.getById(**VkParams.getGroupsParams(group_id = id, lang = self.lang))[0]['id']
+        return self.vk.groups.getById(**VkParams.getGroupsParams(group_id = id, lang = self.lang))['groups'][0]['id']
     
     def get_group_name(self, id):
         '''

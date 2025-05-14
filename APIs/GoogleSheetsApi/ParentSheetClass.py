@@ -100,6 +100,13 @@ class ParentSheetClass:
     
         return self.__spreadsheet_id
     
+
+    def getSheetId(self, sheet_id_key):
+
+        tmp_dict = json.load(open(SHEETS_ID_FILE, encoding='utf-8'))
+
+        return tmp_dict[sheet_id_key]
+    
     def get_sheets(self):
         """Получить информацию о листах документа
 
