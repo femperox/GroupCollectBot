@@ -154,8 +154,7 @@ class StoresCollectOrdersSheets(ParentSheetClass):
         list_title = self.getSheetListName(sheet_id = list_id)
 
         ranges = f'{list_title}!A{self.current_list.endRow +1 }:B{self.current_list.endRow + 2 + len(participantList)}'
-
         rowInfo = self.getSheetListPropertiesById(listId=list_id, includeGridData=True, ranges=[ranges])
-        
+
         return self.current_list.checkDeliveryToParticipant(rowInfo = rowInfo['data'][0]['rowData'],
                                                             participantList = participantList)

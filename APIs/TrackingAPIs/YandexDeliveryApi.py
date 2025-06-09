@@ -96,7 +96,10 @@ class YandexDeliveryApi():
             parcel['operationAttr'] = order_id + ' ' + lastOperation['title'].lower()
             parcel['operationIndex'] = lastOperation['subtitle'] if 'subtitle' in lastOperation.keys() else parcel['destinationIndex']
             locale.setlocale(locale.LC_TIME, 'ru_RU.UTF-8')
-            operationDate = datetime.strptime(lastOperation['lead_title'], '%d %b')
+            try:
+                operationDate = datetime.strptime(lastOperation['lead_title'], '%d %b')
+            except:
+                operationDate = datetime.strptime(lastOperation['lead_title'], '%d %B')
             operationDate = datetime(day=operationDate.day, month=operationDate.month, year=datetime.now().year)
             parcel['operationDate'] = operationDate
 

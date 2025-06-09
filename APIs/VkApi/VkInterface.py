@@ -285,13 +285,14 @@ class VkApi:
             urls_count = len(image_urls)
             for i in range(urls_count):
                 time.sleep(2)
-                new_image = self._local_image_upload(image_urls[i], tag)
-                if new_image != '':
-                    vk_image = self._vk_image_upload(new_image, user, isWallServer)
-               
-                    if vk_image != {}:
-                        result += 'photo{}_{}_{}'.format(vk_image['owner_id'], vk_image['id'], vk_image['access_key']) + ('' if i == urls_count - 1 else ',')
-                        result_urls.append(vk_image['sizes'][-1]['url'])
+                if image_urls[i] != '':
+                    new_image = self._local_image_upload(image_urls[i], tag)
+                    if new_image != '':
+                        vk_image = self._vk_image_upload(new_image, user, isWallServer)
+                
+                        if vk_image != {}:
+                            result += 'photo{}_{}_{}'.format(vk_image['owner_id'], vk_image['id'], vk_image['access_key']) + ('' if i == urls_count - 1 else ',')
+                            result_urls.append(vk_image['sizes'][-1]['url'])
             if result != '':
                 if result[len(result) - 1] == ',':
                     result[:len(result) - 1:]

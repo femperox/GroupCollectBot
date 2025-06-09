@@ -1066,7 +1066,7 @@ def getAllCollectsShopsList(type):
     conn = getConnection(DbNames.collectDatabase)
     cursor = conn.cursor()  
  
-    sel = f'''SELECT DISTINCT vk_group_id from PUBLIC_COLLECTS_SHOPS_LIST where type = '{type}';
+    sel = f'''SELECT DISTINCT vk_group_id from PUBLIC_COLLECTS_SHOPS_LIST where type = '{type}' and is_active = true;
            '''
     cursor.execute(sel)
     result = cursor.fetchall()

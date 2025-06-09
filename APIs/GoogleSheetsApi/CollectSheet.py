@@ -121,7 +121,7 @@ class CollectSheet(ParentSheetClass):
         request.append(ce.unmergeCells(spId, "A2:E1000"))
         request.append(ce.setCellBorder(spId, "A2:E1000"))
         request.append(ce.repeatCells(spId, "A2:E1000", color= c.white))
-        request.append(ce.setRowHeight(spId, rowHeightRange, height=65))
+        request.append(ce.setRowHeight(spId, rowHeightRange, height=90))
 
 
         cellColorFlag = True
