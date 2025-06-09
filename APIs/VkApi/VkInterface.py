@@ -378,7 +378,11 @@ class VkApi:
         :return:
         '''
 
-        return self.vk.groups.getById(**VkParams.getGroupsParams(group_id = id, lang = self.lang))['groups'][0]['id']
+        try:
+            result = self.vk.groups.getById(**VkParams.getGroupsParams(group_id = id.replace('@', ''), lang = self.lang))
+            return result['groups'][0]['id']
+        except:
+            return -1
     
     def get_group_name(self, id):
         '''
