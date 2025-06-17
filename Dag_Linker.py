@@ -48,7 +48,7 @@ def checkCollects():
 
         if info:
             for inf in info:
-                current_gr_id = vk.get_group_id(id = inf['group_id'].replace('club', ''))
+                current_gr_id = vk.get_group_id(id = inf['group_id'].replace('club', '').split('?')[0])
                 if current_gr_id in DB_Operations.getAllCollectsShopsList(type):
                     continue
                 else:
@@ -64,37 +64,37 @@ def checkCollects():
                                                             admin_role = inf['admin_role'],
                                                             )
                     
-        collectList = DB_Operations.getAllCollectsShopsList(type = type)
-        if collectList:
-            formatedList = []
-            for collect in collectList:
-                info = {}
-                adminsList = DB_Operations.getCollectsShopsAdminsList(vk_group_id = collect[0])
-                groupInfo = DB_Operations.getCollectsShopsList(vk_group_id = collect[0])[0]
-                groupInfoVk = vk.get_group_info(id = collect[0])['groups'][0]
-                info['groupId'] = groupInfoVk['id']
-                info['pictureUrl'] = groupInfoVk['photo_200']
-                info['groupName'] = groupInfoVk['name']
-                info['groupInfo'] = {
-                    'city': groupInfo[3],
-                    'countries': groupInfo[4],
-                    'shops': groupInfo[5],
-                    'fandoms': groupInfo[6]
-                }.copy()
-                info['admins'] = []
-                for admin in adminsList:
-                    adminInfo = {}
-                    adminInfo['adminId'] = admin[0]
-                    adminInfo['adminRole'] = admin[2]
-                    adminInfo['adminName'] = vk.get_name(id = admin[0]).split('(')[-1].replace(')', '')
-                    info['admins'].append(adminInfo.copy())
-                formatedList.append(info.copy())
-                time.sleep(2)
+            collectList = DB_Operations.getAllCollectsShopsList(type = type)
+            if collectList:
+                formatedList = []
+                for collect in collectList:
+                    info = {}
+                    adminsList = DB_Operations.getCollectsShopsAdminsList(vk_group_id = collect[0])
+                    groupInfo = DB_Operations.getCollectsShopsList(vk_group_id = collect[0])[0]
+                    groupInfoVk = vk.get_group_info(id = collect[0])['groups'][0]
+                    info['groupId'] = groupInfoVk['id']
+                    info['pictureUrl'] = groupInfoVk['photo_200']
+                    info['groupName'] = groupInfoVk['name']
+                    info['groupInfo'] = {
+                        'city': groupInfo[3],
+                        'countries': groupInfo[4],
+                        'shops': groupInfo[5],
+                        'fandoms': groupInfo[6]
+                    }.copy()
+                    info['admins'] = []
+                    for admin in adminsList:
+                        adminInfo = {}
+                        adminInfo['adminId'] = admin[0]
+                        adminInfo['adminRole'] = admin[2]
+                        adminInfo['adminName'] = vk.get_name(id = admin[0]).split('(')[-1].replace(')', '')
+                        info['admins'].append(adminInfo.copy())
+                    formatedList.append(info.copy())
+                    time.sleep(2)
 
-            formatedList.sort(key = lambda x:x['groupName'].lower())
-            publicCollectList = CollectSheet(spreadsheetKey = CollectSheet.SpreadsheetKeyClass.publicShopsCollectsList)
-            publicCollectList.createCollectView(collectList = formatedList, spId = collects.getSheetId(sheet_id_key = publicSheetIdKey))
-            DB_Operations.UpdateRawCollectsShopsSeenRows(type = type, next_seen_row = next_seen_row)
+                formatedList.sort(key = lambda x:x['groupName'].lower())
+                publicCollectList = CollectSheet(spreadsheetKey = CollectSheet.SpreadsheetKeyClass.publicShopsCollectsList)
+                publicCollectList.createCollectView(collectList = formatedList, spId = collects.getSheetId(sheet_id_key = publicSheetIdKey))
+                DB_Operations.UpdateRawCollectsShopsSeenRows(type = type, next_seen_row = next_seen_row)
     
     collects = CollectSheet(spreadsheetKey = CollectSheet.SpreadsheetKeyClass.rawShopsCollectsList)
     checkCollectsWrapper(type = 'коллект', 
