@@ -138,7 +138,7 @@ def updateTrackingStatuses():
                 if parcel[3] == TrackingTypes.ids[RegexType.regex_track] and tracking_info['operationAttr'] in TrackingSelector.selectArrivedStatuses(parcel[3]):
                         message = mess.mess_notify_arrival.format(tracking_info['barcode'], tracking_info['operationIndex'], DB_Operations.getParcelExpireDate(tracking_info['barcode']))
                 elif parcel[3] == TrackingTypes.ids[RegexType.regex_track_yandex] and tracking_info['operationType'] in TrackingSelector.selectArrivedStatuses(parcel[3]):
-                        message = mess.mess_notify_arrival_yandex.format(tracking_info['barcode'], tracking_info['operationAttr'], tracking_info['destinationIndex'], tracking_info['operationIndex'])
+                        message = mess.mess_notify_arrival_yandex.format(tracking_info['barcode'], tracking_info['operationAttr'], tracking_info['destinationIndex'], DB_Operations.getParcelExpireDate(tracking_info['barcode']))
                 elif parcel[3] == TrackingTypes.ids[RegexType.regex_track_cdek] and tracking_info['operationType'] in TrackingSelector.selectArrivedStatuses(parcel[3]):
                         message = mess.mess_notify_arrival_cdek.format(tracking_info['barcode'], tracking_info['destinationIndex'], DB_Operations.getParcelExpireDate(tracking_info['barcode']))
                 if message:            
