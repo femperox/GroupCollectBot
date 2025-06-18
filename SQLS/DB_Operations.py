@@ -1029,13 +1029,14 @@ def updateInsertPublicCollectsShopsList(vk_group_id, type = '', is_active = 1, c
 
     return result
 
-def updateInsertPublicCollectsShopsAdminsList(vk_admin_id, vk_group_id, admin_role = ''):
+def updateInsertPublicCollectsShopsAdminsList(vk_admin_id, vk_group_id, admin_role = '', is_mbo_inserted = 0):
     """Обновить таблицу со списком админов шопов/коллектов
 
     Args:
         vk_admin_id (int): id админа
         vk_group_id (int): id группы
         admin_role (string, optional): роль админа. Defaults to ''.
+        is_mbo_inserted (int, optional): заполнение админами МБО. Defaults to 0.
 
     Returns:
         int: результат обновления таблицы. 0 - запись существует, 1 - запись добавлена, -1 - группы не существует.
@@ -1044,7 +1045,7 @@ def updateInsertPublicCollectsShopsAdminsList(vk_admin_id, vk_group_id, admin_ro
     conn = getConnection(DbNames.collectDatabase)
     cursor = conn.cursor()  
 
-    cursor.execute(f'''SELECT InsertUpdatePublicCollectsShopsAdminList({vk_admin_id}, {vk_group_id}, '{admin_role}');''')
+    cursor.execute(f'''SELECT InsertUpdatePublicCollectsShopsAdminList({vk_admin_id}, {vk_group_id}, '{admin_role}', cast({is_mbo_inserted} as bool));''')
     result = cursor.fetchone()[0]
    
     conn.commit() 

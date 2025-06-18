@@ -6,7 +6,7 @@ from Logger import logger_utils
 from APIs.TrackingAPIs.TrackingSelector import TrackingSelector, TrackingTypes
 from APIs.posredApi import PosredApi
 from confings.Messages import Messages as mess
-from confings.Consts import vkCoverTime
+from confings.Consts import vkCoverTime, MBO_INSERTED_INFO_ID
 from confings.Consts import RegexType, CollectTypes
 from APIs.GoogleSheetsApi.StoresCollectOrdersSheets import StoresCollectOrdersSheets
 from APIs.GoogleSheetsApi.CollectOrdersSheet import CollectOrdersSheet
@@ -57,11 +57,20 @@ def checkCollects():
                                                         city = inf['city'],
                                                         countries = inf['countries'],
                                                         shops = inf['shops'],
-                                                        fandoms = inf['fandoms'])                  
-                    vk_admin_id = vk.get_id(inf['admin_id'])
+                                                        fandoms = inf['fandoms'])   
+                    if inf['admin_id'] == MBO_INSERTED_INFO_ID:
+                        vk_admin_id = inf['admin_id']
+                        is_mbo_inserted = 1
+                        admin_role = 'Заполнено МБО'          
+                    else:
+                        vk_admin_id = vk.get_id(inf['admin_id'])
+                        is_mbo_inserted = 0
+                        admin_role = inf['admin_role']
+
                     DB_Operations.updateInsertPublicCollectsShopsAdminsList(vk_admin_id = vk_admin_id,
                                                             vk_group_id = current_gr_id,
-                                                            admin_role = inf['admin_role'],
+                                                            admin_role = admin_role,
+                                                            is_mbo_inserted = is_mbo_inserted
                                                             )
                     
             collectList = DB_Operations.getAllCollectsShopsList(type = type)
@@ -86,7 +95,7 @@ def checkCollects():
                         adminInfo = {}
                         adminInfo['adminId'] = admin[0]
                         adminInfo['adminRole'] = admin[2]
-                        adminInfo['adminName'] = vk.get_name(id = admin[0]).split('(')[-1].replace(')', '')
+                        adminInfo['adminName'] = '' if admin[3] else vk.get_name(id = admin[0]).split('(')[-1].replace(')', '')
                         info['admins'].append(adminInfo.copy())
                     formatedList.append(info.copy())
                     time.sleep(2)

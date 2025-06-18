@@ -377,11 +377,11 @@ class VkApi:
         :param id: ссылка на группу в произвольном формате
         :return:
         '''
-
         try:
             result = self.vk.groups.getById(**VkParams.getGroupsParams(group_id = id.replace('@', ''), lang = self.lang))
             return result['groups'][0]['id']
-        except:
+        except Exception as e:
+            pprint(e)
             return -1
     
     def get_group_name(self, id):
@@ -403,7 +403,6 @@ class VkApi:
         :param id: ссылка на пользователя в произвольном формате
         :return:
         '''
-
         group = self.vk.groups.getById(**VkParams.getGroupsParams(group_id = id, lang = self.lang))
         return group
     

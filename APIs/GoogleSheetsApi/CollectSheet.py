@@ -2,6 +2,7 @@ import APIs.GoogleSheetsApi.API.Cells_Editor as ce
 from APIs.GoogleSheetsApi.API.Styles.Borders import Borders as b
 from APIs.GoogleSheetsApi.API.Styles.Colors import Colors as c
 from APIs.GoogleSheetsApi.ParentSheetClass import ParentSheetClass
+from confings.Consts import MBO_INSERTED_INFO_ID
 from pprint import pprint
 
 
@@ -42,7 +43,11 @@ class CollectSheet(ParentSheetClass):
 
             for collect in collectList:
                 if collect:
-                    admin_id = collect[0].split('@')[-1] if collect[0].find('@')>=0 else collect[0].split('/')[-1]
+                    # заполнение от МБО
+                    if collect[0].lower().find('мбо') > -1:
+                        admin_id = MBO_INSERTED_INFO_ID
+                    else:
+                        admin_id = collect[0].split('@')[-1] if collect[0].find('@')>=0 else collect[0].split('/')[-1]
                     group_id = collect[1].split('@')[-1] if collect[1].find('@')>=0 else collect[1].split('/')[-1]
                     newCollectList.append({'admin_id':admin_id, 'group_id':group_id, 'admin_role': collect[2], 
                                         'city': collect[3] if len(collect) >= 4 else '',
@@ -152,7 +157,10 @@ class CollectSheet(ParentSheetClass):
             for admin in collect['admins']:
                 
                 ran = f"'{sheetTitle}'!C{row}"
-                admin_url = f'''=HYPERLINK("https://vk.com/id{admin['adminId']}"; "{admin['adminName']}")''' 
+                if admin['adminId'] == MBO_INSERTED_INFO_ID:
+                    admin_url = f'''{admin['adminName']}''' 
+                else:
+                    admin_url = f'''=HYPERLINK("https://vk.com/id{admin['adminId']}"; "{admin['adminName']}")''' 
                 data.append(ce.insertValue(spId, ran, admin_url))
                 ran = ran.replace("!C", "!D")
                 data.append(ce.insertValue(spId, ran, admin['adminRole']))
