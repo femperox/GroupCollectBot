@@ -38,6 +38,10 @@ class StoreSelector(StoreSelectorParent):
             item = StoresApi.parsePlushShopItem(url = url, item_id = item_id)
         elif site in [Stores.amazon, Stores.amazonShort]:
             item = AmazonApi.parseAmazonItem(url = url, item_id = item_id)
+        elif site == Stores.bratz:
+            item = StoresApi.parseBratzItem(url = url)
+        elif site == Stores.fangamer:
+            item = StoresApi.parseFangamerItem(url = url)
         
         return item
     
