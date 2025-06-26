@@ -73,7 +73,8 @@
 🌐 [youtooz](https://youtooz.com/) *(с 09.10.2024)*  
 🌐 [makeship](https://www.makeship.com) *(с 10.10.2024)*  
 🌐 [plushshop](https://www.plushshop.com) *(с 15.11.2024)*  
-🌐 [suruga-ya](https://www.suruga-ya.jp/) *(с 18.11.2024)*
+🌐 [suruga-ya](https://www.suruga-ya.jp/) *(с 18.11.2024)*  
+🌐 [amazon](https://www.amazon.com/) *(с 26.06.2025)*
 
 
 ## Что будет дорабатываться/добавляться?

@@ -775,7 +775,7 @@ class VkApi:
                         try:
                             url = re.findall(RegexType.regex_store_url_bot, url)[0]  
                             messText, pic = Messages.formPriceMes(url = url, country = selected_country)
-                            payload = event.obj.message['text'].split('?source=home_shops_flashsale_component')[0]
+                            payload = event.obj.message['text'].split('/?')[0]
                             self.sendMes(mess = messText, users= chat, keyboard = VkButtons.form_menu_buttons(isAddButton = True, buttonPayloadText = payload), pic = [pic] if pic else [])
                             logger_utils.info(f"""[CHECK_PRICE] - Расчитана цена для пользователя {self.get_name(id = sender)} товара [{url}]""")
                         except Exception as e:

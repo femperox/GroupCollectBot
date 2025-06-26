@@ -140,3 +140,20 @@ class WebUtils:
         print(f'got {len(proxy_list)} proxies') 
 
         return proxy_list
+
+    def cleanUrl(url):
+        """Почистить ссылку от лишних символов
+
+        Args:
+            url (stirng): ссылка
+
+        Returns:
+            stirng: очищенная ссылка
+        """
+
+        cleaned_url = url
+        if cleaned_url.find('/?') > -1:
+            cleaned_url = cleaned_url.split('/?')[0]
+        
+        return cleaned_url
+    
