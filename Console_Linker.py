@@ -733,10 +733,12 @@ def console():
 
             collectList = input("\nEnter collect's num using comma(, ) (might be empty): ")
             collectList = collectList.split(', ')
+            collectList = [int(x) for x in collectList]
             collectList.sort()
 
             indList = input("Enter ind's num using comma(, ) (might be empty): ")
             indList = indList.split(', ')
+            indList = [int(x) for x in indList]
             indList.sort()
 
             storeCollectList = input("Enter storeCollect title using comma(, ) (might be empty): ")
