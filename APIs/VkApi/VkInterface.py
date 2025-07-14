@@ -7,14 +7,13 @@ import json
 from pprint import pprint
 from datetime import datetime
 import re
-from random import randint
 from vk_api.bot_longpoll import VkBotLongPoll, VkBotEventType
 from vk_api.longpoll import VkLongPoll, VkChatEventType, VkEventType, VkLongpollMode
 from confings.Messages import MessageType, Messages
 from Logger import logger, logger_fav, logger_utils
 from SQLS import DB_Operations
-from confings.Consts import VkTopicCommentChangeType, ItemBuyStatus, VK_PROPOSED_CHAT_ID, VK_ERRORS_CHAT_ID, BanActionType, MAX_BAN_REASONS, RegexType, PayloadType, VkCommands, PRIVATES_PATH, Stores
-from APIs.utils import getMonitorChats, getFavInfo, getStoreMonitorChats
+from confings.Consts import VkTopicCommentChangeType, ItemBuyStatus, VK_PROPOSED_CHAT_ID, VK_ERRORS_CHAT_ID, BanActionType, MAX_BAN_REASONS, RegexType, PayloadType, VkCommands, PRIVATES_PATH, Stores, TEMP_PHOTO_PATH
+from APIs.utils import getMonitorChats, getFavInfo, getStoreMonitorChats, local_image_upload, isExistingFile
 from APIs.TrackingAPIs.TrackingSelector import TrackingSelector, TrackingTypes
 from APIs.StoresApi.JpStoresApi.StoreSelector import StoreSelector
 from APIs.VkApi.objects.VkButtons import VkButtons
@@ -29,7 +28,7 @@ class VkApi:
         self.__tok = tmp_dict[key_token]
         self.__group_id = tmp_dict[key_group_id]
         
-        self.path = '/APIs/VkApi/tmp/'
+        self.path = TEMP_PHOTO_PATH
 
         auth_data = self._login_pass_get(tmp_dict)
 
@@ -47,8 +46,8 @@ class VkApi:
         self._init_tmp_dir()
         self.__admins = tmp_dict['admins']
         
-        vk_session = vk_api.VkApi(token=self.__tok)
-        self.__token_session = vk_session.get_api()
+        self.__token_session_t = vk_api.VkApi(token=self.__tok)
+        self.__token_session = self.__token_session_t .get_api()
 
         self.lang = 100
 
@@ -157,44 +156,6 @@ class VkApi:
         except:
             print_exc()
             return None, None
-        
-    def _get_image_extension(self, url):
-        """Получить формат файла изображения
-
-        Args:
-            url (string): путь до файла
-
-        Returns:
-            string: формат файла
-        """
-        extensions = ['.png', '.jpg', '.jpeg', '.gif']
-        for ext in extensions:
-            if ext in url:
-                return ext
-        return '.jpg'
-
-    def _local_image_upload(self, url: str, tag:str) -> str:
-        """Функция скачивает изображение по url и возвращает строчку с полученным именем файла
-
-        Args:
-            url (str): Ссылка на изображение
-
-        Returns:
-            str: Имя файла или пустая строка
-        """
-        try:
-            extention = self._get_image_extension(url)
-            filename = ''
-            if extention != '':
-                filename = f'new_image{randint(0,15000)}_{tag}' + extention
-                response = requests.get(url)
-                image = open(os.getcwd()+ self.path + filename, 'wb')
-                image.write(response.content)
-                image.close()
-            return filename
-        except:
-            print_exc()
-            self._local_image_upload(url, tag)
 
     def _cover_image_upload(self, image_name: str) -> dict:
         """Загружает локальное изображение на сервера Вконтакте
@@ -239,13 +200,14 @@ class VkApi:
                 vk_response = self.__token_session.photos.getMessagesUploadServer()
             vk_url = vk_response['upload_url']
             try:
+                photoPath = image_name if isExistingFile(path = image_name) else self.path + image_name
                 vk_response = requests.post(
                     vk_url, 
-                    files={'photo': open(os.getcwd()+ self.path + image_name, 'rb')}
+                    files={'photo': open(photoPath, 'rb')}
                 )
 
                 vk_response = vk_response.json()
-                os.remove(os.getcwd()+ self.path + image_name)
+                os.remove(photoPath)
 
                 if vk_response['photo']:
                     if isWallServer:
@@ -286,7 +248,7 @@ class VkApi:
             for i in range(urls_count):
                 time.sleep(2)
                 if image_urls[i] != '':
-                    new_image = self._local_image_upload(image_urls[i], tag)
+                    new_image = image_urls[i] if isExistingFile(path = image_urls[i]) else local_image_upload(image_urls[i], tag)
                     if new_image != '':
                         vk_image = self._vk_image_upload(new_image, user, isWallServer)
                 
@@ -520,7 +482,7 @@ class VkApi:
     def monitorChatActivity(self, logger):
         """_summary_
         """
-
+        #self.__vk_session
         vkBotSession = vk_api.VkApi(token=self.__tok)
         longPoll = VkLongPoll(vkBotSession,mode= VkLongpollMode.GET_EXTENDED, group_id = self.__group_id, wait = 50)
         whiteList = [int(x) for x in self.__admins]
@@ -554,9 +516,7 @@ class VkApi:
        """Мониторинг активности группы
        """
        
-       vkBotSession = vk_api.VkApi(token = self.__tok)
-
-       longPoll = VkBotLongPoll(vkBotSession, self.__group_id, wait = 50)
+       longPoll = VkBotLongPoll(self.__token_session_t, self.__group_id, wait = 50)
        whiteList = [int(x) for x in self.__admins]
 
        # Личные сообщение
@@ -775,7 +735,7 @@ class VkApi:
                         try:
                             url = re.findall(RegexType.regex_store_url_bot, url)[0]  
                             messText, pic = Messages.formPriceMes(url = url, country = selected_country)
-                            payload = event.obj.message['text'].split('/?')[0]
+                            payload = event.obj.message['text'].split('/?')[0].split('/ref=')[0]
                             self.sendMes(mess = messText, users= chat, keyboard = VkButtons.form_menu_buttons(isAddButton = True, buttonPayloadText = payload), pic = [pic] if pic else [])
                             logger_utils.info(f"""[CHECK_PRICE] - Расчитана цена для пользователя {self.get_name(id = sender)} товара [{url}]""")
                         except Exception as e:

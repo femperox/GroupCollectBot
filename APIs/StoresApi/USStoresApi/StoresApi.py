@@ -163,3 +163,9 @@ class StoresApi:
         item = StoresApi.getInfo(curl = curl, variant = variant, url = url, 
                                  priceForFreeShipment = 79.99, shipmentPrice = 15, storeName = Stores.plushshop)
         return item
+    
+    @staticmethod
+    def parseHotTopicItem(url):
+
+        bs = WebUtils.getSoup(url = url, proxyServer = '212.6.44.158:53298', isUcSeleniumNeeded = True)
+        pprint(bs.text)

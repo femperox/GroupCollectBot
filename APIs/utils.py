@@ -1,7 +1,7 @@
 from datetime import datetime
 import os
 import json
-from confings.Consts import MONITOR_CONF_PATH, RegexType, STORE_MONITOR_CONF_PATH, CURRENT_POSRED
+from confings.Consts import MONITOR_CONF_PATH, RegexType, STORE_MONITOR_CONF_PATH, CURRENT_POSRED, TEMP_PHOTO_PATH
 import re
 from itertools import chain
 from pprint import pprint
@@ -10,6 +10,9 @@ from APIs.StoresApi.USStoresApi.StoreSelector import StoreSelector as StoreSelec
 from confings.Consts import Stores
 from dateutil.relativedelta import relativedelta
 import locale
+from random import randint
+import requests
+from traceback import print_exc
 
 def formShortList(storeList):
 
@@ -288,3 +291,126 @@ def flatTopicParticipantList(particpantList):
             continue
 
     return flatList
+
+def get_image_extension(url):
+    """Получить формат файла изображения
+
+    Args:
+        url (string): путь до файла
+
+    Returns:
+        string: формат файла
+    """
+    extensions = ['.png', '.jpg', '.jpeg', '.gif']
+    for ext in extensions:
+        if ext in url:
+            return ext
+    return '.jpg'
+
+def local_image_upload(url: str, tag:str, isFullPathNeeded = False) -> str:
+    """Функция скачивает изображение по url и возвращает строчку с полученным именем файла
+
+    Args:
+        url (str): Ссылка на изображение
+
+    Returns:
+        str: Имя файла или пустая строка
+    """
+    try:
+        extention = get_image_extension(url)
+        filename = ''
+        if extention != '':
+            filename = f'new_image{randint(0,15000)}_{tag}' + extention
+            response = requests.get(url)
+            image = open(TEMP_PHOTO_PATH + filename, 'wb')
+            image.write(response.content)
+            image.close()
+        return TEMP_PHOTO_PATH + filename if isFullPathNeeded else filename
+    except:
+        print_exc()
+        local_image_upload(url, tag)
+
+def createCollage(imagePaths, imagesPerRow = 3, spacing = 20):
+    """
+    Создает коллаж из изображений.
+    
+    :param image_paths: Список путей к изображениям
+    :param imagesPerRow : Количество изображений в строке (по умолчанию 4)
+    :param spacing: Расстояние между изображениями (по умолчанию 10 пикселей)
+    """
+    from PIL import Image
+    if not imagePaths:
+        return
+    outputPath = TEMP_PHOTO_PATH + f'new_collage_image{randint(0,15000)}.jpg'
+
+    images = [Image.open(img_path) for img_path in imagePaths]
+    widths, heights = zip(*(img.size for img in images))
+    
+    # Определяем размеры коллажа
+    max_height_per_row = []
+    current_row_width = 0
+    current_row_heights = []
+    rows_info = []
+    
+    for i, (w, h) in enumerate(zip(widths, heights)):
+        current_row_width += w
+        current_row_heights.append(h)
+        
+        # Если собрали imagesPerRow  изображений или это последнее изображение
+        if (i + 1) % imagesPerRow  == 0 or i == len(images) - 1:
+            max_height = max(current_row_heights)
+            rows_info.append({
+                "width": current_row_width,
+                "height": max_height,
+                "count": len(current_row_heights)
+            })
+            max_height_per_row.append(max_height)
+            current_row_width = 0
+            current_row_heights = []
+    
+    # Общая ширина коллажа — ширина самой широкой строки
+    collage_width = max(row["width"] for row in rows_info)
+    # Общая высота коллажа — сумма высот всех строк + отступы
+    collage_height = sum(max_height_per_row) + (spacing * (len(rows_info) - 1))
+    
+    # Создаем новое изображение для коллажа
+    collage = Image.new('RGB', (collage_width, collage_height), (255, 255, 255))
+    
+    # Вставляем изображения в коллаж
+    x_offset, y_offset = 0, 0
+    current_row = 0
+    current_row_images = 0
+    
+    for i, img in enumerate(images):
+        # Если строка заполнена, переходим на новую
+        if i > 0 and i % imagesPerRow  == 0:
+            y_offset += max_height_per_row[current_row] + spacing
+            x_offset = 0
+            current_row += 1
+            current_row_images = 0
+        
+        # Вычисляем отступ по Y для выравнивания по высоте строки
+        row_max_height = max_height_per_row[current_row]
+        y_pos = y_offset + (row_max_height - img.size[1]) // 2  # Центрируем по вертикали
+        
+        collage.paste(img, (x_offset, y_pos))
+        x_offset += img.size[0] + spacing
+        current_row_images += 1
+    
+    collage.save(outputPath)
+    for img in imagePaths:
+        os.remove(img)
+
+    return outputPath
+
+def isExistingFile(path):
+    """Проверяет, существует ли файл по указанному пути.
+
+    Args:
+        path (string): предполагаемый путь до файла
+
+    Returns:
+        bool: существование файла
+    """
+
+    return os.path.exists(path) and os.path.isfile(path)

@@ -5,6 +5,7 @@ from seleniumbase import Driver
 import requests
 import time
 from pprint import pprint
+import random
 
 class WebUtils:
 
@@ -140,6 +141,10 @@ class WebUtils:
         print(f'got {len(proxy_list)} proxies') 
 
         return proxy_list
+    
+    def getRandomProxy():
+        
+        return random.choice(WebUtils.getProxyServer())
 
     def cleanUrl(url):
         """Почистить ссылку от лишних символов
@@ -154,6 +159,7 @@ class WebUtils:
         cleaned_url = url
         if cleaned_url.find('/?') > -1:
             cleaned_url = cleaned_url.split('/?')[0]
-        
+        if cleaned_url.find('/ref=') > -1:
+            cleaned_url = cleaned_url.split('/ref=')[0]        
         return cleaned_url
     

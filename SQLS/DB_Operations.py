@@ -1162,3 +1162,43 @@ def UpdateRawCollectsShopsSeenRows(type, next_seen_row):
     conn.close()
 
     return
+
+def getNotSeenNews(news_ids, origin):
+    """Сопоставление новых и увиденных новостей. Возвращает ранее не виданные
+
+    Args:
+        news_ids (list of string): список id новостей
+        origin (string): источник
+
+    Returns:
+        list of string: список новых новостей
+    """
+
+    conn = getConnection(DbNames.collectDatabase)
+    cursor = conn.cursor()  
+
+    cursor.execute(f"SELECT GET_NOT_SEEN_NEWS(array{news_ids}, '{origin}')")
+    result = cursor.fetchone()  
+
+    conn.commit()
+    cursor.close()
+    conn.close()
+    
+    return result[0]
+
+def insertNewSeenNews(news_ids, origin):
+    """Добавление новых новостей в просмотренное
+
+    Args:
+        news_ids (list of string): список id новостей
+        origin (string): источник
+    """
+
+    conn = getConnection(DbNames.collectDatabase)
+    cursor = conn.cursor()  
+
+    cursor.execute(f"CALL INSERT_SEEN_NEWS(array{news_ids}, '{origin}')")
+    
+    conn.commit() 
+    cursor.close()
+    conn.close()
