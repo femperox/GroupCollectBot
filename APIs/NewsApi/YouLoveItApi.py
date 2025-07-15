@@ -1,6 +1,8 @@
 from APIs.webUtils import WebUtils 
 from pprint import pprint
-
+from confings.Consts import RegexType
+import re
+        
 class YouLoveItApi:
     
     origin = 'youloveit'
@@ -45,7 +47,26 @@ class YouLoveItApi:
         info['id'] = id
         info['url'] = YouLoveItApi.newsItemPage.format(id)
         info['imgs'] = ['https://www.youloveit.com'+ x['src'] for x in postContent.findAll('img')]
-        info['text'] = postContent.get_text(separator='\n\n')
         info['origin'] = YouLoveItApi.origin
+
+        text = postContent.get_text(separator='\n')
+        release_pattern = r'Release date:\s*(.+)\n'
+        price_pattern = r'Price:\s*(.+)\n'
+        url_pattern = r'can get it here:\s*(https?://\S+)\n'
+
+        release_info = re.findall(release_pattern, text)
+        price_info = re.findall(price_pattern, text)
+        urls_info = list(set(re.findall(url_pattern, text)))
+
+        date_lines = []
+        for line in text.split('\n'):
+            if re.search(RegexType.regex_dates_in_text, line) and not re.search(r'Release date:', line):
+                date_lines.append(line.strip())
+
+        info['text'] = ''
+        info['text'] += "Дата релиза:\n" + " ".join(release_info) + "\n\n" if release_info else ''
+        info['text'] += "Доп. инфо даты:\n" + " ".join(date_lines) + "\n\n" if date_lines else ''
+        info['text'] += "Цена:\n" + " ".join(price_info) + "\n\n" if price_info else ''
+        info['text'] += "Ссылки:\n" + "\n".join(urls_info) + "\n\n" if urls_info else ''
 
         return info
