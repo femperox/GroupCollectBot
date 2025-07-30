@@ -167,5 +167,5 @@ class StoresApi:
     @staticmethod
     def parseHotTopicItem(url):
 
-        bs = WebUtils.getSoup(url = url, proxyServer = '212.6.44.158:53298', isUcSeleniumNeeded = True)
+        bs = WebUtils.getSoup(url = url, proxyServer = '', isUcSeleniumNeeded = True)
         pprint(bs.text)

@@ -416,11 +416,6 @@ def changeStatus(stat, orderList, payment = ''):
     for item in orderList:
         sleep(5)
         pay = ''
-        if payment == 'y':
-            namedRange = item[1].replace('C', 'DCollect') if item[1].find('C') > -1 else item[1].replace('I', 'DInd')
-            pay = collect_table.getPaymentStatus(namedRange)
-            participants = collect_table.getParticipantsList(namedRange)
-            pay = tableToTopic(participants, pay)
         try:
             collectTopicInfo = DB_Operations.getCollectTopicComment(collect_id = item[1], collect_type = item[0])
             vk.edit_collects_activity_comment(topic_id = collectTopicInfo[0], comment_id = collectTopicInfo[1], 

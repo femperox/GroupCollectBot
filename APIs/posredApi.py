@@ -85,7 +85,7 @@ class PosredApi:
         """
 
         if order_type == OrderTypes.ami:
-            return PosredApi.getCurrentAmiCurrencyRate()
+            return PosredApi.getCurrentCurrencyRate()
         elif order_type == OrderTypes.us:
             return PosredApi.getCurrentUSDCurrencyRate()
         elif order_type == OrderTypes.jp:
