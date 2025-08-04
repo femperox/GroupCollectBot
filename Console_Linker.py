@@ -3,10 +3,9 @@ from APIs.GoogleSheetsApi.CollectOrdersSheet import CollectOrdersSheet as collec
 from APIs.GoogleSheetsApi.StoresCollectOrdersSheets import StoresCollectOrdersSheets
 from traceback import format_exc, print_exc
 from pprint import pprint 
-from confings.Consts import OrderTypes, RegexType, CollectTypes
+from confings.Consts import OrdersConsts, RegexType, VkConsts
 from confings.Messages import Messages
 import re
-from confings.Consts import VkTopicCommentChangeType
 from time import sleep
 from datetime import datetime
 from SQLS import DB_Operations
@@ -38,9 +37,9 @@ def createOrderList(collectList = [], indList = [], storeCollectList = []):
         list: общий список заказов с учётом их типа
     """
 
-    orderList = [[CollectTypes.collect, f'C{collect}'] for collect in collectList if collect != '']
-    orderList.extend([[CollectTypes.collect, f'I{ind}'] for ind in indList if ind != ''])
-    orderList.extend([[CollectTypes.store, store] for store in storeCollectList if store != ''])
+    orderList = [[OrdersConsts.CollectTypes.collect, f'C{collect}'] for collect in collectList if collect != '']
+    orderList.extend([[OrdersConsts.CollectTypes.collect, f'I{ind}'] for ind in indList if ind != ''])
+    orderList.extend([[OrdersConsts.CollectTypes.store, store] for store in storeCollectList if store != ''])
 
     return orderList
 
@@ -396,7 +395,7 @@ def changeStatus(stat, orderList, payment = ''):
     # на руках
     
     if stat.lower().find('на руках') > -1:
-        collectIndList = [order for order in orderList if order[0] == CollectTypes.collect]
+        collectIndList = [order for order in orderList if order[0] == OrdersConsts.CollectTypes.collect]
         ShipmentToRussiaEvent(orderList = collectIndList)
 
         # если сразу ехало на получателя
@@ -407,7 +406,7 @@ def changeStatus(stat, orderList, payment = ''):
                                                             collect_type = item[0],
                                                             user_id = participant)            
 
-        storeList = [order for order in orderList if order[0] == CollectTypes.store]
+        storeList = [order for order in orderList if order[0] == OrdersConsts.CollectTypes.store]
         for item in storeList:
             list_id = DB_Operations.getStoresCollectSheetId(collect_id = item[1])
             storesCollectOrdersSheets.setStoresCollectRecieved(list_id = list_id)
@@ -429,8 +428,7 @@ def changePositions(userList):
     for ystypka in userList:
         collect_id = ''
         lot = ''
-        collect_type = CollectTypes.collect
-
+        collect_type = OrdersConsts.CollectTypes.collect
 
         if ystypka['collect'].isdigit():
             lot = "Collect{}".format(int(ystypka['collect']))
@@ -441,10 +439,10 @@ def changePositions(userList):
         else:
             lot = ystypka['collect']
             collect_id = ystypka['collect']
-            collect_type = CollectTypes.store
+            collect_type = OrdersConsts.CollectTypes.store
 
         #TO DO: Поменять логику, нахера делать ревёрс
-        if collect_type == CollectTypes.collect:
+        if collect_type == OrdersConsts.CollectTypes.collect:
 
             user_info = list(vk.get_tuple_name(ystypka['url']))
             user_info.reverse()
@@ -459,7 +457,7 @@ def changePositions(userList):
             updateParticipantDB(participantList = actualParticipants, collectId = collect_id, isYstypka = True)
 
             actualParticipants = tableToTopic(actualParticipants, paymentInfo)
-        elif collect_type == CollectTypes.store:
+        elif collect_type == OrdersConsts.CollectTypes.store:
             user_info = {}
             user_info['user_name'], user_info['user_url'] = vk.get_tuple_name(user_info['user_url'])
             user_info['items'] = ystypka['collect_items']
@@ -487,9 +485,9 @@ def storeCollectActivities(topicList):
         status = flattenList(DB_Operations.getCollectStatuses())
         status_text = status[0]
 
-        orderTypesList = [orderType.value for orderType in OrderTypes]
+        orderTypesList = [orderType.value for orderType in OrdersConsts.OrderTypes]
         order_type = int(input(f'\nВыберите тип закупки:\n{Messages.formConsoleListMes(info_list = orderTypesList)}'))
-        order_type =  OrderTypes(orderTypesList[order_type-1])
+        order_type =  OrdersConsts.OrderTypes(orderTypesList[order_type-1])
 
         topicOrdersList = [topic for topic in topicList 
                         if re.search(RegexType.regex_collect_orders_topics, topic['title'].lower())]
@@ -549,12 +547,12 @@ def storeCollectActivities(topicList):
         storesCollectOrdersSheets.updateStoresCollect(list_id = list_id, participant_list = participant_list,
                                                     participant_count_old = len(participant_list))
         
-        DB_Operations.updateCollectSelector(collectType = CollectTypes.store, collectId = order_title, 
+        DB_Operations.updateCollectSelector(collectType = OrdersConsts.CollectTypes.store, collectId = order_title, 
                                             sheet_or_range = list_id,
                                             topic_id = topicInfo[2]['topic_id'], comment_id = topicInfo[2]['comment_id'])
         
     else:
-        collectTopicInfo = DB_Operations.getCollectTopicComment(collect_id = order_title, collect_type = CollectTypes.store)
+        collectTopicInfo = DB_Operations.getCollectTopicComment(collect_id = order_title, collect_type = OrdersConsts.CollectTypes.store)
         comment=vk.find_board_comment(topic_id = collectTopicInfo[0], comment_id = collectTopicInfo[1])
         old_text = comment['text']
 
@@ -586,7 +584,7 @@ def storeCollectActivities(topicList):
 
     for participant in participant_list:
         if participant['user_url']:
-            DB_Operations.updateInsertParticipantsCollect(  collect_type = CollectTypes.store, collect_id = order_title, 
+            DB_Operations.updateInsertParticipantsCollect(  collect_type = OrdersConsts.CollectTypes.store, collect_id = order_title, 
                                                             user_id = participant['user_url'].split('/')[-1].replace('id', ''), 
                                                             items = participant['items'])
 
@@ -753,9 +751,9 @@ def console():
             for item in orderList:
                 collectTopicInfo = DB_Operations.getCollectTopicComment(collect_id = item[1], collect_type = item[0])
                 topic_url_template = f'[https://vk.com/topic-{vk.get_current_group_id()}_{collectTopicInfo[0]}?post={collectTopicInfo[1]}|'+'{}]'
-                if item[0] == CollectTypes.store:
+                if item[0] == OrdersConsts.CollectTypes.store:
                     collectListUrl.append(topic_url_template.format(item[1]))
-                elif item[0] == CollectTypes.collect:
+                elif item[0] == OrdersConsts.CollectTypes.collect:
                     if item[1][0] == 'I':
                         indListUrl.append(topic_url_template.format(item[1][1:]))
                     elif item[1][0] == 'C':
@@ -784,7 +782,7 @@ def console():
             DB_Operations.updateInsertCollectParcel(parcel_id = parcel_id, status = stat)
             parcelInfo = DB_Operations.getCollectParcel(parcel_id = parcel_id) # index: -2 -1
             vk.edit_collects_activity_comment(topic_id = parcelInfo[-2], comment_id = parcelInfo[-1],
-                                       status_text= stat, typeChange = VkTopicCommentChangeType.parcel)
+                                       status_text= stat, typeChange = VkConsts.VkTopicCommentChangeType.parcel)
 
             collectList = DB_Operations.getAllCollectsInParcel(parcel_id = parcel_id)
             changeStatus(stat = stat, orderList = collectList)

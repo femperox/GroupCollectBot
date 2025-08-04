@@ -1,5 +1,5 @@
 from pprint import pprint
-from confings.Consts import Stores
+from confings.Consts import OrdersConsts
 from APIs.StoresApi.StoreSelectorParent import StoreSelectorParent
 from APIs.StoresApi.USStoresApi.StoresApi import StoresApi
 from APIs.StoresApi.USStoresApi.YoutoozApi import YoutoozApi
@@ -30,17 +30,17 @@ class StoreSelector(StoreSelectorParent):
             item['endTime'] = datetime.now() + relativedelta(years=3)
 
             return item
-        if site == Stores.makeship:
+        if site == OrdersConsts.Stores.makeship:
             item = StoresApi.parseMakeshipItem(url = url)
-        elif site == Stores.youtooz:
+        elif site == OrdersConsts.Stores.youtooz:
             item = YoutoozApi.parseYoutoozItem(url = url)
-        elif site == Stores.plushshop:
+        elif site == OrdersConsts.Stores.plushshop:
             item = StoresApi.parsePlushShopItem(url = url, item_id = item_id)
-        elif site in [Stores.amazon, Stores.amazonShort]:
+        elif site in [OrdersConsts.Stores.amazon, OrdersConsts.Stores.amazonShort]:
             item = AmazonApi.parseAmazonItem(url = url, item_id = item_id)
-        elif site == Stores.bratz:
+        elif site == OrdersConsts.Stores.bratz:
             item = StoresApi.parseBratzItem(url = url)
-        elif site == Stores.fangamer:
+        elif site == OrdersConsts.Stores.fangamer:
             item = StoresApi.parseFangamerItem(url = url)
         
         return item

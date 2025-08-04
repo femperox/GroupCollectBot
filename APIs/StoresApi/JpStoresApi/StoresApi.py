@@ -1,11 +1,10 @@
 from APIs.webUtils import WebUtils 
 import requests
-from confings.Consts import Stores
+from confings.Consts import OrdersConsts
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from time import sleep
 from pprint import pprint
-from confings.Consts import ShipmentPriceType as spt
 from APIs.posredApi import PosredApi
 
 class StoreApi:
@@ -34,7 +33,7 @@ class StoreApi:
         item['itemPrice'] = price * qnty
         item['tax'] = 0
         item['itemPriceWTax'] = 0
-        item['shipmentPrice'] = spt.undefined
+        item['shipmentPrice'] = OrdersConsts.ShipmentPriceType.undefined
         item['page'] = curl
         item['mainPhoto'] = img
         item['name'] = name
@@ -44,7 +43,7 @@ class StoreApi:
         item['posredCommission'] = commission['posredCommission'].format(item['itemPrice'])
         item['posredCommissionValue'] = commission['posredCommissionValue'](item['itemPrice'])
 
-        item['siteName'] = Stores.animate
+        item['siteName'] = OrdersConsts.Stores.animate
         item['id'] = item_id           
 
         return item

@@ -2,7 +2,7 @@ import APIs.GoogleSheetsApi.API.Cells_Editor as ce
 from APIs.GoogleSheetsApi.API.Styles.Borders import Borders as b
 from APIs.GoogleSheetsApi.API.Styles.Colors import Colors as c
 from APIs.GoogleSheetsApi.API.Constants import ConditionType
-from confings.Consts import OrderTypes
+from confings.Consts import OrdersConsts
 from APIs.utils import getExpiryDateString
 from APIs.posredApi import PosredApi
 from APIs.utils import getChar
@@ -26,17 +26,17 @@ class StoresCollectOrdersList:
         self.priceColumn = 'D'
         self.firstPaymentColumn = getChar(self.priceColumn, 2)
 
-        if order_type == OrderTypes.jp:
+        if order_type == OrdersConsts.OrderTypes.jp:
             self.endColumn = 'I'
-        elif order_type in [OrderTypes.us, OrderTypes.eur]:
+        elif order_type in [OrdersConsts.OrderTypes.us, OrdersConsts.OrderTypes.eur]:
             self.endColumn = 'H'
-        elif order_type == OrderTypes.ami:
+        elif order_type == OrdersConsts.OrderTypes.ami:
             self.endColumn = 'K' 
             self.priceColumn = 'E'
             self.firstPaymentColumn = 'I'
 
 
-    def prepareTable(self, list_id, participant_count = 1, order_type = OrderTypes.ami):
+    def prepareTable(self, list_id, participant_count = 1, order_type = OrdersConsts.OrderTypes.ami):
         """Подготовка таблицы. 
 
         Args:
@@ -92,7 +92,7 @@ class StoresCollectOrdersList:
 
         return request
     
-    def prepareTableValues(self, list_id, list_title, topic_url, order_type = OrderTypes.ami):
+    def prepareTableValues(self, list_id, list_title, topic_url, order_type = OrdersConsts.OrderTypes.ami):
         """Подготовка значений таблицы
 
         Args:
@@ -112,13 +112,13 @@ class StoresCollectOrdersList:
         valueRange = list_title + '!{0}{1}'
 
         headers = ["Позиция", "Человек"]
-        if order_type == OrderTypes.jp:
+        if order_type == OrdersConsts.OrderTypes.jp:
             headers.extend(["Позиция в йенах", "Позиция со всеми коммишками и дост по Японии в йенах", "В рублях", 
                  "Доставка до склада посреда в транзите", "Доставка до коллективщика", "Задолжность"])
-        elif order_type == OrderTypes.us:
+        elif order_type == OrdersConsts.OrderTypes.us:
             headers.extend(["Позиция в долларах", "Позиция со всеми коммишками и дост в США в долларах", 
                        "В рублях", "Доставка до коллективщика", "Задолжность"])
-        elif order_type == OrderTypes.ami:
+        elif order_type == OrdersConsts.OrderTypes.ami:
             headers.extend(["Предоплата", "Позиция в йенах", "Позиция в йенах с коммишками", "В рублях",
                        "Доставка до склада посреда в транзите", "Общее", "Доставка до коллективщика", "Задолжность"])
 
@@ -168,19 +168,19 @@ class StoresCollectOrdersList:
             formula = f'= CEILING({getChar(self.priceColumn, 1)}{i}*${self.endColumn}${self.startRow})'
             data.append(ce.insertValue(list_id, valueRange.format(getChar(self.priceColumn, 2), i), formula))
 
-            if order_type == OrderTypes.ami:
+            if order_type == OrdersConsts.OrderTypes.ami:
                 formula = f'= {self.firstPaymentColumn}{i} - {getChar(self.priceColumn, -1)}{i}'           
             else:
                 formula = f'= {self.firstPaymentColumn}{i}'
             data.append(ce.insertValue(list_id, valueRange.format(self.endColumn, i), formula))
 
             # Для Ами нужно в колонке общее сложить цены за позиции и дост в транзит
-            if order_type == OrderTypes.ami:
+            if order_type == OrdersConsts.OrderTypes.ami:
                 formula = f'= {getChar(self.firstPaymentColumn, -2)}{i} + {getChar(self.firstPaymentColumn, -1)}{i}'
                 data.append(ce.insertValue(list_id, valueRange.format(self.firstPaymentColumn, i), formula))
                         
             commission_formula = PosredApi.getCommissionForCollectOrder(order_type = order_type)
-            if order_type == OrderTypes.us:
+            if order_type == OrdersConsts.OrderTypes.us:
                 commission_formula = commission_formula.format(f'{self.priceColumn}{i}', self.participantCount)
             else:
                 commission_formula = commission_formula.format(f'{self.priceColumn}{i}')

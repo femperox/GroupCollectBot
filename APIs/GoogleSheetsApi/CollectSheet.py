@@ -2,10 +2,8 @@ import APIs.GoogleSheetsApi.API.Cells_Editor as ce
 from APIs.GoogleSheetsApi.API.Styles.Borders import Borders as b
 from APIs.GoogleSheetsApi.API.Styles.Colors import Colors as c
 from APIs.GoogleSheetsApi.ParentSheetClass import ParentSheetClass
-from confings.Consts import MBO_INSERTED_INFO_ID
+from confings.Consts import MboConsts
 from pprint import pprint
-
-
 
 class CollectSheet(ParentSheetClass):
     class SpreadsheetKeyClass:
@@ -45,7 +43,7 @@ class CollectSheet(ParentSheetClass):
                 if collect:
                     # заполнение от МБО
                     if collect[0].lower().find('мбо') > -1:
-                        admin_id = MBO_INSERTED_INFO_ID
+                        admin_id = MboConsts.MBO_INSERTED_INFO_ID
                     else:
                         admin_id = collect[0].split('@')[-1] if collect[0].find('@')>=0 else collect[0].split('/')[-1]
                     group_id = collect[1].split('@')[-1] if collect[1].find('@')>=0 else collect[1].split('/')[-1]
@@ -157,7 +155,7 @@ class CollectSheet(ParentSheetClass):
             for admin in collect['admins']:
                 
                 ran = f"'{sheetTitle}'!C{row}"
-                if admin['adminId'] == MBO_INSERTED_INFO_ID:
+                if admin['adminId'] == MboConsts.MBO_INSERTED_INFO_ID:
                     admin_url = f'''{admin['adminName']}''' 
                 else:
                     admin_url = f'''=HYPERLINK("https://vk.com/id{admin['adminId']}"; "{admin['adminName']}")''' 

@@ -3,7 +3,7 @@ from pprint import pprint
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 import json
-from confings.Consts import ShipmentPriceType as spt, Stores
+from confings.Consts import OrdersConsts
 from APIs.posredApi import PosredApi
 import re 
 
@@ -45,7 +45,7 @@ class YoutoozApi:
                     item_shipment_price = row.find('td', {'data-sheets-value': re.compile(r'"1":3')}).text.lower()
                 except:
                     item_shipment_price = row.find('td', {'data-sheets-value': re.compile(r'"1":2,"2":"Free"')}).text.lower()
-                item_shipment_price = spt.free if item_shipment_price == 'free' else int(item_shipment_price.replace('$', ''))
+                item_shipment_price = OrdersConsts.ShipmentPriceType.free if item_shipment_price == 'free' else int(item_shipment_price.replace('$', ''))
                 
                 if item_type in shipment_prices.keys():
                     if item_size in shipment_prices[item_type].keys():
@@ -180,11 +180,11 @@ class YoutoozApi:
         item['mainPhoto'] = js['image'][0].replace('_small', '')
         item['name'] = js['name']
         item['endTime'] = datetime.now() + relativedelta(years=3)
-        item['siteName'] = Stores.youtooz
+        item['siteName'] = OrdersConsts.Stores.youtooz
 
 
         commission = PosredApi.getСommissionForItemUSD()
-        if item['shipmentPrice'] == spt.free:
+        if item['shipmentPrice'] == OrdersConsts.ShipmentPriceType.free:
             format_string = item['itemPrice']
             format_number = item['itemPrice']
         else:

@@ -4,17 +4,15 @@ import datetime
 from pprint import pprint
 import json
 from APIs.webUtils import WebUtils 
-from confings.Consts import PREFECTURE_CODE, CURRENT_POSRED, PRIVATES_PATH
+from confings.Consts import PosrednikConsts, PathsConsts, OrdersConsts
 from traceback import print_exc
 from APIs.posredApi import PosredApi
-from confings.Consts import ShipmentPriceType
-from confings.Consts import Stores
 
 class yahooApi:
 
     def __init__(self):
 
-        self.app_id = json.load(open(PRIVATES_PATH, encoding='utf-8'))['yahoo_jp_app_id']
+        self.app_id = json.load(open(PathsConsts.PRIVATES_PATH, encoding='utf-8'))['yahoo_jp_app_id']
 
     def getRep(self, id):
         """Получение репутации продавца
@@ -70,7 +68,7 @@ class yahooApi:
         Returns:
             string: стоимость доставки по Японии
         """
-        pref_code = PREFECTURE_CODE[CURRENT_POSRED]
+        pref_code = PosrednikConsts.PREFECTURE_CODE[PosrednikConsts.CURRENT_POSRED]
 
         if seller_id == '':
             curl = f'https://auctions.yahooapis.jp/v1/public/items/{id}/shipments?pref_code={pref_code}&appid={self.app_id}'
@@ -91,7 +89,7 @@ class yahooApi:
         if len(prices):
             return float(min(prices))
         else:
-            return ShipmentPriceType.undefined
+            return OrdersConsts.ShipmentPriceType.undefined
 
     def getCurrentPrice(self, id):
         """Получение текущей цены аукциона
@@ -185,7 +183,7 @@ class yahooApi:
                 info['blitz'] = -1
             
             if 'FreeshippingIcon' in xml['ResultSet']['Result']['Option'].keys():
-                info['shipmentPrice'] = ShipmentPriceType.free
+                info['shipmentPrice'] = OrdersConsts.ShipmentPriceType.free
             else:
                 try: 
                     info['ShoppingSellerId'] = xml['ResultSet']['Result']['Seller']['ShoppingSellerId']
@@ -205,7 +203,7 @@ class yahooApi:
 
 
             commission = PosredApi.getСommissionForItem(info['page'])
-            if info['shipmentPrice'] in [ShipmentPriceType.free, ShipmentPriceType.undefined]:
+            if info['shipmentPrice'] in [OrdersConsts.ShipmentPriceType.free, OrdersConsts.ShipmentPriceType.undefined]:
                 format_string = info['itemPriceWTax']
                 format_number = info['itemPriceWTax']
             else:
@@ -214,7 +212,7 @@ class yahooApi:
             info['posredCommission'] = commission['posredCommission'].format(format_string)
             info['posredCommissionValue'] = commission['posredCommissionValue'](format_number)  
 
-            info['siteName'] = Stores.yahooAuctions
+            info['siteName'] = OrdersConsts.Stores.yahooAuctions
             info['id'] = id   
 
             return info

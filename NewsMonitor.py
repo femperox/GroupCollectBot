@@ -7,7 +7,7 @@ import math
 from confings.Messages import Messages
 from Logger import logger_news
 from SQLS.DB_Operations import insertNewSeenNews, getNotSeenNews
-from confings.Consts import NEWS_MONITOR_CONF_PATH
+from confings.Consts import PathsConsts
 import json
 from APIs.utils import createItemPairs, local_image_upload, createCollage
 
@@ -47,7 +47,7 @@ def monitorNews(rcpns, theme):
 
 if __name__ == "__main__":
     vk = vk()
-    with open(NEWS_MONITOR_CONF_PATH, "r") as f: 
+    with open(PathsConsts.NEWS_MONITOR_CONF_PATH, "r") as f: 
         conf_list = json.load(f)
     
     threads = []

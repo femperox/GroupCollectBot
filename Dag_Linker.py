@@ -6,8 +6,7 @@ from Logger import logger_utils
 from APIs.TrackingAPIs.TrackingSelector import TrackingSelector, TrackingTypes
 from APIs.posredApi import PosredApi
 from confings.Messages import Messages as mess
-from confings.Consts import vkCoverTime, MBO_INSERTED_INFO_ID
-from confings.Consts import RegexType, CollectTypes
+from confings.Consts import VkConsts, MboConsts, RegexType, OrdersConsts
 from APIs.GoogleSheetsApi.StoresCollectOrdersSheets import StoresCollectOrdersSheets
 from APIs.GoogleSheetsApi.CollectOrdersSheet import CollectOrdersSheet
 import time
@@ -58,7 +57,7 @@ def checkCollects():
                                                         countries = inf['countries'],
                                                         shops = inf['shops'],
                                                         fandoms = inf['fandoms'])   
-                    if inf['admin_id'] == MBO_INSERTED_INFO_ID:
+                    if inf['admin_id'] == MboConsts.MBO_INSERTED_INFO_ID:
                         vk_admin_id = inf['admin_id']
                         is_mbo_inserted = 1
                         admin_role = 'Заполнено МБО'          
@@ -176,11 +175,11 @@ def checkDeliveryStatusToParticipants():
             if not isAllParicipantsSent(participantInfo):
                 pprint(f'Чекаем {order}')
 
-                if order[0] == CollectTypes.collect:
+                if order[0] == OrdersConsts.CollectTypes.collect:
                     named_range = DB_Operations.getCollectNamedRange(collect_id = order[1])
                     local_delivery_status_list = collectOrdersSheet.checkDeliveryToParticipants(namedRange = named_range, participantList = [p[0] for p in participantInfo])
                      
-                elif order[0] == CollectTypes.store:
+                elif order[0] == OrdersConsts.CollectTypes.store:
                     list_id = DB_Operations.getStoresCollectSheetId(collect_id = order[1])
                     local_delivery_status_list = storesCollectOrdersSheets.checkDeliveryToParticipants(list_id = list_id, participantList = [p[0] for p in participantInfo])
                                 
@@ -202,7 +201,7 @@ def updateCoverPhoto(daytime):
         daytime (str): время суток
     """
 
-    vk._cover_image_upload(image_name=vkCoverTime[daytime])
+    vk._cover_image_upload(image_name = VkConsts.vkCoverTime[daytime])
 
 class DagLinkerValues:
 

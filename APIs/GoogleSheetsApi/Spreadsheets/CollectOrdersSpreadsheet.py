@@ -5,7 +5,7 @@ import re
 from pprint import pprint
 from dateutil.relativedelta import *
 from multipledispatch import dispatch
-from confings.Consts import CollectOrdersSheetNames as sheetNames, ShipmentPriceType
+from confings.Consts import CollectOrdersSheetNames as sheetNames, OrdersConsts
 from APIs.posredApi import PosredApi
 from APIs.GoogleSheetsApi.API.Constants import ConditionType
 from APIs.utils import getExpiryDateString
@@ -258,7 +258,7 @@ class CollectOrdersSpreadsheetClass():
             data.append(ce.insertValue(spId, ran, formula))
 
             ran = sheetTitle + "!I{0}".format(self.startLotRow+8)
-            shipmentPrice = item['shipmentPrice'].value if isinstance(item['shipmentPrice'], ShipmentPriceType) else item['shipmentPrice']
+            shipmentPrice = item['shipmentPrice'].value if isinstance(item['shipmentPrice'], OrdersConsts.ShipmentPriceType) else item['shipmentPrice']
         
             formula = f"={shipmentPrice}".replace('.', ',')
             data.append(ce.insertValue(spId, ran, formula))

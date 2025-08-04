@@ -1,5 +1,5 @@
 from suds.client import Client
-from confings.Consts import PRIVATES_PATH
+from confings.Consts import PathsConsts
 import json
 
 class PochtaApi():
@@ -32,7 +32,7 @@ class PochtaApi():
         """    
 
         
-        tmp_dict = json.load(open(PRIVATES_PATH, encoding='utf-8'))
+        tmp_dict = json.load(open(PathsConsts.PRIVATES_PATH, encoding='utf-8'))
         login = tmp_dict['pochta_API_usr']
         psw = tmp_dict['pochta_API_psw']
 

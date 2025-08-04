@@ -2,7 +2,7 @@ import psycopg2
 import os
 import json
 from pprint import pprint
-from confings.Consts import DbNames, CollectTypes
+from confings.Consts import DbNames, OrdersConsts
 
 def getConnection(connection = DbNames.database):
     """Получить подключение к базе PostgreSQL
@@ -462,7 +462,7 @@ def insertNewSeenProducts(items_id, type_id):
     cursor.close()
     conn.close()
 
-def updateCollectSelector(collectId, collectType = CollectTypes.collect, status = '', sheet_or_range = '', parcel_id = -1, topic_id = 0, comment_id = 0):
+def updateCollectSelector(collectId, collectType = OrdersConsts.CollectTypes.collect, status = '', sheet_or_range = '', parcel_id = -1, topic_id = 0, comment_id = 0):
     """Обновить информацию о коллекте определённого типа
 
     Args:
@@ -519,7 +519,7 @@ def deleteParticipantsCollect(collect_id):
     cursor.close()
     conn.close()
 
-def updateSentStatusForParticipant(collect_id, user_id, collect_type = CollectTypes.collect):
+def updateSentStatusForParticipant(collect_id, user_id, collect_type = OrdersConsts.CollectTypes.collect):
     """Обновить статус доставки позиций до участника
 
     Args:
@@ -539,7 +539,7 @@ def updateSentStatusForParticipant(collect_id, user_id, collect_type = CollectTy
 
     return
 
-def updateInsertParticipantsCollect(collect_id, user_id, items, isYstypka = False, collect_type = CollectTypes.collect):
+def updateInsertParticipantsCollect(collect_id, user_id, items, isYstypka = False, collect_type = OrdersConsts.CollectTypes.collect):
     """Внести изменения в таблицу коллектов и участников
 
     Args:
@@ -770,7 +770,7 @@ def getAllCollectsInParcel(parcel_id):
     
     return result
 
-def getCollectTopicComment(collect_id, collect_type = CollectTypes.collect):
+def getCollectTopicComment(collect_id, collect_type = OrdersConsts.CollectTypes.collect):
     """Получить topic_id и comment_id коллекта по collect_id
 
     Args:
@@ -813,7 +813,7 @@ def getRecievedActiveCollects():
     
     return result
 
-def getOrderParticipants(collect_id, collect_type = CollectTypes.collect):
+def getOrderParticipants(collect_id, collect_type = OrdersConsts.CollectTypes.collect):
     """Получить всех участников заказа
 
     Returns:

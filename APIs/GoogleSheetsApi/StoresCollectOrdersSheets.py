@@ -1,7 +1,7 @@
 
 from APIs.GoogleSheetsApi.ParentSheetClass import ParentSheetClass
 from APIs.GoogleSheetsApi.Spreadsheets.StoresCollectOrdersList import StoresCollectOrdersList
-from confings.Consts import OrderTypes, SHEETS_ID_FILE
+from confings.Consts import OrdersConsts, PathsConsts
 from APIs.utils import getCurrentMonthString
 from pprint import pprint
 import json
@@ -24,7 +24,7 @@ class StoresCollectOrdersSheets(ParentSheetClass):
             dict: словарь с id нового документа и нового листа
         """
 
-        archive_spreadsheet_id = json.load(open(SHEETS_ID_FILE, encoding='utf-8'))['storesCollectArchiveList']
+        archive_spreadsheet_id = json.load(open(PathsConsts.SHEETS_ID_FILE, encoding='utf-8'))['storesCollectArchiveList']
 
         new_list_id = self.copySheetListTo(sheet_id = list_id, new_spreadsheet_id = archive_spreadsheet_id)['sheetId']
 
@@ -32,7 +32,7 @@ class StoresCollectOrdersSheets(ParentSheetClass):
 
         return {'new_sp_id': archive_spreadsheet_id, 'new_list_id': new_list_id}
 
-    def createNewStoresCollect(self, title, topic_url, participant_count, order_type = OrderTypes.ami):
+    def createNewStoresCollect(self, title, topic_url, participant_count, order_type = OrdersConsts.OrderTypes.ami):
         """Создать лист закупки
 
         Args:
@@ -45,7 +45,7 @@ class StoresCollectOrdersSheets(ParentSheetClass):
             int: id листа
         """
         list_title = title
-        if order_type != OrderTypes.ami:
+        if order_type != OrdersConsts.OrderTypes.ami:
             list_title += ' ' + getCurrentMonthString()
 
         list_id = self.createSheetList(title = list_title)

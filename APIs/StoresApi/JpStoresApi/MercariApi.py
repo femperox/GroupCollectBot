@@ -4,7 +4,7 @@ from pprint import pprint
 import mercari
 from SQLS.DB_Operations import GetNotSeenProducts
 from random import randint, choice
-from confings.Consts import ShipmentPriceType as spt, Stores
+from confings.Consts import OrdersConsts
 import uuid
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
@@ -90,13 +90,13 @@ class MercariApi:
         
         for product in js['items']:
 
-            if IsExistBannedSeller(seller_id = product['sellerId'], category = type_id, store_id= Stores.mercari):
+            if IsExistBannedSeller(seller_id = product['sellerId'], category = type_id, store_id= OrdersConsts.Stores.mercari):
                     continue            
 
             item['itemPrice'] = product['price']
             item['tax'] = 0
             item['itemPriceWTax'] = 0 # Всегда включена в цену
-            item['shipmentPrice'] = spt.free if int(product['shippingPayerId']) == MercariApi.FREE_SHIPPING else spt.undefined
+            item['shipmentPrice'] = OrdersConsts.ShipmentPriceType.free if int(product['shippingPayerId']) == MercariApi.FREE_SHIPPING else OrdersConsts.ShipmentPriceType.undefined
             item['page'] = f'https://jp.mercari.com/item/{product["id"]}'
             item['sellerId'] = product['sellerId']
             item['itemId'] = product["id"]
@@ -177,7 +177,7 @@ class MercariApi:
 
             item['tax'] = 0
             item['itemPriceWTax'] = 0 # Всегда включена в цену
-            item['shipmentPrice'] = spt.free if int(js['productDetail']['shippingPayer']['shippingPayerId']) == MercariApi.FREE_SHIPPING_SHOPS else spt.undefined
+            item['shipmentPrice'] = OrdersConsts.ShipmentPriceType.free if int(js['productDetail']['shippingPayer']['shippingPayerId']) == MercariApi.FREE_SHIPPING_SHOPS else OrdersConsts.ShipmentPriceType.undefined
             item['page'] = url
             item['mainPhoto'] = js['productDetail']['photos'][0]
             item['itemStatus'] = MercariApi.MercariItemStatus.sold if len(js["productTags"]) else MercariApi.MercariItemStatus.on_sale 
@@ -187,7 +187,7 @@ class MercariApi:
             item['posredCommission'] = commission['posredCommission'].format(item['itemPrice'])
             item['posredCommissionValue'] = commission['posredCommissionValue'](item['itemPrice'])
 
-            item['siteName'] = Stores.mercari
+            item['siteName'] = OrdersConsts.Stores.mercari
             item['id'] = item_id     
 
         elif js['code'] == 5:
@@ -220,7 +220,7 @@ class MercariApi:
             item['itemPrice'] = js['data']['price']
             item['tax'] = 0
             item['itemPriceWTax'] = 0 # Всегда включена в цену
-            item['shipmentPrice'] = spt.free if int(js['data']['shipping_payer']['id']) == MercariApi.FREE_SHIPPING else spt.undefined
+            item['shipmentPrice'] = OrdersConsts.ShipmentPriceType.free if int(js['data']['shipping_payer']['id']) == MercariApi.FREE_SHIPPING else OrdersConsts.ShipmentPriceType.undefined
             item['page'] = url
             item['mainPhoto'] = js['data']['photos'][0]
             item['itemStatus'] = js['data']['status']
@@ -230,7 +230,7 @@ class MercariApi:
             item['posredCommission'] = commission['posredCommission'].format(item['itemPrice'])
             item['posredCommissionValue'] = commission['posredCommissionValue'](item['itemPrice'])  
 
-            item['siteName'] = Stores.mercari
+            item['siteName'] = OrdersConsts.Stores.mercari
             item['id'] = item_id      
 
         elif js['result'] == "error":

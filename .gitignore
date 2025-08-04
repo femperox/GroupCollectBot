@@ -21,6 +21,6 @@
 *.chromedriver
 
 HPoiApi.py
+VkAccessToken.py
 
 *MBO*
-*Amazon*

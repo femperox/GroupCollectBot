@@ -12,7 +12,7 @@ from vk_api.longpoll import VkLongPoll, VkChatEventType, VkEventType, VkLongpoll
 from confings.Messages import MessageType, Messages
 from Logger import logger, logger_fav, logger_utils
 from SQLS import DB_Operations
-from confings.Consts import VkTopicCommentChangeType, ItemBuyStatus, VK_PROPOSED_CHAT_ID, VK_ERRORS_CHAT_ID, BanActionType, MAX_BAN_REASONS, RegexType, PayloadType, VkCommands, PRIVATES_PATH, Stores, TEMP_PHOTO_PATH
+from confings.Consts import VkConsts, RegexType, PathsConsts, OrdersConsts
 from APIs.utils import getMonitorChats, getFavInfo, getStoreMonitorChats, local_image_upload, isExistingFile, generate_random_integer
 from APIs.TrackingAPIs.TrackingSelector import TrackingSelector, TrackingTypes
 from APIs.StoresApi.JpStoresApi.StoreSelector import StoreSelector
@@ -23,12 +23,12 @@ import time
 class VkApi:
 
     def __init__(self, key_token = 'access_token', key_group_id = 'group_id') -> None:
-        tmp_dict = json.load(open(PRIVATES_PATH, encoding='utf-8'))
+        tmp_dict = json.load(open(PathsConsts.PRIVATES_PATH, encoding='utf-8'))
         
         self.__tok = tmp_dict[key_token]
         self.__group_id = tmp_dict[key_group_id]
         
-        self.path = TEMP_PHOTO_PATH
+        self.path = PathsConsts.TEMP_PHOTO_PATH
 
         auth_data = self._login_pass_get(tmp_dict)
 
@@ -89,7 +89,7 @@ class VkApi:
                 for _ in range(size):
                     key += chr(random.randint(0, 10000))
                 privates.setdefault('secret_key', key)
-                json.dump(privates, open(PRIVATES_PATH, 'w'))
+                json.dump(privates, open(PathsConsts.PRIVATES_PATH, 'w'))
             return privates.get('secret_key', '')
         except:
             print_exc()
@@ -148,7 +148,7 @@ class VkApi:
                 password = self._encode_decode_str(key, new_pass)
                 privates.setdefault('login', login)
                 privates.setdefault('password', password)
-                json.dump(privates, open(PRIVATES_PATH, 'w'))
+                json.dump(privates, open(PathsConsts.PRIVATES_PATH, 'w'))
                 return new_login, new_pass
             new_login = self._encode_decode_str(key, login, encode=False)
             new_pass = self._encode_decode_str(key, password, encode=False)
@@ -521,7 +521,7 @@ class VkApi:
        # Личные сообщение
        not_dm_chats = getMonitorChats()
        not_dm_chats.extend(getStoreMonitorChats())
-       not_dm_chats.append(VK_PROPOSED_CHAT_ID)
+       not_dm_chats.append(VkConsts.VK_PROPOSED_CHAT_ID)
 
        storeSelector = StoreSelector()
         
@@ -572,12 +572,12 @@ class VkApi:
                     # Действия с сообщениями - callback кнопицы 
                     if 'payload' in event.object.keys():
                         chat = event.object['peer_id']
-                        if event.object['payload']['type'] not in [PayloadType.menu_bot_call_menu['type']]:
+                        if event.object['payload']['type'] not in [VkConsts.PayloadType.menu_bot_call_menu['type']]:
                             message_id = event.object['conversation_message_id']                    
                             mes = self.get_message(chat_id = chat, mess_id= message_id)
 
                         # добавление в избранное
-                        if event.object['payload']['type'] == PayloadType.add_fav['type']:
+                        if event.object['payload']['type'] == VkConsts.PayloadType.add_fav['type']:
 
                             item_index = int(event.object['payload']['text'])
                             fav_item = getFavInfo(mes['items'][0]['text'], item_index, isPosredPresent = False if 'fromBuyMenu' in event.object['payload'].keys() else True)
@@ -597,11 +597,11 @@ class VkApi:
                             self.sendMes(mess = mess, users = chat)
 
                         # удаление избранного
-                        elif event.object['payload']['type'] == PayloadType.delete_fav_num['type']:
+                        elif event.object['payload']['type'] == VkConsts.PayloadType.delete_fav_num['type']:
 
                             item_index = int(event.object['payload']['text'])
                             auc_id = re.findall(RegexType.regex_hashtag, mes['items'][0]['text'])
-                            auc_id = [auc for auc in auc_id if auc not in VkCommands.hashtagList][item_index].replace('#', '')  
+                            auc_id = [auc for auc in auc_id if auc not in VkConsts.VkCommands.hashtagList][item_index].replace('#', '')  
                                              
                             mes = Messages.mes_delete_fav(user_name = self.get_name(event.object['user_id']), user_id = event.object['user_id'], auc_id = auc_id, delete_func = DB_Operations.deleteFav )
                             
@@ -610,7 +610,7 @@ class VkApi:
                             self.sendMes(mess=mes, users=chat)                       
                         
                         # бан продавана
-                        elif event.object['payload']['type'] == PayloadType.ban_seller_num['type'] and event.object['user_id'] in self.__admins:
+                        elif event.object['payload']['type'] == VkConsts.PayloadType.ban_seller_num['type'] and event.object['user_id'] in self.__admins:
 
                             item_index = int(event.object['payload']['text'])
                             category = re.findall(RegexType.regex_hashtag, mes['items'][0]['text'])
@@ -618,10 +618,10 @@ class VkApi:
                             seller = category[1:][item_index].replace('#', '').replace(')', '')
                             category = category[0].replace('#', '')
 
-                            if category.split('_')[0].lower() == Stores.mercari_rus:
-                                store_id = Stores.mercari
+                            if category.split('_')[0].lower() == OrdersConsts.Stores.mercari_rus:
+                                store_id = OrdersConsts.Stores.mercari
                             else:
-                                store_id = Stores.yahooAuctions
+                                store_id = OrdersConsts.Stores.yahooAuctions
 
                             if seller:
 
@@ -632,38 +632,38 @@ class VkApi:
                                 if not isBanned:
                                     logger.info(f"\n[BAN-{category.split('_')[-1]}] Забанен продавец {seller}\n") 
                         # вызов менюшки
-                        elif event.object['payload'] == PayloadType.menu_bot_call_menu:
-                            DB_Operations.updateUserMenuStatus(user_id = chat, status = PayloadType.menu_bot_none["type"])
+                        elif event.object['payload'] == VkConsts.PayloadType.menu_bot_call_menu:
+                            DB_Operations.updateUserMenuStatus(user_id = chat, status = VkConsts.PayloadType.menu_bot_none["type"])
                             self.sendMes(mess = "Выберите пункт меню", users = chat, keyboard = VkButtons.form_menu_buttons())
                         # ответ на запрос о списке позиций
-                        elif event.object['payload'] == PayloadType.menu_bot_get_orders:
+                        elif event.object['payload'] == VkConsts.PayloadType.menu_bot_get_orders:
                             user_items = DB_Operations.getParticipantItems(user_id = chat)
                             session = generate_random_integer()
                             DB_Operations.updateUserMenuStatus(user_id = event.object.user_id, 
-                                                                status = PayloadType.menu_bot_get_orders['type'],
+                                                                status = VkConsts.PayloadType.menu_bot_get_orders['type'],
                                                                 session = session)
                             self.sendMes( mess = Messages.formParticipantItemsMes(participantItems = user_items),
                                             users = chat,
                                             keyboard = VkButtons.form_back_button(session = session))
                         # сообщение с запросом ссылки для расчёта
-                        elif event.object['payload']["type"] == PayloadType.menu_check_price["type"]:
+                        elif event.object['payload']["type"] == VkConsts.PayloadType.menu_check_price["type"]:
                             session = generate_random_integer()
-                            DB_Operations.updateUserMenuStatus(user_id = event.object.user_id, status = PayloadType.menu_check_price['type'],
+                            DB_Operations.updateUserMenuStatus(user_id = event.object.user_id, status = VkConsts.PayloadType.menu_check_price['type'],
                                                                 country = event.object['payload']['country'],
                                                                 session = session)
                             self.sendMes(mess = Messages.formCalcMes(event.object['payload']['country']), 
                                             users = chat,
                                             keyboard = VkButtons.form_back_button(session = session))     
                         # назад в меню - удаление сообщения с кнопкой "назад"
-                        elif event.object['payload']["type"] == PayloadType.menu_bot_back_button["type"]:
+                        elif event.object['payload']["type"] == VkConsts.PayloadType.menu_bot_back_button["type"]:
                             current_session = DB_Operations.getUserMenuSession(user_id = chat)
                             if 'session' in event.object['payload'].keys() and current_session == event.object['payload']['session']:
-                                DB_Operations.updateUserMenuStatus(user_id = chat, status= PayloadType.menu_bot_none["type"])
+                                DB_Operations.updateUserMenuStatus(user_id = chat, status= VkConsts.PayloadType.menu_bot_none["type"])
                             self.__token_session.messages.delete(**VkParams.getDeleteMessageParams( peer_id = chat, 
                                                                                                     group_id = self.__group_id,
                                                                                                     cmids = mes['items'][0]['conversation_message_id']))
                         # Челик поставил на выкуп товар
-                        elif event.object['payload']["type"] == PayloadType.menu_bot_add_item["type"]:
+                        elif event.object['payload']["type"] == VkConsts.PayloadType.menu_bot_add_item["type"]:
 
                             attachment = ''
                             if len(mes['items'][0]['attachments']) > 0:
@@ -673,7 +673,7 @@ class VkApi:
                             url = re.findall(RegexType.regex_store_url_bot, mes['items'][0]['text'])[0]
                             textInfo = event.object['payload']["text"].replace(url, '')
                             text = Messages.formAddItemMes(item_url = url, user = self.get_name(event.object.user_id), info = textInfo)
-                            self.sendMes(mess = text, users = VK_PROPOSED_CHAT_ID, 
+                            self.sendMes(mess = text, users = VkConsts.VK_PROPOSED_CHAT_ID, 
                                          pic = [attachment] if attachment else [],
                                          keyboard=VkButtons.form_menu_buying_buttons(userId = event.object.user_id, userMesId = mes['items'][0]['id']))
 
@@ -684,14 +684,14 @@ class VkApi:
                                                                                             attachment = attachment))
                             self.sendMes(mess = "Спасибо! Ваша заявка на выкуп принята!" + Messages.bot_ending, users = chat)
                         # менюшка со статусом выкупа
-                        elif event.object['payload']["type"] in [PayloadType.buy_fail["type"], PayloadType.buy_succes["type"]]:
+                        elif event.object['payload']["type"] in [VkConsts.PayloadType.buy_fail["type"], VkConsts.PayloadType.buy_succes["type"]]:
 
-                            if event.object['payload']["type"] == PayloadType.buy_succes["type"]:
+                            if event.object['payload']["type"] == VkConsts.PayloadType.buy_succes["type"]:
                                 mess = 'Ваш товар был успешно выкуплен! Коллективщик свяжется с вами для последующей оплаты позже.'
-                                itemStatus = ItemBuyStatus.succes
+                                itemStatus = VkConsts.ItemBuyStatus.succes
                             else:
                                 mess = 'Ваш товар не успели выкупить/удалили/не прошла ваша ставка. Если товар не в солде, то посредник не смог связаться с продавцом или ему отказали в покупке.'
-                                itemStatus = ItemBuyStatus.fail
+                                itemStatus = VkConsts.ItemBuyStatus.fail
 
                             mess += Messages.bot_ending
 
@@ -728,14 +728,14 @@ class VkApi:
                         self.removeChatUser(user = sender, chat = chat)
 
                     # менюшка
-                    elif chat not in not_dm_chats and event.obj.message['text'].lower() in VkCommands.menuList:
+                    elif chat not in not_dm_chats and event.obj.message['text'].lower() in VkConsts.VkCommands.menuList:
                         self.sendMes(mess = 'Кнопка меню подключена!' + Messages.bot_ending, 
                                     users = sender,
                                     keyboard = VkButtons.form_main_menu_button())  
-                        DB_Operations.updateUserMenuStatus(user_id = sender, status = PayloadType.menu_bot_none["type"])
+                        DB_Operations.updateUserMenuStatus(user_id = sender, status = VkConsts.PayloadType.menu_bot_none["type"])
                     # ответ на менюшку
-                    elif PayloadType.menu_check_price["type"] == DB_Operations.getUserMenuStatus(user_id=sender):
-                        DB_Operations.updateUserMenuStatus(user_id = sender, status = PayloadType.menu_bot_none["type"])
+                    elif VkConsts.PayloadType.menu_check_price["type"] == DB_Operations.getUserMenuStatus(user_id=sender):
+                        DB_Operations.updateUserMenuStatus(user_id = sender, status = VkConsts.PayloadType.menu_bot_none["type"])
                         selected_country = DB_Operations.getUserMenuCountry(user_id = sender)
 
                         url = event.obj.message['text']
@@ -743,16 +743,16 @@ class VkApi:
                             url = re.findall(RegexType.regex_store_url_bot, url)[0]  
                             messText, pic = Messages.formPriceMes(url = url, country = selected_country)
                             payload = event.obj.message['text'].split('/?')[0].split('/ref=')[0]
-                            self.sendMes(mess = messText, users= chat, keyboard = VkButtons.form_menu_buttons(isAddButton = True, buttonPayloadText = payload), pic = [pic] if pic else [])
+                            self.sendMes(mess = messText, users = chat, keyboard = VkButtons.form_menu_buttons(isAddButton = True, buttonPayloadText = payload), pic = [pic] if pic else [])
                             logger_utils.info(f"""[CHECK_PRICE] - Расчитана цена для пользователя {self.get_name(id = sender)} товара [{url}]""")
                         except Exception as e:
                             pprint(e)
                             logger_utils.info(f"""[ERROR_CHECK_PRICE] - Не удалось посчитать цену для пользователя {self.get_name(id = sender)} товара [{url}] :: {e}""")
                             self.sendMes(mess = "Возникла ошибка, попробуйте позже ещё раз! Убедитесь в правильности ссылки! Убедитесь, что товар доступен для покупки! Снова выберите в меню кнопку расчёта цены", users= chat) 
-                            self.sendMes(mess = f"Сообщение:\n {url}\n\n\nОшибка:\n{e}", users=VK_ERRORS_CHAT_ID)                                 
+                            self.sendMes(mess = f"Сообщение:\n {url}\n\n\nОшибка:\n{e}", users = VkConsts.VK_ERRORS_CHAT_ID)                                 
                     
                     # получение избранного        
-                    elif event.obj.message['text'].lower().split(' ')[0] in VkCommands.getFavList and sender in whiteList:
+                    elif event.obj.message['text'].lower().split(' ')[0] in VkConsts.VkCommands.getFavList and sender in whiteList:
                             try:
                                 text = event.obj.message['text'].lower()
                                 offset = 0
@@ -774,7 +774,7 @@ class VkApi:
                                 logger_fav.info(f"[ERROR_SEL_FAV-{sender}] для пользователя {sender}: {e}") 
                                             
                     # Ручное добавление в избранное 
-                    elif event.obj.message['text'].lower().split(' ')[0] in VkCommands.favList and event.obj.message['text'].lower().find("https://")>=0 and sender in whiteList:
+                    elif event.obj.message['text'].lower().split(' ')[0] in VkConsts.VkCommands.favList and event.obj.message['text'].lower().find("https://")>=0 and sender in whiteList:
                         store_urls = re.findall(RegexType.regex_store_url_bot, event.obj.message['text'].lower())  
                         items = []
                         for url in store_urls:
@@ -791,7 +791,7 @@ class VkApi:
                 elif event.type == VkBotEventType.WALL_POST_NEW and 'copy_history' in event.object:
                     
                     post_id = event.obj['id']
-                    self.edit_wall_post(VkCommands.repost_tag, post_id = post_id)
+                    self.edit_wall_post(VkConsts.VkCommands.repost_tag, post_id = post_id)
 
                 # новые записи (автотеги)    
                 elif event.type == VkBotEventType.WALL_POST_NEW:
@@ -806,9 +806,9 @@ class VkApi:
                     isTagPost = False
                     
                     for tag in post['tags']:
-                        if tag.replace('#','').replace(VkCommands.group_tag, '') in allFandoms:
+                        if tag.replace('#','').replace(VkConsts.VkCommands.group_tag, '') in allFandoms:
                             isTagPost = True
-                            users = DB_Operations.getTags(tag.replace('#','').replace(VkCommands.group_tag, ''))
+                            users = DB_Operations.getTags(tag.replace('#','').replace(VkConsts.VkCommands.group_tag, ''))
                             users = '\n'.join([self.get_name(usr) for usr in users])
                             #users = '\n'.join(str(usr) for usr in users)
                             mess += f'\n\n{tag}:\n{users}'
@@ -821,9 +821,9 @@ class VkApi:
                     
                     deleter_id = event.object['deleter_id'] if event.object['deleter_id'] != 100 else event.object['user_id']
 
-                    count_bans = DB_Operations.addBans(deleter_id, BanActionType.deleting.value)
+                    count_bans = DB_Operations.addBans(deleter_id, VkConsts.BanActionType.deleting.value)
 
-                    if count_bans >= MAX_BAN_REASONS:
+                    if count_bans >= VkConsts.MAX_BAN_REASONS:
                         self.ban_users({'id': deleter_id, 'comment': 'Удаление комментариев.'})
 
                     mess = Messages.mes_ban_user_delete.format(self.get_name(deleter_id),count_bans)
@@ -837,8 +837,8 @@ class VkApi:
                 elif  event.type in [VkBotEventType.PHOTO_COMMENT_EDIT, VkBotEventType.WALL_REPLY_EDIT] and event.object['from_id'] not in whiteList:
                     deleter_id = event.object['from_id']
 
-                    count_bans = DB_Operations.addBans(deleter_id, BanActionType.editing.value)
-                    if count_bans >= MAX_BAN_REASONS:
+                    count_bans = DB_Operations.addBans(deleter_id, VkConsts.BanActionType.editing.value)
+                    if count_bans >= VkConsts.MAX_BAN_REASONS:
                         self.ban_users({'id': deleter_id, 'comment': 'Изменение комментариев.'})
                     
                     mess = Messages.mes_ban_user_edit.format(self.get_name(deleter_id),count_bans)
@@ -1122,7 +1122,7 @@ class VkApi:
 
     def edit_collects_activity_comment(self, topic_id, comment_id, status_text = '', 
                                        participant_text = '', 
-                                       typeChange = VkTopicCommentChangeType.collect,
+                                       typeChange = VkConsts.VkTopicCommentChangeType.collect,
                                        img_urls=[]):
         """Изменить комментарий, относящийся к активности коллектов
 
@@ -1144,10 +1144,10 @@ class VkApi:
 
         # Изменение статуса
         if status_text:
-            if typeChange == VkTopicCommentChangeType.collect:
+            if typeChange == VkConsts.VkTopicCommentChangeType.collect:
                 status_end_part =  re.search('\n\n\d', old_text).span()[1] - 3
                 status_start_part = re.search('Состояние: ', old_text).span()[1]
-            elif typeChange == VkTopicCommentChangeType.parcel:
+            elif typeChange == VkConsts.VkTopicCommentChangeType.parcel:
                 status_end_part =  re.search('\n\n\w', old_text).span()[1] - 3
                 status_start_part = re.search('Статус: ', old_text).span()[1]
             new_text = old_text[:status_start_part] + status_text + old_text[status_end_part:]

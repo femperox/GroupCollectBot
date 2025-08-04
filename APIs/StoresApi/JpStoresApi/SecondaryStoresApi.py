@@ -4,7 +4,7 @@ from pprint import pprint
 from datetime import datetime
 import json
 from dateutil.relativedelta import relativedelta
-from confings.Consts import ShipmentPriceType as spt, Stores
+from confings.Consts import OrdersConsts
 from selenium.webdriver.common.by import By
 from traceback import print_exc
 from APIs.posredApi import PosredApi
@@ -35,7 +35,7 @@ class SecondaryStoreApi:
         item['itemPrice'] = js['price']
         item['tax'] = 0
         item['itemPriceWTax'] = 0 # всегда включено в цену
-        item['shipmentPrice'] = spt.free
+        item['shipmentPrice'] = OrdersConsts.ShipmentPriceType.free
         item['page'] = url
         item['mainPhoto'] = js['images'][0]['url']
         item['endTime'] = datetime.now() + relativedelta(years=3)
@@ -44,7 +44,7 @@ class SecondaryStoreApi:
         item['posredCommission'] = commission['posredCommission'].format(item['itemPrice'])
         item['posredCommissionValue'] = commission['posredCommissionValue'](item['itemPrice'])  
 
-        item['siteName'] = Stores.payPay
+        item['siteName'] = OrdersConsts.Stores.payPay
         item['id'] = item_id   
 
         return item
@@ -79,12 +79,12 @@ class SecondaryStoreApi:
             item['mainPhoto'] = soup.find('img', class_ = 'img-fluid main-pro-img cursor_pointer')['src']
             item['name'] = soup.find('h1', class_ = 'h1_title_product').text.replace('\n', '').replace('         ', '')
 
-        item['shipmentPrice'] = spt.undefined
+        item['shipmentPrice'] = OrdersConsts.ShipmentPriceType.undefined
         item['tax'] = 0
         item['itemPriceWTax'] = 0
         item['page'] = url
         item['endTime'] = datetime.now() + relativedelta(years=3)
-        item['siteName'] = Stores.suruga
+        item['siteName'] = OrdersConsts.Stores.suruga
         commission = PosredApi.getСommissionForItem(item['page'])
         item['posredCommission'] = commission['posredCommission'].format(item['itemPrice'])
         item['posredCommissionValue'] = commission['posredCommissionValue'](item['itemPrice']) 
@@ -131,7 +131,7 @@ class SecondaryStoreApi:
                 item['itemPrice'] = info['price']
                 item['itemPriceWTax'] = info['price_with_tax']
                 item['tax'] = item['itemPriceWTax'] * 100 / item['itemPrice'] - 100
-                item['shipmentPrice'] = spt.undefined
+                item['shipmentPrice'] = OrdersConsts.ShipmentPriceType.undefined
                 item['page'] = url
                 item['mainPhoto'] = img 
                 item['endTime'] = datetime.now() + relativedelta(years=3)
@@ -140,7 +140,7 @@ class SecondaryStoreApi:
                 item['posredCommission'] = commission['posredCommission'].format(item['itemPriceWTax'])
                 item['posredCommissionValue'] = commission['posredCommissionValue'](item['itemPriceWTax'])  
 
-                item['siteName'] = Stores.mandarake
+                item['siteName'] = OrdersConsts.Stores.mandarake
                 item['id'] = item_id   
                 
         except:

@@ -10,7 +10,7 @@ from Logger import logger
 from traceback import print_exc
 from APIs.StoresApi.JpStoresApi.yahooApi import yahooApi
 from APIs.StoresApi.JpStoresApi.MercariApi import MercariApi
-from confings.Consts import MONITOR_CONF_PATH, Stores
+from confings.Consts import PathsConsts, OrdersConsts
 from confings.Messages import MessageType, Messages
 from APIs.utils import getActiveMonitorChatsTypes, createItemPairs
 from SQLS.DB_Operations import IsExistBannedSeller, insertNewSeenProducts
@@ -94,7 +94,7 @@ def bs4MonitorYahoo(curl, params):
                 
                 item['seller'] = lot['data-auction-sellerid']
                 item['price'] = int(lot['data-auction-startprice'])
-                if IsExistBannedSeller(seller_id = item['seller'], category = params['tag'], store_id= Stores.yahooAuctions) or item['price'] > params['maxPrice']-1:
+                if IsExistBannedSeller(seller_id = item['seller'], category = params['tag'], store_id= OrdersConsts.Stores.yahooAuctions) or item['price'] > params['maxPrice']-1:
                     continue
 
                 info = yahooApi.getAucInfo(item['id'])
@@ -241,17 +241,17 @@ if __name__ == "__main__":
     vk = vk()
     yahooApi = yahooApi()
     
-    with open(MONITOR_CONF_PATH, "r") as f: 
+    with open(PathsConsts.MONITOR_CONF_PATH, "r") as f: 
         conf_list = json.load(f)
           
     active_chats = []
     for conf in conf_list[1:]:
         
-        if conf["store"] == Stores.yahooAuctions:
+        if conf["store"] == OrdersConsts.Stores.yahooAuctions:
             if conf["type"] == "big-category": threads.append(threading.Thread(target=bs4MonitorYahoo, args=(conf["curl"], conf["params"])))
             else: 
                 threads.append(threading.Thread(target=bs4SellerMonitorYahoo, args=(conf["curl"], conf["params"])))
-        elif conf["store"] == Stores.mercari:
+        elif conf["store"] == OrdersConsts.Stores.mercari:
             threads.append(threading.Thread(target=monitorMercari, args=(conf["curl"], conf["params"])))
         
         active_chats.append(conf)

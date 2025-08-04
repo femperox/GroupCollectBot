@@ -7,7 +7,7 @@ from SQLS.DB_Operations import getUsers, getAllFavs, deleteFav
 import threading
 from Logger import logger_fav
 from APIs.StoresApi.JpStoresApi.yahooApi import yahooApi as ya
-from confings.Consts import Stores
+from confings.Consts import OrdersConsts
 from confings.Messages import Messages
 from APIs.StoresApi.JpStoresApi.StoreSelector import StoreSelector
 from APIs.StoresApi.JpStoresApi.MercariApi import MercariApi
@@ -60,7 +60,7 @@ def checkTime(usr_id):
                     continue                
                 
                 # если товар выкупил кто-то или сняли с продажи
-                if fav[4] == Stores.mercari:
+                if fav[4] == OrdersConsts.Stores.mercari:
                     info = MercariApi.parseMercariPage(url = item_url, item_id = fav[1])
                     if info['itemStatus'] != MercariApi.MercariItemStatus.on_sale:
                         
@@ -70,7 +70,7 @@ def checkTime(usr_id):
                         
                         logger_fav.info(f"[NOTIFY_DELETE_FAV-{fav[0]}] для пользователя {fav[0]} отправлено уведомление о выкупе {fav[-2]}_{fav[1]}")
 
-                elif fav[4] == Stores.yahooAuctions:            
+                elif fav[4] == OrdersConsts.Stores.yahooAuctions:            
   
                     diff = fav[3] - now
                     diff = round(diff.total_seconds())

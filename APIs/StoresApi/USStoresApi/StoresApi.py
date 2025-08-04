@@ -3,7 +3,7 @@ from pprint import pprint
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 import json
-from confings.Consts import Stores, ShipmentPriceType
+from confings.Consts import OrdersConsts
 from APIs.posredApi import PosredApi
 import requests
 
@@ -37,11 +37,11 @@ class StoresApi:
         item['tax'] = 0
         item['itemPriceWTax'] = 0
         if priceForFreeShipment is None:
-            item['shipmentPrice'] = ShipmentPriceType.undefined if shipmentPrice is None else shipmentPrice
+            item['shipmentPrice'] = OrdersConsts.ShipmentPriceType.undefined if shipmentPrice is None else shipmentPrice
         else:
             item['priceForFreeShipment'] = priceForFreeShipment
-            item['shipmentPrice'] = ShipmentPriceType.undefined if shipmentPrice is None else shipmentPrice
-            item['shipmentPrice'] = ShipmentPriceType.free if item['itemPrice'] >= item['priceForFreeShipment'] else item['shipmentPrice']
+            item['shipmentPrice'] = OrdersConsts.ShipmentPriceType.undefined if shipmentPrice is None else shipmentPrice
+            item['shipmentPrice'] = OrdersConsts.ShipmentPriceType.free if item['itemPrice'] >= item['priceForFreeShipment'] else item['shipmentPrice']
                     
         item['page'] = url
 
@@ -83,7 +83,7 @@ class StoresApi:
         """
 
         curl = f'https://www.fangamer.com/products/{url.split("products/")[-1]}.js'
-        item = StoresApi.getInfo(curl = curl, url = url, storeName = Stores.fangamer)
+        item = StoresApi.getInfo(curl = curl, url = url, storeName = OrdersConsts.Stores.fangamer)
         return item
 
     @staticmethod
@@ -98,7 +98,7 @@ class StoresApi:
         """
 
         curl = f'https://www.bratz.com/products/{url.split("products/")[-1]}.js'
-        item = StoresApi.getInfo(curl = curl, url = url, priceForFreeShipment = 50, storeName = Stores.bratz)
+        item = StoresApi.getInfo(curl = curl, url = url, priceForFreeShipment = 50, storeName = OrdersConsts.Stores.bratz)
         return item
 
     @staticmethod
@@ -129,7 +129,7 @@ class StoresApi:
         item['mainPhoto'] = js['image']
         item['name'] = js['name']
         item['endTime'] = datetime.now() + relativedelta(years=3)
-        item['siteName'] = Stores.makeship
+        item['siteName'] = OrdersConsts.Stores.makeship
 
         commission = PosredApi.getСommissionForItemUSD()
 
@@ -161,7 +161,7 @@ class StoresApi:
             curl = f'https://www.plushshop.com/collections/anime-meow/products/{item_id}.js'
   
         item = StoresApi.getInfo(curl = curl, variant = variant, url = url, 
-                                 priceForFreeShipment = 79.99, shipmentPrice = 15, storeName = Stores.plushshop)
+                                 priceForFreeShipment = 79.99, shipmentPrice = 15, storeName = OrdersConsts.Stores.plushshop)
         return item
     
     @staticmethod

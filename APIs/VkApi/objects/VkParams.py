@@ -1,4 +1,4 @@
-from confings.Consts import VkCoverSize
+from confings.Consts import VkConsts
 import random
 
 class VkParams:
@@ -161,10 +161,10 @@ class VkParams:
         
         params = {
                     'group_id': group_id,
-                    'crop_x': VkCoverSize.crop_x,
-                    'crop_y': VkCoverSize.crop_y,
-                    'crop_x2': VkCoverSize.crop_x2,
-                    'crop_y2': VkCoverSize.crop_y2
+                    'crop_x': VkConsts.VkCoverSize.crop_x,
+                    'crop_y': VkConsts.VkCoverSize.crop_y,
+                    'crop_x2': VkConsts.VkCoverSize.crop_x2,
+                    'crop_y2': VkConsts.VkCoverSize.crop_y2
                 }
         
         return params 

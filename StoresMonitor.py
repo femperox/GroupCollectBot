@@ -4,10 +4,9 @@ from traceback import print_exc
 from time import sleep
 from APIs.StoresApi.JpStoresApi.AmiAmiApi import AmiAmiApi
 from confings.Messages import Messages, MessageType
-from confings.Consts import MonitorStoresType
+from confings.Consts import OrdersConsts, PathsConsts
 from Logger import logger_stores
 from SQLS.DB_Operations import insertNewSeenProducts
-from confings.Consts import STORE_MONITOR_CONF_PATH
 import json
 from APIs.utils import createItemPairs
 from APIs.StoresApi.JpStoresApi.HPoiApi import HPoiApi
@@ -53,9 +52,9 @@ def monitorAmiProduct(rcpns, typeRRS, newProxyTick, thread_index):
             newProxyTick = refreshSessions(ticks = newProxyTick, thread_index = thread_index )
             firstStart[thread_index] = False
             
-            if typeRRS == MonitorStoresType.amiAmiEngPreOwned:
+            if typeRRS == OrdersConsts.MonitorStoresType.amiAmiEngPreOwned:
                 items = AmiAmiApi.preownedAmiAmiEng(type_id = typeRRS, logger = logger_stores, thread_index = thread_index)
-            elif typeRRS == MonitorStoresType.amiAmiEngPreOrder:
+            elif typeRRS == OrdersConsts.MonitorStoresType.amiAmiEngPreOrder:
                 items = AmiAmiApi.preOrderAmiAmiEng(type_id = typeRRS, logger = logger_stores, thread_index = thread_index)
             else:
                 items = AmiAmiApi.productsAmiAmiEng(type_id = typeRRS, logger = logger_stores, thread_index = thread_index)
@@ -125,7 +124,7 @@ def monitor_hpoi(rcpns, typeRRS, vk):
 if __name__ == "__main__":
     vk = vk()
 
-    with open(STORE_MONITOR_CONF_PATH, "r") as f: 
+    with open(PathsConsts.STORE_MONITOR_CONF_PATH, "r") as f: 
         conf_list = json.load(f)
     
     threads = []
@@ -134,10 +133,10 @@ if __name__ == "__main__":
     for conf in conf_list[1:]:
 
         if conf["type"] == MessageType.monitor_amiAmi.value:
-            threads.append(threading.Thread(target=monitorAmiProduct, args=( conf["rcpns"], MonitorStoresType.amiAmiEngPreOwned, maxProxyTick, 0)))
-            threads.append(threading.Thread(target=monitorAmiProduct, args=( conf["rcpns"], MonitorStoresType.amiAmiEngSale,     maxProxyTick-1, 1)))
-            #threads.append(threading.Thread(target=monitorAmiProduct, args=( conf["rcpns"], MonitorStoresType.amiAmiEngPreOrder, maxProxyTick - 2, 2)))
-            #threads.append(threading.Thread(target=monitorAmiProduct, args=( conf["rcpns"], MonitorStoresType.amiAmiEngInStock,  maxProxyTick - 2)))
+            threads.append(threading.Thread(target=monitorAmiProduct, args=( conf["rcpns"], OrdersConsts.MonitorStoresType.amiAmiEngPreOwned, maxProxyTick, 0)))
+            threads.append(threading.Thread(target=monitorAmiProduct, args=( conf["rcpns"], OrdersConsts.MonitorStoresType.amiAmiEngSale,     maxProxyTick-1, 1)))
+            #threads.append(threading.Thread(target=monitorAmiProduct, args=( conf["rcpns"], OrdersConsts.MonitorStoresType.amiAmiEngPreOrder, maxProxyTick - 2, 2)))
+            #threads.append(threading.Thread(target=monitorAmiProduct, args=( conf["rcpns"], OrdersConsts.MonitorStoresType.amiAmiEngInStock,  maxProxyTick - 2)))
 
 
 

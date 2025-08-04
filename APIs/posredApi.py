@@ -1,10 +1,9 @@
-from confings.Consts import CURRENCY_API, CURRENT_POSRED, Stores, CURRENCIES, CURRENCY_USD_API, CURRENCY_API_JPY_AMI, OrderTypes
+from confings.Consts import PosrednikConsts, OrdersConsts
 from APIs.webUtils import WebUtils
 from APIs.StoresApi.StoreSelectorParent import StoreSelectorParent
 import requests
 import json
 from pprint import pprint
-
 
 class PosredApi:
     
@@ -16,12 +15,12 @@ class PosredApi:
             float: курс рубля
         """
         headers = WebUtils.getHeader()
-        page = requests.get(CURRENCY_API[CURRENT_POSRED], headers=headers)
+        page = requests.get(PosrednikConsts.CURRENCY_API[PosrednikConsts.CURRENT_POSRED], headers=headers)
         js = json.loads(page.text)
 
 
         for json_item in js:
-            if json_item['codeTo'] in CURRENCIES.rub.value:
+            if json_item['codeTo'] in PosrednikConsts.CURRENCIES.rub.value:
                 return float(json_item['rate']) 
             
     @staticmethod
@@ -32,7 +31,7 @@ class PosredApi:
             float: курс рубля
         """
 
-        soup = WebUtils.getSoup(url = CURRENCY_API_JPY_AMI)
+        soup = WebUtils.getSoup(url = PosrednikConsts.CURRENCY_API_JPY_AMI)
         currencyScript = soup.findAll('script')[-1].text.replace('\\', '').replace("self.__next_f.push(", '').replace('n"])', '')
         currencyJPYStart = currencyScript.find('{"title":"JPY"')
         currencyJPYEnd = currencyScript.find(']},{"_template":"infoBgBlock","titleBlock":"Конвертация')
@@ -50,7 +49,7 @@ class PosredApi:
         """
 
         headers = WebUtils.getHeader()
-        page = requests.get(CURRENCY_USD_API, headers=headers)
+        page = requests.get(PosrednikConsts.CURRENCY_USD_API, headers=headers)
         js = json.loads(page.text)
 
         return js['Valute']['USD']['Value'] + 7
@@ -63,8 +62,8 @@ class PosredApi:
         store_selector.url = url
         current_store_name = store_selector.getStoreName()
 
-        jpStores = formShortList(Stores.availableStoreJp)
-        usStores = formShortList(Stores.availableStoreUS)
+        jpStores = formShortList(OrdersConsts.Stores.availableStoreJp)
+        usStores = formShortList(OrdersConsts.Stores.availableStoreUS)
 
         if current_store_name in jpStores:
             return PosredApi.getCurrentCurrencyRate()
@@ -84,11 +83,11 @@ class PosredApi:
             float: курс рубля
         """
 
-        if order_type == OrderTypes.ami:
+        if order_type == OrdersConsts.OrderTypes.ami:
             return PosredApi.getCurrentCurrencyRate()
-        elif order_type == OrderTypes.us:
+        elif order_type == OrdersConsts.OrderTypes.us:
             return PosredApi.getCurrentUSDCurrencyRate()
-        elif order_type == OrderTypes.jp:
+        elif order_type == OrdersConsts.OrderTypes.jp:
             return PosredApi.getCurrentCurrencyRate()
 
     @staticmethod
@@ -106,7 +105,7 @@ class PosredApi:
         
         ss = StoreSelector()
         ss.url = url
-        if ss.getStoreName() == Stores.amiAmi and ss.isEngAmi(url=url):
+        if ss.getStoreName() == OrdersConsts.Stores.amiAmi and ss.isEngAmi(url=url):
             standartCommissionPercent = 2.2
         else:
             standartCommissionPercent = 6
@@ -114,7 +113,7 @@ class PosredApi:
         def commission(price):
             return price*standartCommissionPercent/100
 
-        return {'key': CURRENCIES.percent,
+        return {'key': PosrednikConsts.CURRENCIES.percent,
                 'value': standartCommissionPercent,
                 'posredCommissionValue': commission, 
                 'posredCommission': '{}*'+'{:0.3f}'.format(standartCommissionPercent/100)}
@@ -130,7 +129,7 @@ class PosredApi:
         def commission(price):
             return 1.3 + price*0.02
 
-        return {'key': CURRENCIES.mixed,
+        return {'key': PosrednikConsts.CURRENCIES.mixed,
                 'value': '1.3$ + 2%',
                 'posredCommission': '1.3 + {}*0.02',
                 'posredCommissionValue': commission}        
@@ -146,9 +145,9 @@ class PosredApi:
             string: форматируемая строка с результатом
         """
 
-        if order_type == OrderTypes.ami:
+        if order_type == OrdersConsts.OrderTypes.ami:
             return '{}*0,1'
-        elif order_type == OrderTypes.us:
+        elif order_type == OrdersConsts.OrderTypes.us:
             return '{0}*0,1 + {0}*0,02 + 1,3/{1}'
-        elif order_type == OrderTypes.jp:
+        elif order_type == OrdersConsts.OrderTypes.jp:
             return '{0}*0,1 + {0}*0,038'

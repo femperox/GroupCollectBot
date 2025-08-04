@@ -3,7 +3,7 @@ from googleapiclient import discovery
 from oauth2client.service_account import ServiceAccountCredentials
 import APIs.GoogleSheetsApi.API.Cells_Editor as ce
 import json 
-from confings.Consts import CREDENTIALS_FILE, SHEETS_ID_FILE
+from confings.Consts import PathsConsts
 from pprint import pprint
 from traceback import print_exc
 
@@ -11,7 +11,7 @@ class ParentSheetClass:
 
     def __init__(self):
         # Service-объект, для работы с Google-таблицами
-        credentials = ServiceAccountCredentials.from_json_keyfile_name(CREDENTIALS_FILE,
+        credentials = ServiceAccountCredentials.from_json_keyfile_name(PathsConsts.CREDENTIALS_FILE,
                                                                        ['https://www.googleapis.com/auth/spreadsheets',
                                                                         'https://www.googleapis.com/auth/drive'])
         httpAuth = credentials.authorize(httplib2.Http())
@@ -92,7 +92,7 @@ class ParentSheetClass:
 
     def setSpreadsheetId(self, sp_name):
 
-        tmp_dict = json.load(open(SHEETS_ID_FILE, encoding='utf-8'))
+        tmp_dict = json.load(open(PathsConsts.SHEETS_ID_FILE, encoding='utf-8'))
 
         self.__spreadsheet_id = tmp_dict[sp_name]
 
@@ -103,7 +103,7 @@ class ParentSheetClass:
 
     def getSheetId(self, sheet_id_key):
 
-        tmp_dict = json.load(open(SHEETS_ID_FILE, encoding='utf-8'))
+        tmp_dict = json.load(open(PathsConsts.SHEETS_ID_FILE, encoding='utf-8'))
 
         return tmp_dict[sheet_id_key]
     

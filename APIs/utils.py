@@ -1,13 +1,12 @@
 from datetime import datetime
 import os
 import json
-from confings.Consts import MONITOR_CONF_PATH, RegexType, STORE_MONITOR_CONF_PATH, CURRENT_POSRED, TEMP_PHOTO_PATH
+from confings.Consts import PathsConsts, RegexType, PosrednikConsts, OrdersConsts
 import re
 from itertools import chain
 from pprint import pprint
 from APIs.StoresApi.JpStoresApi.StoreSelector import StoreSelector as StoreSelectorJp
 from APIs.StoresApi.USStoresApi.StoreSelector import StoreSelector as StoreSelectorUs
-from confings.Consts import Stores
 from dateutil.relativedelta import relativedelta
 import locale
 from random import randint
@@ -34,8 +33,8 @@ def pickRightStoreSelector(url):
     store_selector.url = url
     current_store_name = store_selector.getStoreName()
 
-    jpStores = formShortList(Stores.availableStoreJp)
-    usStores = formShortList(Stores.availableStoreUS)
+    jpStores = formShortList(OrdersConsts.Stores.availableStoreJp)
+    usStores = formShortList(OrdersConsts.Stores.availableStoreUS)
 
     if current_store_name in jpStores:
         return store_selector
@@ -95,7 +94,7 @@ def getMonitorChats():
         list: список уникальных чатов сообщества
     """
 
-    with open(MONITOR_CONF_PATH, "r") as f: 
+    with open(PathsConsts.MONITOR_CONF_PATH, "r") as f: 
         conf_list = json.load(f)
 
         chat_list = []
@@ -108,7 +107,7 @@ def getMonitorChats():
     
 def getStoreMonitorChats():
 
-    with open(STORE_MONITOR_CONF_PATH, "r") as f: 
+    with open(PathsConsts.STORE_MONITOR_CONF_PATH, "r") as f: 
         conf_list = json.load(f)
 
         chat_list = []
@@ -126,7 +125,7 @@ def getMonitorChatsTypes():
         dict: список чатовы
     """
 
-    with open(MONITOR_CONF_PATH, "r") as f: 
+    with open(PathsConsts.MONITOR_CONF_PATH, "r") as f: 
         conf_list = json.load(f)
 
         chat_dict = {}
@@ -188,7 +187,7 @@ def getFavInfo(text, item_index = 0, isPosredPresent = True):
     fav_item = {}
 
     storeSelector = StoreSelectorJp()
-    storeSelector.url = CURRENT_POSRED
+    storeSelector.url = PosrednikConsts.CURRENT_POSRED
 
     if isPosredPresent:
         posred_domen = storeSelector.getStoreName()
@@ -325,10 +324,10 @@ def local_image_upload(url: str, tag:str, isFullPathNeeded = False) -> str:
         if extention != '':
             filename = f'new_image{randint(0,15000)}_{tag}' + extention
             response = requests.get(url)
-            image = open(TEMP_PHOTO_PATH + filename, 'wb')
+            image = open(PathsConsts.TEMP_PHOTO_PATH + filename, 'wb')
             image.write(response.content)
             image.close()
-        return TEMP_PHOTO_PATH + filename if isFullPathNeeded else filename
+        return PathsConsts.TEMP_PHOTO_PATH + filename if isFullPathNeeded else filename
     except:
         print_exc()
         local_image_upload(url, tag)
@@ -344,7 +343,7 @@ def createCollage(imagePaths, imagesPerRow = 3, spacing = 20):
     from PIL import Image
     if not imagePaths:
         return
-    outputPath = TEMP_PHOTO_PATH + f'new_collage_image{randint(0,15000)}.jpg'
+    outputPath = PathsConsts.TEMP_PHOTO_PATH + f'new_collage_image{randint(0,15000)}.jpg'
 
     images = [Image.open(img_path) for img_path in imagePaths]
     widths, heights = zip(*(img.size for img in images))

@@ -1,5 +1,5 @@
 from vk_api.keyboard import VkKeyboard, VkKeyboardColor
-from confings.Consts import VK_AUTOTAG_FORM_URL, VK_GUID_FOR_NEW_USERS_URL, PayloadType, PayloadPriceCheckCountry
+from confings.Consts import VkConsts
 from confings.Messages import MessageType
 
 class VkButtons:
@@ -13,14 +13,14 @@ class VkButtons:
     @staticmethod
     def form_main_menu_button():
         keyboard = VkButtons.get_empty_keyboard(inline=False)
-        keyboard.add_callback_button(label = 'Меню', color = VkKeyboardColor.SECONDARY, payload = PayloadType.menu_bot_call_menu) 
+        keyboard.add_callback_button(label = 'Меню', color = VkKeyboardColor.SECONDARY, payload = VkConsts.PayloadType.menu_bot_call_menu) 
         return keyboard
 
     @staticmethod
     def form_back_button(session):
 
         keyboard = VkButtons.get_empty_keyboard()
-        keyboard.add_callback_button(label='⏪ Назад', color=VkKeyboardColor.SECONDARY, payload = {"type": PayloadType.menu_bot_back_button["type"], "session": session}) 
+        keyboard.add_callback_button(label='⏪ Назад', color=VkKeyboardColor.SECONDARY, payload = {"type": VkConsts.PayloadType.menu_bot_back_button["type"], "session": session}) 
         return keyboard
 
     @staticmethod
@@ -38,17 +38,17 @@ class VkButtons:
         keyboard = VkButtons.get_empty_keyboard()
 
         if isAddButton:
-            keyboard.add_callback_button(label='🔖 Поставить на выкуп', color=VkKeyboardColor.POSITIVE, payload= {"type": PayloadType.menu_bot_add_item["type"],  "text": buttonPayloadText}) 
+            keyboard.add_callback_button(label='🔖 Поставить на выкуп', color=VkKeyboardColor.POSITIVE, payload= {"type": VkConsts.PayloadType.menu_bot_add_item["type"],  "text": buttonPayloadText}) 
 
         else:
-            keyboard.add_openlink_button(link = VK_GUID_FOR_NEW_USERS_URL, label ='🔰 Новичкам')
-            keyboard.add_openlink_button(link = VK_AUTOTAG_FORM_URL, label ='📩 Автотеги')
+            keyboard.add_openlink_button(link = VkConsts.VK_GUID_FOR_NEW_USERS_URL, label ='🔰 Новичкам')
+            keyboard.add_openlink_button(link = VkConsts.VK_AUTOTAG_FORM_URL, label ='📩 Автотеги')
             keyboard.add_line()
-            keyboard.add_callback_button(label='📦 Мои позиции', color=VkKeyboardColor.SECONDARY, payload = PayloadType.menu_bot_get_orders)
+            keyboard.add_callback_button(label='📦 Мои позиции', color=VkKeyboardColor.SECONDARY, payload = VkConsts.PayloadType.menu_bot_get_orders)
             keyboard.add_line()
-            keyboard.add_callback_button(label='🛒 Узнать цену товара (🇯🇵)', color=VkKeyboardColor.PRIMARY, payload = PayloadType.menu_check_price)
+            keyboard.add_callback_button(label='🛒 Узнать цену товара (🇯🇵)', color=VkKeyboardColor.PRIMARY, payload = VkConsts.PayloadType.menu_check_price)
             keyboard.add_line()
-            keyboard.add_callback_button(label='🛒 Узнать цену товара (🇺🇸)', color=VkKeyboardColor.PRIMARY, payload = {"type": PayloadType.menu_check_price["type"], "country": PayloadPriceCheckCountry.us } )
+            keyboard.add_callback_button(label='🛒 Узнать цену товара (🇺🇸)', color=VkKeyboardColor.PRIMARY, payload = {"type": VkConsts.PayloadType.menu_check_price["type"], "country": VkConsts.PayloadPriceCheckCountry.us } )
         return keyboard
     
     @staticmethod
@@ -61,11 +61,11 @@ class VkButtons:
         
         keyboard = VkButtons.get_empty_keyboard()
 
-        keyboard.add_callback_button(label ='Добавить в ⭐️', color=VkKeyboardColor.SECONDARY, payload= PayloadType.buy_fav)
+        keyboard.add_callback_button(label = 'Добавить в ⭐️', color = VkKeyboardColor.SECONDARY, payload = VkConsts.PayloadType.buy_fav)
         keyboard.add_line()
 
-        keyboard.add_callback_button(label='Товар выкуплен', color=VkKeyboardColor.POSITIVE, payload= {"type": PayloadType.buy_succes["type"],  "user": userId, "userMes": userMesId})
-        keyboard.add_callback_button(label='Товар НЕ выкуплен', color=VkKeyboardColor.NEGATIVE, payload= {"type": PayloadType.buy_fail["type"],  "user": userId, "userMes": userMesId})
+        keyboard.add_callback_button(label = 'Товар выкуплен', color = VkKeyboardColor.POSITIVE, payload = {"type": VkConsts.PayloadType.buy_succes["type"],  "user": userId, "userMes": userMesId})
+        keyboard.add_callback_button(label = 'Товар НЕ выкуплен', color = VkKeyboardColor.NEGATIVE, payload = {"type": VkConsts.PayloadType.buy_fail["type"],  "user": userId, "userMes": userMesId})
 
         return keyboard
 
@@ -84,8 +84,8 @@ class VkButtons:
         keyboard = VkButtons.get_empty_keyboard()
 
         if type == MessageType.monitor_big_category:  
-            keyboard.add_callback_button(label='🚫', color=VkKeyboardColor.NEGATIVE, payload=PayloadType.ban_seller)
-            keyboard.add_callback_button(label='⭐️', color=VkKeyboardColor.POSITIVE, payload=PayloadType.add_fav)
+            keyboard.add_callback_button(label='🚫', color=VkKeyboardColor.NEGATIVE, payload= VkConsts.PayloadType.ban_seller)
+            keyboard.add_callback_button(label='⭐️', color=VkKeyboardColor.POSITIVE, payload= VkConsts.PayloadType.add_fav)
         
         elif type in [MessageType.monitor_big_category_other, MessageType.monitor_seller, MessageType.fav_list]:
             j = 0
@@ -96,11 +96,11 @@ class VkButtons:
                     keyboard.add_line()
 
                 if type in [MessageType.monitor_big_category_other, MessageType.monitor_seller]:
-                    payload = {"type": PayloadType.add_fav_num["type"], "text": PayloadType.add_fav_num["text"].format(i)}
+                    payload = {"type": VkConsts.PayloadType.add_fav_num["type"], "text": VkConsts.PayloadType.add_fav_num["text"].format(i)}
                     keyboard.add_callback_button(label=f'⭐️ {i+1}', color=VkKeyboardColor.POSITIVE, payload=payload)
                 
                 elif type in [MessageType.fav_list]:
-                    payload = {"type": PayloadType.delete_fav_num["type"], "text": PayloadType.delete_fav_num["text"].format(i)}
+                    payload = {"type": VkConsts.PayloadType.delete_fav_num["type"], "text": VkConsts.PayloadType.delete_fav_num["text"].format(i)}
                     keyboard.add_callback_button(label=f'🗑 {i+1}', color=VkKeyboardColor.SECONDARY, payload=payload)
 
                 j += 1
@@ -114,7 +114,7 @@ class VkButtons:
                 if j % columnn_count == 0:
                     keyboard.add_line()
 
-                payload = {"type": PayloadType.ban_seller_num["type"], "text": PayloadType.ban_seller_num["text"].format(i)}
+                payload = {"type": VkConsts.PayloadType.ban_seller_num["type"], "text": VkConsts.PayloadType.ban_seller_num["text"].format(i)}
                 keyboard.add_callback_button(label=f'🚫 {i+1}', color=VkKeyboardColor.NEGATIVE, payload=payload)
                 
                 j += 1

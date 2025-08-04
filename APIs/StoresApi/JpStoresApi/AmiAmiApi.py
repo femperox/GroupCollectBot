@@ -1,23 +1,14 @@
 from APIs.webUtils import WebUtils 
 import requests
-from confings.Consts import ShipmentPriceType as spt
+from confings.Consts import OrdersConsts
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 import locale
-import json
 import time 
 from SQLS.DB_Operations import GetNotSeenProducts, insertNewSeenProducts
-from random import choice
-from confings.Consts import MonitorStoresType
 from pprint import pprint
-from requests_html import HTMLSession 
-from confings.Consts import Stores
-import cfscrape 
-from seleniumbase import Driver
 from APIs.posredApi import PosredApi
-import random
 import sys
-from concurrent.futures import ThreadPoolExecutor
 sys.argv.append("-n")  # Tell SeleniumBase to do thread-locking as needed
 
 class AmiAmiApi():
@@ -201,7 +192,7 @@ class AmiAmiApi():
         item['itemPrice'] = js['item']['price']
         item['tax'] = 0
         item['itemPriceWTax'] = 0
-        item['shipmentPrice'] = spt.undefined
+        item['shipmentPrice'] = OrdersConsts.ShipmentPriceType.undefined
         item['page'] = url
         item['mainPhoto'] = 'https://img.amiami.com'+js['item']['main_image_url']
         item['name'] = js['item']['gname']
@@ -211,7 +202,7 @@ class AmiAmiApi():
         item['posredCommission'] = commission['posredCommission'].format(item['itemPrice'])
         item['posredCommissionValue'] = commission['posredCommissionValue'](item['itemPrice'])  
 
-        item['siteName'] = Stores.amiAmi
+        item['siteName'] = OrdersConsts.Stores.amiAmi
         item['id'] = item_id   
 
         return item
@@ -236,7 +227,7 @@ class AmiAmiApi():
 
         item['tax'] = 0
         item['itemPriceWTax'] = 0 # Всегда включена в цену
-        item['shipmentPrice'] = spt.undefined
+        item['shipmentPrice'] = OrdersConsts.ShipmentPriceType.undefined
         item['page'] = url
         item['mainPhoto'] = soup.find('a', class_ = 'nolink sponly')['src']
         item['name'] = soup.find('h2', class_ = 'item-detail__section-title').text
@@ -246,7 +237,7 @@ class AmiAmiApi():
         item['posredCommission'] = commission['posredCommission'].format(item['itemPrice'])
         item['posredCommissionValue'] = commission['posredCommissionValue'](item['itemPrice'])  
 
-        item['siteName'] = Stores.amiAmi
+        item['siteName'] = OrdersConsts.Stores.amiAmi
         item['id'] = item_id   
 
         return item
@@ -270,7 +261,7 @@ class AmiAmiApi():
 
         item['tax'] = 0
         item['itemPriceWTax'] = 0 # Всегда включена в цену
-        item['shipmentPrice'] = spt.undefined
+        item['shipmentPrice'] = OrdersConsts.ShipmentPriceType.undefined
         item['page'] = url
         item['mainPhoto'] = soup.find('img', class_ = 'gallery_item_main ofi')['src']
         item['name'] = soup.find('h2', class_ = 'heading_10').text
@@ -280,7 +271,7 @@ class AmiAmiApi():
         item['posredCommission'] = commission['posredCommission'].format(item['itemPrice'])
         item['posredCommissionValue'] = commission['posredCommissionValue'](item['itemPrice'])  
 
-        item['siteName'] = Stores.amiAmi
+        item['siteName'] = OrdersConsts.Stores.amiAmi
         item['id'] = item_id   
 
         return item
@@ -336,7 +327,7 @@ class AmiAmiApi():
 
         pages_to_see = 15
 
-        if type_id == MonitorStoresType.amiAmiEngSale:
+        if type_id == OrdersConsts.MonitorStoresType.amiAmiEngSale:
             curl = 'https://api.amiami.com/api/v1.0/items?pagemax=50&pagecnt={}&lang=eng&mcode=&ransu=&age_confirm=&s_st_saleitem=1&s_st_list_newitem_available=1'
             pages_to_see = 10
         else:
@@ -350,7 +341,7 @@ class AmiAmiApi():
 
         for product in js['items']:
 
-            if type_id == MonitorStoresType.amiAmiEngInStock and (product['preorderitem'] 
+            if type_id == OrdersConsts.MonitorStoresType.amiAmiEngInStock and (product['preorderitem'] 
                                                                   or product['saleitem'] 
                                                                   or not product['thumb_url']):
                 continue
@@ -359,7 +350,7 @@ class AmiAmiApi():
             item['itemPrice'] = product['min_price']
             item['tax'] = 0
             item['itemPriceWTax'] = 0
-            item['shipmentPrice'] = spt.undefined
+            item['shipmentPrice'] = OrdersConsts.ShipmentPriceType.undefined
             item['page'] = f"https://www.amiami.com/eng/detail?gcode={product['gcode']}"
             item['mainPhoto'] = 'https://img.amiami.com'+product['thumb_url']
             item['itemId'] = product['gcode']
@@ -417,7 +408,7 @@ class AmiAmiApi():
             item['itemPrice'] = preOrder['min_price']
             item['tax'] = 0
             item['itemPriceWTax'] = 0
-            item['shipmentPrice'] = spt.undefined
+            item['shipmentPrice'] = OrdersConsts.ShipmentPriceType.undefined
             item['page'] = f"https://www.amiami.com/eng/detail?gcode={preOrder['gcode']}"
             item['mainPhoto'] = 'https://img.amiami.com'+preOrder['thumb_url']
             item['itemId'] = preOrder['gcode']
@@ -503,7 +494,7 @@ class AmiAmiApi():
             item['itemPrice'] = preowned['min_price']
             item['tax'] = 0
             item['itemPriceWTax'] = 0
-            item['shipmentPrice'] = spt.undefined
+            item['shipmentPrice'] = OrdersConsts.ShipmentPriceType.undefined
             item['page'] = f"https://www.amiami.com/eng/detail?gcode={preowned['gcode']}"
             item['mainPhoto'] = 'https://img.amiami.com'+preowned['thumb_url']
             item['itemId'] = preowned['gcode']
