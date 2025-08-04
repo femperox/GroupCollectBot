@@ -1,20 +1,26 @@
 from vk_api.keyboard import VkKeyboard, VkKeyboardColor
-from confings.Consts import VK_AUTOTAG_FORM_URL, PayloadType, PayloadPriceCheckCountry
+from confings.Consts import VK_AUTOTAG_FORM_URL, VK_GUID_FOR_NEW_USERS_URL, PayloadType, PayloadPriceCheckCountry
 from confings.Messages import MessageType
 
 class VkButtons:
 
     @staticmethod
-    def form_back_button(payload):
-
-        settings = dict(one_time = False, inline=True)
-            
-        keyboard = ''
-
+    def get_empty_keyboard(one_time = False, inline = True):
+        settings = dict(one_time = one_time, inline = inline)
         keyboard = VkKeyboard(**settings)
+        return keyboard        
 
-        keyboard.add_callback_button(label='⏪ Назад', color=VkKeyboardColor.SECONDARY, payload = payload) 
+    @staticmethod
+    def form_main_menu_button():
+        keyboard = VkButtons.get_empty_keyboard(inline=False)
+        keyboard.add_callback_button(label = 'Меню', color = VkKeyboardColor.SECONDARY, payload = PayloadType.menu_bot_call_menu) 
+        return keyboard
 
+    @staticmethod
+    def form_back_button(session):
+
+        keyboard = VkButtons.get_empty_keyboard()
+        keyboard.add_callback_button(label='⏪ Назад', color=VkKeyboardColor.SECONDARY, payload = {"type": PayloadType.menu_bot_back_button["type"], "session": session}) 
         return keyboard
 
     @staticmethod
@@ -29,23 +35,20 @@ class VkButtons:
             VkKeyboard: кнопки меню
         """
 
-        settings = dict(one_time = False, inline=True)
-            
-        keyboard = ''
-
-        keyboard = VkKeyboard(**settings)
+        keyboard = VkButtons.get_empty_keyboard()
 
         if isAddButton:
             keyboard.add_callback_button(label='🔖 Поставить на выкуп', color=VkKeyboardColor.POSITIVE, payload= {"type": PayloadType.menu_bot_add_item["type"],  "text": buttonPayloadText}) 
 
         else:
-            keyboard.add_openlink_button(link = VK_AUTOTAG_FORM_URL, label ='📩 Добавиться к автотегам')
+            keyboard.add_openlink_button(link = VK_GUID_FOR_NEW_USERS_URL, label ='🔰 Новичкам')
+            keyboard.add_openlink_button(link = VK_AUTOTAG_FORM_URL, label ='📩 Автотеги')
             keyboard.add_line()
-            keyboard.add_callback_button(label='📦 Мои позиции', color=VkKeyboardColor.SECONDARY, payload= PayloadType.menu_bot_get_orders)
+            keyboard.add_callback_button(label='📦 Мои позиции', color=VkKeyboardColor.SECONDARY, payload = PayloadType.menu_bot_get_orders)
             keyboard.add_line()
-            keyboard.add_callback_button(label='🛒 Узнать цену товара (🇯🇵)', color=VkKeyboardColor.PRIMARY, payload= PayloadType.menu_check_price)
+            keyboard.add_callback_button(label='🛒 Узнать цену товара (🇯🇵)', color=VkKeyboardColor.PRIMARY, payload = PayloadType.menu_check_price)
             keyboard.add_line()
-            keyboard.add_callback_button(label='🛒 Узнать цену товара (🇺🇸)', color=VkKeyboardColor.PRIMARY, payload= {"type": PayloadType.menu_check_price["type"], "country": PayloadPriceCheckCountry.us } )
+            keyboard.add_callback_button(label='🛒 Узнать цену товара (🇺🇸)', color=VkKeyboardColor.PRIMARY, payload = {"type": PayloadType.menu_check_price["type"], "country": PayloadPriceCheckCountry.us } )
         return keyboard
     
     @staticmethod
@@ -56,9 +59,7 @@ class VkButtons:
             VkKeyboard: кнопки меню выкупа
         """
         
-        settings = dict(one_time= False, inline=True)
-            
-        keyboard = VkKeyboard(**settings)
+        keyboard = VkButtons.get_empty_keyboard()
 
         keyboard.add_callback_button(label ='Добавить в ⭐️', color=VkKeyboardColor.SECONDARY, payload= PayloadType.buy_fav)
         keyboard.add_line()
@@ -80,19 +81,13 @@ class VkButtons:
             VkKeyboard: кнопки для подборок товаров
         """
 
-        settings = dict(one_time=False, inline=True)
-        
-        keyboard = ''
+        keyboard = VkButtons.get_empty_keyboard()
 
         if type == MessageType.monitor_big_category:  
-                    
-            keyboard = VkKeyboard(**settings)
             keyboard.add_callback_button(label='🚫', color=VkKeyboardColor.NEGATIVE, payload=PayloadType.ban_seller)
             keyboard.add_callback_button(label='⭐️', color=VkKeyboardColor.POSITIVE, payload=PayloadType.add_fav)
         
         elif type in [MessageType.monitor_big_category_other, MessageType.monitor_seller, MessageType.fav_list]:
-
-            keyboard = VkKeyboard(**settings)
             j = 0
             columnn_count = 5
             for i in range(len(items)):

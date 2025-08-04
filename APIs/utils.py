@@ -14,6 +14,9 @@ from random import randint
 import requests
 from traceback import print_exc
 
+def generate_random_integer():
+    return randint(0,2147483647)
+
 def formShortList(storeList):
 
     store_selector = StoreSelectorJp()

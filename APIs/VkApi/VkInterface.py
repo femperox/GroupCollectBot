@@ -13,7 +13,7 @@ from confings.Messages import MessageType, Messages
 from Logger import logger, logger_fav, logger_utils
 from SQLS import DB_Operations
 from confings.Consts import VkTopicCommentChangeType, ItemBuyStatus, VK_PROPOSED_CHAT_ID, VK_ERRORS_CHAT_ID, BanActionType, MAX_BAN_REASONS, RegexType, PayloadType, VkCommands, PRIVATES_PATH, Stores, TEMP_PHOTO_PATH
-from APIs.utils import getMonitorChats, getFavInfo, getStoreMonitorChats, local_image_upload, isExistingFile
+from APIs.utils import getMonitorChats, getFavInfo, getStoreMonitorChats, local_image_upload, isExistingFile, generate_random_integer
 from APIs.TrackingAPIs.TrackingSelector import TrackingSelector, TrackingTypes
 from APIs.StoresApi.JpStoresApi.StoreSelector import StoreSelector
 from APIs.VkApi.objects.VkButtons import VkButtons
@@ -485,7 +485,6 @@ class VkApi:
         #self.__vk_session
         vkBotSession = vk_api.VkApi(token=self.__tok)
         longPoll = VkLongPoll(vkBotSession,mode= VkLongpollMode.GET_EXTENDED, group_id = self.__group_id, wait = 50)
-        whiteList = [int(x) for x in self.__admins]
 
         while True:
             try:
@@ -517,7 +516,7 @@ class VkApi:
        """
        
        longPoll = VkBotLongPoll(self.__token_session_t, self.__group_id, wait = 50)
-       whiteList = [int(x) for x in self.__admins]
+       whiteList = self.__admins
 
        # Личные сообщение
        not_dm_chats = getMonitorChats()
@@ -572,10 +571,10 @@ class VkApi:
 
                     # Действия с сообщениями - callback кнопицы 
                     if 'payload' in event.object.keys():
-
                         chat = event.object['peer_id']
-                        message_id = event.object['conversation_message_id']                    
-                        mes = self.get_message(chat_id = chat, mess_id= message_id)
+                        if event.object['payload']['type'] not in [PayloadType.menu_bot_call_menu['type']]:
+                            message_id = event.object['conversation_message_id']                    
+                            mes = self.get_message(chat_id = chat, mess_id= message_id)
 
                         # добавление в избранное
                         if event.object['payload']['type'] == PayloadType.add_fav['type']:
@@ -611,7 +610,7 @@ class VkApi:
                             self.sendMes(mess=mes, users=chat)                       
                         
                         # бан продавана
-                        elif event.object['payload']['type'] == PayloadType.ban_seller_num['type'] and str(event.object['user_id']) in self.__admins:
+                        elif event.object['payload']['type'] == PayloadType.ban_seller_num['type'] and event.object['user_id'] in self.__admins:
 
                             item_index = int(event.object['payload']['text'])
                             category = re.findall(RegexType.regex_hashtag, mes['items'][0]['text'])
@@ -632,29 +631,37 @@ class VkApi:
                                 self.sendMes(mess = message, users= chat)
                                 if not isBanned:
                                     logger.info(f"\n[BAN-{category.split('_')[-1]}] Забанен продавец {seller}\n") 
-                        
-                        # запросили список позиций
-                        elif event.object['payload'] == PayloadType.menu_bot_get_orders:
-
-                            user_items = DB_Operations.getParticipantItems(user_id = chat)
-                            self.sendMes( mess = Messages.formParticipantItemsMes(participantItems = user_items),
-                                          users = chat)
-
-                        # менюшка с чеком цены
-                        elif event.object['payload']["type"] == PayloadType.menu_check_price["type"]:
-                            
-                            DB_Operations.updateUserMenuStatus(user_id = event.object.user_id, status = PayloadType.menu_check_price['type'], country = event.object['payload']['country'])
-                            self.sendMes(mess = Messages.formCalcMes(event.object['payload']['country']), 
-                                         users = chat,
-                                         keyboard = VkButtons.form_back_button(payload = PayloadType.menu_bot_call_menu))     
-                        # назад в меню
+                        # вызов менюшки
                         elif event.object['payload'] == PayloadType.menu_bot_call_menu:
-                            
-                            DB_Operations.updateUserMenuStatus(user_id = chat, status= PayloadType.menu_bot_none["type"])
-
-                            self.__token_session.messages.delete(**VkParams.getDeleteMessageParams(peer_id = chat, 
-                                                                                                group_id = self.__group_id,
-                                                                                                cmids = mes['items'][0]['conversation_message_id']))
+                            DB_Operations.updateUserMenuStatus(user_id = chat, status = PayloadType.menu_bot_none["type"])
+                            self.sendMes(mess = "Выберите пункт меню", users = chat, keyboard = VkButtons.form_menu_buttons())
+                        # ответ на запрос о списке позиций
+                        elif event.object['payload'] == PayloadType.menu_bot_get_orders:
+                            user_items = DB_Operations.getParticipantItems(user_id = chat)
+                            session = generate_random_integer()
+                            DB_Operations.updateUserMenuStatus(user_id = event.object.user_id, 
+                                                                status = PayloadType.menu_bot_get_orders['type'],
+                                                                session = session)
+                            self.sendMes( mess = Messages.formParticipantItemsMes(participantItems = user_items),
+                                            users = chat,
+                                            keyboard = VkButtons.form_back_button(session = session))
+                        # сообщение с запросом ссылки для расчёта
+                        elif event.object['payload']["type"] == PayloadType.menu_check_price["type"]:
+                            session = generate_random_integer()
+                            DB_Operations.updateUserMenuStatus(user_id = event.object.user_id, status = PayloadType.menu_check_price['type'],
+                                                                country = event.object['payload']['country'],
+                                                                session = session)
+                            self.sendMes(mess = Messages.formCalcMes(event.object['payload']['country']), 
+                                            users = chat,
+                                            keyboard = VkButtons.form_back_button(session = session))     
+                        # назад в меню - удаление сообщения с кнопкой "назад"
+                        elif event.object['payload']["type"] == PayloadType.menu_bot_back_button["type"]:
+                            current_session = DB_Operations.getUserMenuSession(user_id = chat)
+                            if 'session' in event.object['payload'].keys() and current_session == event.object['payload']['session']:
+                                DB_Operations.updateUserMenuStatus(user_id = chat, status= PayloadType.menu_bot_none["type"])
+                            self.__token_session.messages.delete(**VkParams.getDeleteMessageParams( peer_id = chat, 
+                                                                                                    group_id = self.__group_id,
+                                                                                                    cmids = mes['items'][0]['conversation_message_id']))
                         # Челик поставил на выкуп товар
                         elif event.object['payload']["type"] == PayloadType.menu_bot_add_item["type"]:
 
@@ -676,7 +683,6 @@ class VkApi:
                                                                                             conversation_message_id = mes['items'][0]['conversation_message_id'],
                                                                                             attachment = attachment))
                             self.sendMes(mess = "Спасибо! Ваша заявка на выкуп принята!" + Messages.bot_ending, users = chat)
-
                         # менюшка со статусом выкупа
                         elif event.object['payload']["type"] in [PayloadType.buy_fail["type"], PayloadType.buy_succes["type"]]:
 
@@ -723,9 +729,10 @@ class VkApi:
 
                     # менюшка
                     elif chat not in not_dm_chats and event.obj.message['text'].lower() in VkCommands.menuList:
-                        # and (sender in whiteList)
-                        self.sendMes(mess = "Выберите пункт меню", users = chat, keyboard = VkButtons.form_menu_buttons())
-
+                        self.sendMes(mess = 'Кнопка меню подключена!' + Messages.bot_ending, 
+                                    users = sender,
+                                    keyboard = VkButtons.form_main_menu_button())  
+                        DB_Operations.updateUserMenuStatus(user_id = sender, status = PayloadType.menu_bot_none["type"])
                     # ответ на менюшку
                     elif PayloadType.menu_check_price["type"] == DB_Operations.getUserMenuStatus(user_id=sender):
                         DB_Operations.updateUserMenuStatus(user_id = sender, status = PayloadType.menu_bot_none["type"])

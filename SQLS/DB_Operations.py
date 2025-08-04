@@ -981,19 +981,43 @@ def getUserMenuCountry(user_id):
     
     return result[0]
 
-def updateUserMenuStatus(user_id, status = '', country = ''):
+def getUserMenuSession(user_id):
+    """Получить сессию расчета для пользователя в чате с ботом
+
+    Args:
+        user_id (int): id пользователя
+
+    Returns:
+        int: id сессии
+    """
+    
+    conn = getConnection(DbNames.collectDatabase)
+    cursor = conn.cursor()  
+
+    sql = f"""select GET_USER_MENU_SESSION_ID({user_id});"""
+
+    cursor.execute(sql)
+    result = cursor.fetchone() 
+
+    cursor.close()
+    conn.close()
+    
+    return result[0]
+
+def updateUserMenuStatus(user_id, status = '', country = '', session = 0):
     """Обновить статус меню бота
 
     Args:
         user_id (int): id пользователя
         status (string): статус меню бота
+        session (int): id сессии
 
     """
 
     conn = getConnection(DbNames.collectDatabase)
     cursor = conn.cursor()  
 
-    cursor.execute(f"CALL USER_MENU_STATUS_UPDATE({user_id}, '{status}', '{country}')")
+    cursor.execute(f"CALL USER_MENU_STATUS_UPDATE({user_id}, '{status}', '{country}', {session})")
    
     conn.commit() 
     cursor.close()
