@@ -78,7 +78,8 @@
 🌐 [suruga-ya](https://www.suruga-ya.jp/) *(с 18.11.2024)*  
 🌐 [amazon](https://www.amazon.com/) *(с 26.06.2025)*  
 🌐 [bratz](https://www.bratz.com) *(с 26.06.2025)*  
-🌐 [fangamer](https://www.fangamer.com) *(с 26.06.2025)*
+🌐 [fangamer](https://www.fangamer.com) *(с 26.06.2025)*  
+🌐 [mattel](https://creations.mattel.com) *(с 06.08.2025)*
 
 
 ## Что будет дорабатываться/добавляться?

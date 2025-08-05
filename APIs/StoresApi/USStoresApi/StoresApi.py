@@ -73,6 +73,44 @@ class StoresApi:
         item['posredCommissionValue'] = commission['posredCommissionValue'](format_number)
 
         return item
+    
+    @staticmethod
+    def parseMattelItem(url):
+        """Получение базовой информации о товаре с магазина mattel
+
+        Args:
+            url (string): ссылка на товар
+
+        Returns:
+            dict: словарь с информацией о товаре
+        """
+        
+        curl = f'https://creations.mattel.com/products/{url.split("products/")[-1]}.js'
+        shipping_price_url = 'https://creations.mattel.com/pages/shipping-rates-policy'
+
+        soup_shipment = WebUtils.getSoup(url = shipping_price_url)
+        shipment_price = soup_shipment.find('tbody').findAll('td')[1].text
+        shipment_price = float(shipment_price.replace('$', ''))
+        
+        item = StoresApi.getInfo(curl = curl, url = url, 
+                                shipmentPrice = shipment_price,
+                                storeName = OrdersConsts.Stores.mattel)
+        
+        soup_membership = WebUtils.getSoup(url = url)
+        soup_membership = soup_membership.find_all('script', {'type': 'text/javascript'})
+        target_script = None
+        for script in soup_membership:
+            if script.string and "'item_badge':" in script.string:
+                target_script = script.string.strip()
+                break
+        js_start = target_script.find("'item_badge':") + len("'item_badge':")
+        js_end = target_script.find("'item_bundle_id'") - 1
+        membership = target_script[js_start:js_end].replace('\n', '').replace(',','').replace("'", '').strip()
+
+        item['isMembershipNeeded'] = bool(membership)
+        
+        return item
+    
     @staticmethod
     def parseFangamerItem(url):
         """Получение базовой информации о товаре с магазина fangamer

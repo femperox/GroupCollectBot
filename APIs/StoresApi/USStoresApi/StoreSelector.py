@@ -42,6 +42,8 @@ class StoreSelector(StoreSelectorParent):
             item = StoresApi.parseBratzItem(url = url)
         elif site == OrdersConsts.Stores.fangamer:
             item = StoresApi.parseFangamerItem(url = url)
+        elif site == OrdersConsts.Stores.mattel:
+            item = StoresApi.parseMattelItem(url = url)
         
         return item
     
