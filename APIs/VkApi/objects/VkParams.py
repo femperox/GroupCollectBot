@@ -149,6 +149,25 @@ class VkParams:
         return params
     
     @staticmethod
+    def getEditGroupParams(group_id, description):
+        """Подготовить параметры для смены инфы о сообществе
+
+        Args:
+            group_id (int): id группы
+            text (string): новый текст статуса
+
+        Returns:
+            dict: параметры для смены статуса сообщества
+        """
+
+        params = {
+                'group_id': group_id,
+                'description': description,
+        }
+
+        return params
+    
+    @staticmethod
     def getOwnerCoverPhotoUploadServerParams(group_id):
         """Получить параметры для подготовки загрузки шапки сообщества
 

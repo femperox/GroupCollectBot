@@ -865,6 +865,13 @@ class VkApi:
         except Exception as e:
             print_exc()
 
+    def edit_group_description(self, text):
+        
+        try:
+            self.vk.groups.edit(**VkParams.getEditGroupParams(group_id = self.__group_id, description = text))
+        except Exception as e:
+            print_exc()        
+
     def get_wall_post(self, post_owner_id):
         """получить инфо о посте
 
