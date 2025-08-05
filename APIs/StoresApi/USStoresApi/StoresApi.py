@@ -27,11 +27,27 @@ class StoresApi:
 
         headers = WebUtils.getHeader()
         page = requests.get(curl, headers=headers)
-        js = page.json() 
+        js = page.json()
 
         item = {}
 
-        item['itemPrice'] = float(js['price'])/100
+        if variant:
+            variant_item = [x for x in js['variants'] if x['id'] == variant][0]
+            item['itemPrice'] = variant_item['price']
+            if 'featured_image' in variant_item:
+                item['mainPhoto'] = variant_item['featured_image']['src']
+            else:
+                item['mainPhoto'] = 'https:' + js['featured_image']
+            item['name'] = variant_item['name']
+        else:
+            if len(js['variants']) > 1 and js['variants'][0]['available'] == False:
+                item['itemPrice'] = js['variants'][-1]['price']
+            else:
+                item['itemPrice'] = js['price']
+            item['mainPhoto'] = 'https:' + js['featured_image']
+            item['name'] = js['title']
+        
+        item['itemPrice'] = float(item['itemPrice'])/100
         item['id'] = js['id']
 
         item['tax'] = 0
@@ -45,20 +61,6 @@ class StoresApi:
                     
         item['page'] = url
 
-        if variant:
-            variant_item = [x for x in js['variants'] if x['id'] == variant][0]
-            item['itemPrice'] = variant_item['price']
-            if 'featured_image' in variant_item:
-                item['mainPhoto'] = variant_item['featured_image']['src']
-            else:
-                item['mainPhoto'] = 'https:' + js['featured_image']
-            item['name'] = variant_item['name']
-        else:
-            item['itemPrice'] = js['price']
-            item['mainPhoto'] = 'https:' + js['featured_image']
-            item['name'] = js['title']
-        item['itemPrice'] = float(item['itemPrice'])/100
-
         item['name'] = js['title']
         item['endTime'] = datetime.now() + relativedelta(years=3)
         item['siteName'] = storeName
@@ -69,7 +71,7 @@ class StoresApi:
         format_number = item['itemPrice']
         item['posredCommission'] = commission['posredCommission'].format(format_string)
         item['posredCommissionValue'] = commission['posredCommissionValue'](format_number)
-        
+
         return item
     @staticmethod
     def parseFangamerItem(url):
