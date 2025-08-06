@@ -6,6 +6,7 @@ from APIs.StoresApi.USStoresApi.YoutoozApi import YoutoozApi
 from APIs.StoresApi.USStoresApi.AmazonApi import AmazonApi
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
+from APIs.StoresApi.ProductInfoClass import ProductInfoClass
 
 class StoreSelector(StoreSelectorParent):
 
@@ -45,5 +46,5 @@ class StoreSelector(StoreSelectorParent):
         elif site == OrdersConsts.Stores.mattel:
             item = StoresApi.parseMattelItem(url = url)
         
-        return item
+        return ProductInfoClass(**item)
     

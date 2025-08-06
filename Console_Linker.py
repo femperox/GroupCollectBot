@@ -315,7 +315,7 @@ def createTableTopic(post_url, site_url ='', spId=0, topic_id=0, items=0, img_ur
         store_selector = pickRightStoreSelector(url = site_url)
         item = store_selector.selectStore(url = site_url)
         if len(img_url) == 0:
-            img_url = item['mainPhoto']
+            img_url = item.mainPhoto
 
     namedRange, collect_id = createNamedRange(spId)
 
@@ -325,7 +325,7 @@ def createTableTopic(post_url, site_url ='', spId=0, topic_id=0, items=0, img_ur
 
     mes = Messages.mes_collect_info(collectId = collect_id,
                                     participantList = transformToTopicFormat(participantsList), 
-                                    lotWallUrl = post_url, siteName = item["siteName"])
+                                    lotWallUrl = post_url, siteName = item.siteName)
 
     topicInfo = vk.post_comment(topic_id = topic_id, message=mes, img_urls=[img_url])
  

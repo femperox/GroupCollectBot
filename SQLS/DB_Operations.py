@@ -3,6 +3,7 @@ import os
 import json
 from pprint import pprint
 from confings.Consts import DbNames, OrdersConsts
+from APIs.StoresApi.ProductInfoClass import ProductInfoClass
 
 def getConnection(connection = DbNames.database):
     """Получить подключение к базе PostgreSQL
@@ -22,7 +23,7 @@ def getConnection(connection = DbNames.database):
     return conn
 
 
-def addFav(item):
+def addFav(item:ProductInfoClass):
     """Добавление лота в избранное
 
     Args:
@@ -34,7 +35,7 @@ def addFav(item):
 
     conn = getConnection()
     cursor = conn.cursor()
-    cursor.execute(f"SELECT ADD_FAV({item['usr']}, '{item['id']}', '{item['attachement']}', '{item['endTime']}', '{item['siteName']}', '{item['page']}')")
+    cursor.execute(f"SELECT ADD_FAV({item.user}, '{item.id}', '{item.attachement}', '{item.endTime}', '{item.siteName}', '{item.page}')")
     result = cursor.fetchone()[0]
    
     conn.commit() 

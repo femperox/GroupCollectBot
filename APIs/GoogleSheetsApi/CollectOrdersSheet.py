@@ -5,6 +5,7 @@ import APIs.GoogleSheetsApi.API.Cells_Editor as ce
 from APIs.GoogleSheetsApi.API.Styles.Borders import Borders as b
 from APIs.GoogleSheetsApi.API.Styles.Colors import Colors as c
 from APIs.utils import concatList
+from APIs.StoresApi.ProductInfoClass import ProductInfoClass
 
 class CollectOrdersSheet(ParentSheetClass):
 
@@ -133,7 +134,7 @@ class CollectOrdersSheet(ParentSheetClass):
 
        return participantList
     
-    def createTable(self, spId, namedRange, participants = 1, item = [], image = "https://i.pinimg.com/originals/50/d8/03/50d803bda6ba43aaa776d0e243f03e7b.png"):
+    def createTable(self, spId, namedRange, participants = 1, item:ProductInfoClass = None, image = "https://i.pinimg.com/originals/50/d8/03/50d803bda6ba43aaa776d0e243f03e7b.png"):
         '''
         Создаёт и заполняет базовую таблицу по заданным параметрам
 

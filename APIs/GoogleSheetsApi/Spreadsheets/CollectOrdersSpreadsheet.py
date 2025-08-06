@@ -9,6 +9,7 @@ from confings.Consts import CollectOrdersSheetNames as sheetNames, OrdersConsts
 from APIs.posredApi import PosredApi
 from APIs.GoogleSheetsApi.API.Constants import ConditionType
 from APIs.utils import getExpiryDateString
+from APIs.StoresApi.ProductInfoClass import ProductInfoClass
 
 class CollectOrdersSpreadsheetClass():
 
@@ -160,7 +161,7 @@ class CollectOrdersSpreadsheetClass():
         return collectType, collectNum
 
 
-    def prepareValues(self, spId, image, collect = "", item = []):
+    def prepareValues(self, spId, image, collect = "", item:ProductInfoClass = None):
         '''
         подготовка блока data в json-запросе для заполнения таблицы значениями
 
@@ -222,7 +223,7 @@ class CollectOrdersSpreadsheetClass():
         data.append(ce.insertValue(spId, ran, image))
 
         # информация о сайте
-        url = f'=HYPERLINK("{item["page"]}"; "{item["siteName"]}")'
+        url = f'=HYPERLINK("{item.page}"; "{item.siteName}")'
         ran = sheetTitle + "!J{0}".format(self.startLotRow+3)
         data.append(ce.insertValue(spId, ran, url))
 
@@ -231,7 +232,7 @@ class CollectOrdersSpreadsheetClass():
         # Курс
         form = "!J{0}"
         ran = sheetTitle + form.format(self.startLotRow+5)
-        formula = f"={str(PosredApi.getCurrentCurrencyRateByUrl(url = item['page'])).replace('.', ',')}"
+        formula = f"={str(PosredApi.getCurrentCurrencyRateByUrl(url = item.page)).replace('.', ',')}"
         data.append(ce.insertValue(spId, ran, formula))
 
         for i in range(2):
@@ -253,12 +254,12 @@ class CollectOrdersSpreadsheetClass():
         if item:
             # стоимость лота со всеми комм и дост
             ran = sheetTitle + "!I{0}".format(self.startLotRow+7)
-            tax = item['tax']/100 if item['tax'] > 0 else 0
-            formula = "={0} + {0}*{1} + {2} + {0}*0.15".format(item['itemPrice'], tax, item['posredCommission']).replace('.', ',')
+            tax = item.tax/100 if item.tax > 0 else 0
+            formula = "={0} + {0}*{1} + {2} + {0}*0.15".format(item.itemPrice, tax, item.posredCommission).replace('.', ',')
             data.append(ce.insertValue(spId, ran, formula))
 
             ran = sheetTitle + "!I{0}".format(self.startLotRow+8)
-            shipmentPrice = item['shipmentPrice'].value if isinstance(item['shipmentPrice'], OrdersConsts.ShipmentPriceType) else item['shipmentPrice']
+            shipmentPrice = item.shipmentPrice.value if isinstance(item.shipmentPrice, OrdersConsts.ShipmentPriceType) else item.shipmentPrice
         
             formula = f"={shipmentPrice}".replace('.', ',')
             data.append(ce.insertValue(spId, ran, formula))
@@ -266,7 +267,7 @@ class CollectOrdersSpreadsheetClass():
         
             # личная комм
             ran = sheetTitle + "!I{0}".format(self.startLotRow+11)            
-            formula = "={0} + {0}*{1} + {2}".format(item['itemPrice'], tax, item['posredCommission']).replace('.', ',')
+            formula = "={0} + {0}*{1} + {2}".format(item.itemPrice, tax, item.posredCommission).replace('.', ',')
             data.append(ce.insertValue(spId, ran, formula))
         
             formula = "=CEILING(I{0}*J{1})".format(self.startLotRow+11, self.startLotRow+5)
@@ -289,7 +290,7 @@ class CollectOrdersSpreadsheetClass():
 
 
 
-    def prepareBody(self, spId, image, collect = "", item = []):
+    def prepareBody(self, spId, image, collect = "", item:ProductInfoClass = None):
         '''
         подготовка json запроса для заполнения таблицы лота информауией
 

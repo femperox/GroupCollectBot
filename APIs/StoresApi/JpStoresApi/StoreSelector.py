@@ -8,6 +8,7 @@ from APIs.StoresApi.JpStoresApi.AmiAmiApi import AmiAmiApi
 from APIs.StoresApi.JpStoresApi.MercariApi import MercariApi
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
+from APIs.StoresApi.ProductInfoClass import ProductInfoClass
 
 class StoreSelector(StoreSelectorParent):
 
@@ -82,5 +83,5 @@ class StoreSelector(StoreSelectorParent):
         elif site == OrdersConsts.Stores.suruga:
             item = ssa.parseSuruga(url = url)
         
-        return item
+        return ProductInfoClass(**item)
     

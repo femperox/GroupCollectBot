@@ -46,7 +46,6 @@ def monitorAmiProduct(rcpns, typeRRS, newProxyTick, thread_index):
     seen_ids = []
     
     while True:
-        
         try:
 
             newProxyTick = refreshSessions(ticks = newProxyTick, thread_index = thread_index )
@@ -58,7 +57,7 @@ def monitorAmiProduct(rcpns, typeRRS, newProxyTick, thread_index):
                 items = AmiAmiApi.preOrderAmiAmiEng(type_id = typeRRS, logger = logger_stores, thread_index = thread_index)
             else:
                 items = AmiAmiApi.productsAmiAmiEng(type_id = typeRRS, logger = logger_stores, thread_index = thread_index)
-            logger_stores.info(f"[SEEN-{typeRRS}] len {len(items)} :{[x['itemId'] for x in items]}")
+            logger_stores.info(f"[SEEN-{typeRRS}] len {len(items)} :{[x.itemId for x in items]}")
 
             if items:
 
@@ -68,10 +67,10 @@ def monitorAmiProduct(rcpns, typeRRS, newProxyTick, thread_index):
                 for part in items_parts:
                     sleep(0.5)
                     mes = Messages.formAmiAmiMess(part, typeRRS)
-                    pics = [x['mainPhoto'] for x in part]
+                    pics = [x.mainPhoto for x in part]
                     vk.sendMes(mess = mes, users = rcpns, tag = typeRRS, pic = pics)
 
-                    seen_ids = [x['itemId'] for x in part]
+                    seen_ids = [x.itemId for x in part]
                     logger_stores.info(f"[MESSAGE-{typeRRS}] Отправлено сообщение {seen_ids}")
                     insertNewSeenProducts(items_id=seen_ids, type_id= typeRRS)
 

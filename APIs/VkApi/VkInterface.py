@@ -778,10 +778,9 @@ class VkApi:
                         store_urls = re.findall(RegexType.regex_store_url_bot, event.obj.message['text'].lower())  
                         items = []
                         for url in store_urls:
-                            info = {}
                             info = storeSelector.selectStore(url)
-                            info['attachement'] = self._form_images_request_signature([info['mainPhoto']], self.__group_id, tag="custom_fav")[0]
-                            info['usr'] = sender
+                            attachement = self._form_images_request_signature([info['mainPhoto']], self.__group_id, tag="custom_fav")[0]
+                            info.setFavouritesInfo(attachement = attachement, user = sender)
 
                             items.append(info.copy())
 

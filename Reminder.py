@@ -22,7 +22,6 @@ def addNotifiers():
     checked_users = []
     
     while True:
-    
         users = [x[0] for x in getUsers()]
         for user in users:
             if user in checked_users:
