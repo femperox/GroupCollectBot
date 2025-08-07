@@ -30,7 +30,8 @@ class StoreSelector(StoreSelectorParent):
             item['page'] = url
             item['endTime'] = datetime.now() + relativedelta(years=3)
 
-            return item
+            return ProductInfoClass(**item)
+        
         if site == OrdersConsts.Stores.makeship:
             item = StoresApi.parseMakeshipItem(url = url)
         elif site == OrdersConsts.Stores.youtooz:

@@ -582,18 +582,19 @@ class VkApi:
                             item_index = int(event.object['payload']['text'])
                             fav_item = getFavInfo(mes['items'][0]['text'], item_index, isPosredPresent = False if 'fromBuyMenu' in event.object['payload'].keys() else True)
 
-                            fav_item['usr'] = event.object['user_id']
+                            user = event.object['user_id']
                             try:
-                                fav_item['attachement'] = mes['items'][0]['attachments'][item_index]['photo']
+                                attachement = mes['items'][0]['attachments'][item_index]['photo']
                             except:
-                                fav_item['attachement'] = self.get_attachemetns(peer_id=chat, conv_id=message_id, idx = item_index)
+                                attachement = self.get_attachemetns(peer_id=chat, conv_id=message_id, idx = item_index)
                                 
-                            if fav_item['attachement']:
-                                fav_item['attachement'] = 'photo{}_{}_{}'.format(fav_item['attachement']['owner_id'], fav_item['attachement']['id'], fav_item['attachement']['access_key'])
+                            if attachement:
+                                attachement = 'photo{}_{}_{}'.format(attachement['owner_id'], attachement['id'], attachement['access_key'])
                             
-                            mess = Messages.mes_fav(fav_item = fav_item, fav_func = DB_Operations.addFav).format(self.get_name(fav_item['usr']), f"{fav_item['siteName']}_{fav_item['id']}")
+                            fav_item.setFavouritesInfo(attachement = attachement, user = user)
+                            mess = Messages.mes_fav(fav_item = fav_item, fav_func = DB_Operations.addFav).format(self.get_name(fav_item.user), f"{fav_item.siteName}_{fav_item.id}")
                             
-                            logger_fav.info(f"[ADD_FAV-{fav_item['usr']}] для пользователя {fav_item['usr']}: {mess}")
+                            logger_fav.info(f"[ADD_FAV-{fav_item.user}] для пользователя {fav_item.user}: {mess}")
                             self.sendMes(mess = mess, users = chat)
 
                         # удаление избранного
@@ -779,7 +780,7 @@ class VkApi:
                         items = []
                         for url in store_urls:
                             info = storeSelector.selectStore(url)
-                            attachement = self._form_images_request_signature([info['mainPhoto']], self.__group_id, tag="custom_fav")[0]
+                            attachement = self._form_images_request_signature([info.mainPhoto], self.__group_id, tag="custom_fav")[0]
                             info.setFavouritesInfo(attachement = attachement, user = sender)
 
                             items.append(info.copy())

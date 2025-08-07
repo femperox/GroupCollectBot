@@ -156,7 +156,7 @@ class yahooApi:
             headers = WebUtils.getHeader()
             page = requests.get(curl, headers=headers)
             xml = xmltodict.parse(page.content)
-       
+
             info['page'] = xml['ResultSet']['Result']['AuctionItemUrl']
             info['page'] = xml['ResultSet']['Result']['AuctionItemUrl']
             
@@ -194,13 +194,12 @@ class yahooApi:
                     info['PostageSetId'] = 1
                     info['ItemWeight'] = 0
                 
-                
                 info['shipmentPrice'] = self.getShipmentPrice(id, info['ShoppingSellerId'], info['PostageSetId'], info['ItemWeight'])
 
             info['itemPrice'] = float(xml['ResultSet']['Result']['Price'])
             info['tax'] = float(xml['ResultSet']['Result']['TaxRate'])
             info['itemPriceWTax'] = float(xml['ResultSet']['Result']['TaxinPrice']) if 'TaxinPrice' in xml['ResultSet']['Result'] else info['itemPrice']
-
+            info['seller'] = xml['ResultSet']['Result']['Seller']['Id']
 
             commission = PosredApi.getСommissionForItem(info['page'])
             if info['shipmentPrice'] in [OrdersConsts.ShipmentPriceType.free, OrdersConsts.ShipmentPriceType.undefined]:
@@ -214,7 +213,6 @@ class yahooApi:
 
             info['siteName'] = OrdersConsts.Stores.yahooAuctions
             info['id'] = id   
-
             return info
             
         except Exception as e:

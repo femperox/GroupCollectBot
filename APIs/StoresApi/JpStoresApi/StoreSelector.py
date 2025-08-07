@@ -58,7 +58,7 @@ class StoreSelector(StoreSelectorParent):
             else:
                 item['endTime'] = datetime.now() + relativedelta(years=3)
 
-            return item
+            return ProductInfoClass(**item)
 
         if site == OrdersConsts.Stores.mercari:
             if url.find('/shops/') > -1:

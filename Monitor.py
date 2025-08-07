@@ -15,6 +15,8 @@ from confings.Messages import MessageType, Messages
 from APIs.utils import getActiveMonitorChatsTypes, createItemPairs
 from SQLS.DB_Operations import IsExistBannedSeller, insertNewSeenProducts
 from APIs.VkApi.objects.VkButtons import VkButtons
+from APIs.StoresApi.ProductInfoClass import ProductInfoClass
+from typing import List
 
 threads = []
         
@@ -33,19 +35,19 @@ def sendHelloMessage(active_chats):
         vk.sendMes(mess = mes, users = active_chat)
     
 
-def sendMessage(items, params):
+def sendMessage(items:List[ProductInfoClass], params):
     """Отправка сообщения с подборкой продавца
 
     Args:
-        items (list): список лотов и информацией о них
+        items (List[ProductInfoClass]): список лотов и информацией о них
         params (dict): словарь с информацией о потоке
     """
 
     mes = Messages.formSellerMess(items)
-    pics = [x['mainPhoto'] for x in items]
+    pics = [x.mainPhoto for x in items]
     keyboard = VkButtons.form_inline_buttons(type = MessageType.monitor_seller, items = pics)
     vk.sendMes(mess = mes, users = params['rcpns'], tag = params['tag'], pic = pics, keyboard = keyboard)
-    logger.info(f"[MESSAGE-{params['tag']}] Отправлено сообщение о лотах продавца {items[0]['seller']}")
+    logger.info(f"[MESSAGE-{params['tag']}] Отправлено сообщение о лотах продавца {items[0].seller}")
  
 
 def bs4MonitorYahoo(curl, params):
@@ -65,7 +67,6 @@ def bs4MonitorYahoo(curl, params):
 
     while True:
         sleep(50)
-
         try:
             
             soup = WebUtils.getSoup(curl, parser= WebUtils.Bs4Parsers.htmlParser)
@@ -92,24 +93,27 @@ def bs4MonitorYahoo(curl, params):
                 tmp_seen_aucs.append(item['id'])
                 i += 1
                 
-                item['seller'] = lot['data-auction-sellerid']
                 item['price'] = int(lot['data-auction-startprice'])
-                if IsExistBannedSeller(seller_id = item['seller'], category = params['tag'], store_id= OrdersConsts.Stores.yahooAuctions) or item['price'] > params['maxPrice']-1:
+                if item['price'] > params['maxPrice']-1:
                     continue
 
-                info = yahooApi.getAucInfo(item['id'])
-
-                if len(info) == 0:
+                info = ProductInfoClass(**yahooApi.getAucInfo(item['id']))
+                if IsExistBannedSeller(seller_id = info.seller, category = params['tag'], store_id= OrdersConsts.Stores.yahooAuctions) or\
+                    not info or\
+                    info.mainPhoto == '' or\
+                    int(info.goodRate) < params['minRep']:
                     continue
-                item.update(info)
+
+                #if not info:
+                #    continue
                 
-                if item['mainPhoto'] == '' or int(item['goodRate']) < params['minRep']:
-                    continue              
+                #if info.mainPhoto == '' or int(info.goodRate) < params['minRep']:
+                #    continue              
                 
-                mes = Messages.formMess(item, params['tag'])
+                mes = Messages.formMess(info, params['tag'])
                 keyboard = VkButtons.form_inline_buttons(type = MessageType.monitor_big_category)
-                vk.sendMes(mess = mes, users = params['rcpns'], tag = params['tag'], pic = [item['mainPhoto']], keyboard = keyboard )
-                logger.info(f"[MESSAGE-{params['tag']}] Отправлено сообщение о лоте {item['id']}")
+                vk.sendMes(mess = mes, users = params['rcpns'], tag = params['tag'], pic = [info.mainPhoto], keyboard = keyboard )
+                logger.info(f"[MESSAGE-{params['tag']}] Отправлено сообщение о лоте {info.id}")
             
             if ((not notBreakSeen and i != currentSize) or (notBreakSeen and i == currentSize)) and tmp_seen_aucs:
                 prev_seen_aucs = seen_aucs.copy()
@@ -171,17 +175,13 @@ def bs4SellerMonitorYahoo(curl, params):
                 
                 item['seller'] = lot['data-auction-sellerid']
 
-                info = yahooApi.getAucInfo(item['id'])
+                info = ProductInfoClass(**yahooApi.getAucInfo(item['id']))
+                info.setSeller(seller = item['seller'])
 
-                if len(info) == 0:
-                    continue
-                
-                item.update(info)
-                
-                if item['mainPhoto'] == '':
+                if not info or info.mainPhoto == '':
                     continue
 
-                items.append(item.copy())
+                items.append(info.copy())
                 if len(items) == 10:              
                     sendMessage(items, params)
                     items = []
@@ -212,7 +212,7 @@ def monitorMercari(key_word, params):
     while True:
             sleep(300)
             try:
-                items = MercariApi.monitorMercariCategory(key_word = key_word, type_id = params['tag'])
+                items = ProductInfoClass(**MercariApi.monitorMercariCategory(key_word = key_word, type_id = params['tag']))
                 logger.info(f"[SEEN-{params['tag']}] Просмотренные аукционы: {len([x['itemId'] for x in items])}")
 
                 if items: 
@@ -221,13 +221,13 @@ def monitorMercari(key_word, params):
                     for part in items_parts:
                                 
                         mes = Messages.formMercariMess(part, params['tag'])
-                        pics = [x['mainPhoto'] for x in part]
+                        pics = [x.mainPhoto for x in part]
 
                         keyboard = VkButtons.form_inline_buttons(type = MessageType.monitor_big_category_other, items = part)
                         vk.sendMes(mess = mes, users = params['rcpns'], tag = params['tag'], pic = pics, keyboard = keyboard)
                         
 
-                        seen_ids = [x['itemId'] for x in part]
+                        seen_ids = [x.id for x in part]
                         logger.info(f"[MESSAGE-{params['tag']}] Отправлено сообщение {seen_ids}")
                         insertNewSeenProducts(items_id = seen_ids, type_id = params['tag'])
 

@@ -1,7 +1,7 @@
 from datetime import datetime
 import os
 import json
-from confings.Consts import PathsConsts, RegexType, PosrednikConsts, OrdersConsts
+from confings.Consts import PathsConsts, RegexType, PosrednikConsts, OrdersConsts, VkConsts
 import re
 from itertools import chain
 from pprint import pprint
@@ -25,7 +25,7 @@ def formShortList(storeList):
         storeListShort.append(store_selector.getStoreName())
     return storeListShort
 
-def pickRightStoreSelector(url):
+def pickRightStoreSelector(url, payloadCountry = None):
 
     store_selector = StoreSelectorJp()
     store_selector_us = StoreSelectorUs()
@@ -40,7 +40,11 @@ def pickRightStoreSelector(url):
         return store_selector
     elif current_store_name in usStores:
         return store_selector_us
-    else: return store_selector
+    else: 
+        if payloadCountry == VkConsts.PayloadPriceCheckCountry.us:
+            return store_selector_us
+        else:
+            return store_selector
 
 def getChar(char, step):
     """Получить след символ
@@ -184,7 +188,7 @@ def getFavInfo(text, item_index = 0, isPosredPresent = True):
     Returns:
         dict: словарь с инфо
     """
-    fav_item = {}
+    fav_item = None
 
     storeSelector = StoreSelectorJp()
     storeSelector.url = PosrednikConsts.CURRENT_POSRED
@@ -197,7 +201,7 @@ def getFavInfo(text, item_index = 0, isPosredPresent = True):
 
     storeSelector = pickRightStoreSelector(url = urls[item_index])
     fav_item = storeSelector.selectStore(urls[item_index], not isPosredPresent)
-    
+
     return fav_item
 
 def flattenList(matrix):
@@ -223,7 +227,6 @@ def createItemPairs(items, message_img_limit = 10):
     """
 
     items_parts = []
-    
     
     i = 0
     for i in range(0, len(items) // message_img_limit):

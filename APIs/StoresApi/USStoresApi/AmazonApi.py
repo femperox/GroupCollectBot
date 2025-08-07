@@ -40,10 +40,9 @@ class AmazonApi:
             print(f"Ошибка: {e}")
 
     def parseAmazonItem(url, item_id):
-
-        driver = WebUtils.getSelenium()
+        
+        driver = WebUtils.getSelenium(wire = False)
         driver.get(url)
-
         AmazonApi.changeZipCode(driver = driver)
 
         item = {}

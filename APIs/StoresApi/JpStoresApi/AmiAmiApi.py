@@ -8,6 +8,7 @@ import time
 from SQLS.DB_Operations import GetNotSeenProducts, insertNewSeenProducts
 from pprint import pprint
 from APIs.posredApi import PosredApi
+from APIs.StoresApi.ProductInfoClass import ProductInfoClass
 import sys
 sys.argv.append("-n")  # Tell SeleniumBase to do thread-locking as needed
 
@@ -353,31 +354,31 @@ class AmiAmiApi():
             item['shipmentPrice'] = OrdersConsts.ShipmentPriceType.undefined
             item['page'] = f"https://www.amiami.com/eng/detail?gcode={product['gcode']}"
             item['mainPhoto'] = 'https://img.amiami.com'+product['thumb_url']
-            item['itemId'] = product['gcode']
+            item['id'] = product['gcode']
             item['name'] = product['gname']
 
             if AmiAmiApi.isWrongCategory(product['gcode']) or product['image_on'] == 0:
                 continue
-            item_list_raw.append(item.copy())
+            item_list_raw.append(ProductInfoClass(**item))
 
         logger.info(f"[SEEN-{type_id}-PRERAW] len {len(item_list_raw)}")
         
         if item_list_raw:
             
-            item_list_ids = GetNotSeenProducts([item['itemId'] for item in item_list_raw], type_id= type_id)
+            item_list_ids = GetNotSeenProducts([item.id for item in item_list_raw], type_id= type_id)
 
             logger.info(f"[SEEN-{type_id}-RAW] len {len(item_list_ids)}")
 
             for item in item_list_raw:
                 time.sleep(3)
-                if not item['itemId'] in item_list_ids:
+                if not item.id in item_list_ids:
                     continue
                 
-                additionalInfo = AmiAmiApi.getAdditionalProductInfo(item['itemId'], thread_index)
+                additionalInfo = AmiAmiApi.getAdditionalProductInfo(item.id, thread_index)
                 if not additionalInfo:
                     continue
                 elif additionalInfo['cate1'] in AmiAmiApi.wrongCategoriesNumbers or AmiAmiApi.isWrongCategoryName(additionalInfo['sname']):
-                    insertNewSeenProducts([item['itemId']], type_id = type_id)
+                    insertNewSeenProducts([item.id], type_id = type_id)
                     continue
 
                 item_list.append(item.copy())
@@ -411,7 +412,7 @@ class AmiAmiApi():
             item['shipmentPrice'] = OrdersConsts.ShipmentPriceType.undefined
             item['page'] = f"https://www.amiami.com/eng/detail?gcode={preOrder['gcode']}"
             item['mainPhoto'] = 'https://img.amiami.com'+preOrder['thumb_url']
-            item['itemId'] = preOrder['gcode']
+            item['id'] = preOrder['gcode']
 
 
             item['name'] = preOrder['gname']
@@ -424,18 +425,18 @@ class AmiAmiApi():
                 continue
 
             if AmiAmiApi.isWrongCategory(preOrder['gcode']):
-                insertNewSeenProducts([item['itemId']], type_id = type_id)
+                insertNewSeenProducts([item.id], type_id = type_id)
                 continue
             if preOrder['image_on'] == 0:
                 continue
 
-            item_list_raw.append(item.copy())
+            item_list_raw.append(ProductInfoClass(**item))
 
         
         logger.info(f"[SEEN-{type_id}-PRERAW] len {len(item_list_raw)}")
         
         if item_list_raw:
-            item_list_ids = GetNotSeenProducts([item['itemId'] for item in item_list_raw], type_id= type_id)
+            item_list_ids = GetNotSeenProducts([item.id for item in item_list_raw], type_id= type_id)
         
             logger.info(f"[SEEN-{type_id}-RAW] len {len(item_list_ids)}")
            
@@ -443,24 +444,24 @@ class AmiAmiApi():
             for item in item_list_raw:
 
                 time.sleep(3)
-                if not item['itemId'] in item_list_ids:
+                if not item.id in item_list_ids:
                     continue
                 
-                additionalInfo = AmiAmiApi.getAdditionalProductInfo(item['itemId'], thread_index)
+                additionalInfo = AmiAmiApi.getAdditionalProductInfo(item.id, thread_index)
                 if not additionalInfo:
                     continue
                 elif additionalInfo['cate1'] in AmiAmiApi.wrongCategoriesNumbers or AmiAmiApi.isWrongCategoryName(additionalInfo['sname']):
-                    insertNewSeenProducts([item['itemId']], type_id = type_id)
+                    insertNewSeenProducts([item.id], type_id = type_id)
                     continue
 
                 locale.setlocale(locale.LC_TIME, 'ru_RU.UTF-8')
 
-                if item['releaseDate']  < datetime.now() - relativedelta(months=1):
+                if item.releaseDate  < datetime.now() - relativedelta(months=1):
                     
-                    item['releaseDate'] =  additionalInfo['releasedate'].strftime("%b %Y")
+                    item.setReleaseDate(releaseDate = additionalInfo['releasedate'].strftime("%b %Y"))
 
                 else:
-                    item['releaseDate'] = item['releaseDate'].strftime("%b %Y")
+                    item.setReleaseDate(releaseDate = item['releaseDate'].strftime("%b %Y"))
 
                 item_list.append(item.copy())
 
@@ -497,33 +498,33 @@ class AmiAmiApi():
             item['shipmentPrice'] = OrdersConsts.ShipmentPriceType.undefined
             item['page'] = f"https://www.amiami.com/eng/detail?gcode={preowned['gcode']}"
             item['mainPhoto'] = 'https://img.amiami.com'+preowned['thumb_url']
-            item['itemId'] = preowned['gcode']
+            item['id'] = preowned['gcode']
 
             if AmiAmiApi.isWrongCategory(preowned['gcode']) or preowned['image_on'] == 0:
                 continue
 
-            item_list_raw.append(item.copy())
+            item_list_raw.append(ProductInfoClass(**item))
 
         logger.info(f"[SEEN-{type_id}-PRERAW] len {len(item_list_raw)}")
         
         if item_list_raw:
-            item_list_ids = GetNotSeenProducts([item['itemId'] for item in item_list_raw], type_id= type_id)
-            item_list_raw = [item for item in item_list_raw if item['itemId'] in item_list_ids]
+            item_list_ids = GetNotSeenProducts([item.id for item in item_list_raw], type_id= type_id)
+            item_list_raw = [item for item in item_list_raw if item.id in item_list_ids]
 
             logger.info(f"[SEEN-{type_id}-RAW] len {len(item_list_ids)}: {item_list_ids}")
 
             for item in item_list_raw:
                 time.sleep(3)
                 
-                additionalInfo = AmiAmiApi.getAdditionalProductInfo(item['itemId'], thread_index)
+                additionalInfo = AmiAmiApi.getAdditionalProductInfo(item.id, thread_index)
                 
                 if not additionalInfo:
                     continue
                 elif additionalInfo['cate1'] in AmiAmiApi.wrongCategoriesNumbers or AmiAmiApi.isWrongCategoryName(additionalInfo['sname']):
-                    insertNewSeenProducts([item['itemId']], type_id = type_id)
+                    insertNewSeenProducts([item.id], type_id = type_id)
                     continue
 
-                item['name'] = additionalInfo['sname']
+                item.setName(name = additionalInfo['sname'])
                 item_list.append(item.copy())
         
         

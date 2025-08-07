@@ -69,7 +69,7 @@ class WebUtils:
         return soup
 
     @staticmethod
-    def getSelenium(isUC = False, proxy = ''):
+    def getSelenium(isUC = False, proxy = '', wire = True):
         """получить веб-драйве
 
         Args:
@@ -81,7 +81,7 @@ class WebUtils:
         if proxy:
             return Driver(uc=True, incognito= True, proxy = proxy) if isUC else Driver(incognito= True, wire=True, proxy  = proxy)
         else:
-            return Driver(uc=True, incognito= True) if isUC else Driver(incognito= True, wire=True)
+            return Driver(uc=True, incognito= True) if isUC else Driver(incognito= True, wire=wire)
     
     @staticmethod
     def getScraperSessoin(session):

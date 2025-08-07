@@ -42,6 +42,15 @@ class ProductInfoClass:
         self.attachement = attachement
         self.user = user
 
+    def setReleaseDate(self, releaseDate):
+        self.releaseDate = releaseDate
+
+    def setName(self, name):
+        self.name = name
+
+    def setSeller(self, seller):
+        self.seller = seller
+
     def copy(self):
         newCopy = ProductInfoClass(
             id=self.id,

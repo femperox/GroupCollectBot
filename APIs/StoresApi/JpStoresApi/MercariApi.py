@@ -99,16 +99,16 @@ class MercariApi:
             item['shipmentPrice'] = OrdersConsts.ShipmentPriceType.free if int(product['shippingPayerId']) == MercariApi.FREE_SHIPPING else OrdersConsts.ShipmentPriceType.undefined
             item['page'] = f'https://jp.mercari.com/item/{product["id"]}'
             item['sellerId'] = product['sellerId']
-            item['itemId'] = product["id"]
+            item['id'] = product["id"]
             item_list_raw.append(item.copy())
 
-        item_list_ids = GetNotSeenProducts([item['itemId'] for item in item_list_raw], type_id= type_id)
-        item_list_raw = [item for item in item_list_raw if item['itemId'] in item_list_ids]
+        item_list_ids = GetNotSeenProducts([item['id'] for item in item_list_raw], type_id= type_id)
+        item_list_raw = [item for item in item_list_raw if item['id'] in item_list_ids]
         item_list = []
 
         for item in item_list_raw:
 
-            additionalInfo = MercariApi.getAdditionalInfo(item["itemId"], item["sellerId"])
+            additionalInfo = MercariApi.getAdditionalInfo(item["id"], item["sellerId"])
             if not additionalInfo:
                 continue
             item['mainPhoto'] = additionalInfo['mainPhoto']
