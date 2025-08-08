@@ -10,7 +10,7 @@ from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from SQLS.DB_Operations import IsExistBannedSeller
 from APIs.posredApi import PosredApi
-
+from traceback import print_exc
 
 class MercariApi:
 
@@ -20,6 +20,10 @@ class MercariApi:
         trading = 'trading'
         sold = 'sold_out'
         deleted = 'deleted'
+
+    class MercariItemTypes:
+        mercari_shops = 'ITEM_TYPE_BEYOND'
+        mercari = 'ITEM_TYPE_MERCARI'
 
     FREE_SHIPPING = 2
     FREE_SHIPPING_SHOPS = 1
@@ -52,6 +56,7 @@ class MercariApi:
             
             except Exception as e:
                 pprint(e)
+                print_exc()
                 continue
 
         return 0
@@ -74,6 +79,9 @@ class MercariApi:
                                      },
                 "serviceFrom":"suruga",
                 "defaultDatasets": [],
+                "withAuction": False,
+                "useDynamicAttribute": True,
+                "source": "BaseSerp"
 				} 
         
         if key_word.isnumeric():
@@ -87,10 +95,10 @@ class MercariApi:
 
         item_list_raw = []
         item = {}
-        
         for product in js['items']:
 
-            if IsExistBannedSeller(seller_id = product['sellerId'], category = type_id, store_id= OrdersConsts.Stores.mercari):
+            if IsExistBannedSeller(seller_id = product['sellerId'], category = type_id, store_id= OrdersConsts.Stores.mercari) or\
+                product['itemType'] == MercariApi.MercariItemTypes.mercari_shops:
                     continue            
 
             item['itemPrice'] = product['price']
@@ -107,7 +115,6 @@ class MercariApi:
         item_list = []
 
         for item in item_list_raw:
-
             additionalInfo = MercariApi.getAdditionalInfo(item["id"], item["sellerId"])
             if not additionalInfo:
                 continue
@@ -142,11 +149,11 @@ class MercariApi:
         session = requests.session()
         curl = f'https://api.mercari.jp/items/get?id={item_id}'
 
+
         headers = MercariApi.curlMercariApi(curl = curl, uuid_gen_word = item_id)    
 
         page = session.get(curl, headers=headers, proxies = {'http': f'http://{proxy}'} if proxy else None)
         js = page.json() 
-
         return js['data']['photos'][0]
 
 

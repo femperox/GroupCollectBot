@@ -208,12 +208,10 @@ def bs4SellerMonitorYahoo(curl, params):
 
 def monitorMercari(key_word, params):
     items = []
-
     while True:
-            sleep(300)
             try:
-                items = ProductInfoClass(**MercariApi.monitorMercariCategory(key_word = key_word, type_id = params['tag']))
-                logger.info(f"[SEEN-{params['tag']}] Просмотренные аукционы: {len([x['itemId'] for x in items])}")
+                items = [ProductInfoClass(**x) for x in MercariApi.monitorMercariCategory(key_word = key_word, type_id = params['tag'])]
+                logger.info(f"[SEEN-{params['tag']}] Просмотренные аукционы: {len([x.id for x in items])}")
 
                 if items: 
                     items_parts = createItemPairs(items = items, message_img_limit=5)
@@ -233,9 +231,11 @@ def monitorMercari(key_word, params):
 
             except Exception as e:
                 
-                logger.info(f"\n[ERROR-{params['tag']}] {e} - {print_exc()}\n Последние лоты теперь: {[x['itemId'] for x in items]}\n")
-                print(f"\n{datetime.datetime.now()} - [ERROR-{params['tag']}]  Упал поток - {e} - {print_exc()}\n Последние лоты теперь: {[x['itemId'] for x in items]}\n")
+                logger.info(f"\n[ERROR-{params['tag']}] {e} - {print_exc()}\n Последние лоты теперь: {[x.id for x in items]}\n")
+                print(f"\n{datetime.datetime.now()} - [ERROR-{params['tag']}]  Упал поток - {e} - {print_exc()}\n Последние лоты теперь: {[x.id for x in items]}\n")
+                sleep(300)
                 continue
+            sleep(300)
 
 if __name__ == "__main__":
     vk = vk()
@@ -248,7 +248,8 @@ if __name__ == "__main__":
     for conf in conf_list[1:]:
         
         if conf["store"] == OrdersConsts.Stores.yahooAuctions:
-            if conf["type"] == "big-category": threads.append(threading.Thread(target=bs4MonitorYahoo, args=(conf["curl"], conf["params"])))
+            if conf["type"] == "big-category": 
+                threads.append(threading.Thread(target=bs4MonitorYahoo, args=(conf["curl"], conf["params"])))
             else: 
                 threads.append(threading.Thread(target=bs4SellerMonitorYahoo, args=(conf["curl"], conf["params"])))
         elif conf["store"] == OrdersConsts.Stores.mercari:
