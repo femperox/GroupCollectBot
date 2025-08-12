@@ -5,6 +5,7 @@ from Logger import logger_utils
 from APIs.TrackingAPIs.TrackingSelector import TrackingSelector, TrackingTypes
 from APIs.PosredApi.posredApi import PosredApi
 from APIs.PosredApi.DaromApi import DaromApi
+from APIs.PosredApi.EasyShipApi import EasyShipApi
 from confings.Messages import Messages as mess
 from confings.Consts import VkConsts, MboConsts, RegexType, OrdersConsts, PosrednikConsts
 from APIs.GoogleSheetsApi.StoresCollectOrdersSheets import StoresCollectOrdersSheets
@@ -223,6 +224,32 @@ def updateActivePosredCollects():
                                                     status_text = status_name)
                     DB_Operations.updateCollectSelector(collectType = order[0], collectId = order[1], status_id = darom_orders[order[2]]['status'])
 
+def addActivePosredCollects():
+    """Добавить к заказам номер у посреда
+    """
+
+    easyShip = EasyShipApi()
+    active_orders = easyShip.get_active_orders()
+    new_orders = DB_Operations.GetNotSeenPosredCollects(posred_ids = list(active_orders.keys()))
+    empty_posred_id_orders = DB_Operations.getEmptyPosredIdCollects()
+    for new_order in new_orders:
+        collect_id = [empty_posred_id_order for empty_posred_id_order in empty_posred_id_orders if empty_posred_id_order[1].lower() in active_orders[new_order]['title'].lower()][0]
+        if not collect_id:
+            continue
+
+        posred = PosredApi.getPosredByOrderId(order_id = new_order)
+        if posred == PosrednikConsts.EasyShip:
+            status_id = OrdersConsts.OrderStatus.shipped_US
+        elif posred == PosrednikConsts.DaromJp:
+            status_id = OrdersConsts.OrderStatus.shipped_JP
+        status_name = DB_Operations.getCollectStatusNameById(status_id = status_id)
+        collectTopicInfo = DB_Operations.getCollectTopicComment(collect_id = collect_id[1], collect_type = collect_id[0])
+
+        print(f'Коллект {collect_id[1]}: {status_name}')
+        vk.edit_collects_activity_comment(topic_id = collectTopicInfo[0], comment_id = collectTopicInfo[1], 
+                                        status_text = status_name)
+        DB_Operations.updateCollectSelector(collectType = collect_id[0], collectId = collect_id[1], status_id = status_id)
+
 class DagLinkerValues:
 
     addTaggedUsers = 'addNewUsers'
@@ -232,6 +259,7 @@ class DagLinkerValues:
     updateCoverPhoto = 'updateCoverPhoto'
     checkDeliveryStatusToParticipants = 'checkDeliveryStatusToParticipants'
     updateActivePosredCollects = 'updateActivePosredCollects'
+    addActivePosredCollects = 'addActivePosredCollects'
 
 if __name__ == "__main__":
 
@@ -252,3 +280,5 @@ if __name__ == "__main__":
         checkDeliveryStatusToParticipants()
     elif sys.argv[1] == DagLinkerValues.updateActivePosredCollects:
         updateActivePosredCollects()
+    elif sys.argv[1] == DagLinkerValues.addActivePosredCollects:
+        addActivePosredCollects()

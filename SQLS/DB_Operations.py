@@ -785,10 +785,7 @@ def getAllCollectsInParcel(parcel_id):
     return result
 
 def getAllActivePosredCollects():
-    """Получить все коллекты с посылки по parcel_id
-
-    Args:
-        parcel_id (int): id посылки.
+    """Получить все коллекты с posred_id
 
     Returns:
         list of list: записи с посылками
@@ -831,6 +828,48 @@ def getCollectsByPosredList(posred_ids_list):
     conn.close()
     
     return result
+
+def getEmptyPosredIdCollects():
+    """Получить все коллекты (предзаказ, выкупается), у которых пустой posred_id
+
+    Returns:
+        list of list: записи с коллетками
+    """
+
+    conn = getConnection(DbNames.collectDatabase)
+    cursor = conn.cursor()  
+    
+    sel = f'''SELECT * from get_empty_posred_id_collects();
+
+           '''
+    cursor.execute(sel)
+    result = cursor.fetchall()
+        
+    cursor.close()
+    conn.close()
+    
+    return result
+
+def GetNotSeenPosredCollects(posred_ids):
+    """Сопоставление новых и увиденных товаров. Возвращает ранее не виданные
+
+    Args:
+        posred_ids (list of string): список id заказов у посреда
+
+    Returns:
+        list of string: список новых товаров
+    """
+
+    conn = getConnection(DbNames.collectDatabase)
+    cursor = conn.cursor()  
+
+    cursor.execute(f"SELECT GET_NOT_SEEN_collects_by_posred_list(array[{posred_ids}])")
+    result = cursor.fetchone()  
+
+    cursor.close()
+    conn.close()
+    
+    return result[0]
 
 def getCollectTopicComment(collect_id, collect_type = OrdersConsts.CollectTypes.collect):
     """Получить topic_id и comment_id коллекта по collect_id
