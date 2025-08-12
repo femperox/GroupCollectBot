@@ -1,12 +1,12 @@
-from APIs.GoogleSheetsApi.TagsSheet import TagsSheet as ts
-from APIs.GoogleSheetsApi.CollectSheet import CollectSheet as cs
+from APIs.GoogleSheetsApi.TagsSheet import TagsSheet
 from APIs.VkApi.VkInterface import VkApi as vk
 from SQLS import DB_Operations
 from Logger import logger_utils
 from APIs.TrackingAPIs.TrackingSelector import TrackingSelector, TrackingTypes
-from APIs.posredApi import PosredApi
+from APIs.PosredApi.posredApi import PosredApi
+from APIs.PosredApi.DaromApi import DaromApi
 from confings.Messages import Messages as mess
-from confings.Consts import VkConsts, MboConsts, RegexType, OrdersConsts
+from confings.Consts import VkConsts, MboConsts, RegexType, OrdersConsts, PosrednikConsts
 from APIs.GoogleSheetsApi.StoresCollectOrdersSheets import StoresCollectOrdersSheets
 from APIs.GoogleSheetsApi.CollectOrdersSheet import CollectOrdersSheet
 import time
@@ -19,11 +19,11 @@ def addNewUsers():
     """Добавить новых людей для автотегов
     """
 
+    ts = TagsSheet()
     list = ts.getSheetListProperties()
     for usr in list:            
         usr[0] = vk.get_id(usr[0])
         
-
         for fandom in usr[1]:
             DB_Operations.addTags(usr[0], fandom)
     
@@ -165,6 +165,8 @@ def checkDeliveryStatusToParticipants():
     """Обновление состояния отправки позиций до участника
     """
     orderInfo = DB_Operations.getRecievedActiveCollects()
+    collectOrdersSheet = CollectOrdersSheet()
+    storesCollectOrdersSheets = StoresCollectOrdersSheets()
     for order in orderInfo:
         time.sleep(2.5)
         try:
@@ -203,6 +205,24 @@ def updateCoverPhoto(daytime):
 
     vk._cover_image_upload(image_name = VkConsts.vkCoverTime[daytime])
 
+def updateActivePosredCollects():
+    """Обновить статусы лотов, что ещё находятся в "руках" посреда
+    """
+
+    all_orders = DB_Operations.getAllActivePosredCollects()
+    darom = DaromApi()
+    darom_orders = darom.get_active_orders()
+    for order in all_orders:
+        if PosredApi.getPosredByOrderId(order_id = order[2]) == PosrednikConsts.DaromJp:
+            if order[2] in darom_orders.keys() and darom_orders[order[2]]['status'] != OrdersConsts.OrderStatus.procurement and\
+                order[3] != darom_orders[order[2]]['status']:
+                    collectTopicInfo = DB_Operations.getCollectTopicComment(collect_id = order[1], collect_type = order[0])
+                    status_name = DB_Operations.getCollectStatusNameById(status_id = darom_orders[order[2]]['status'])
+                    print(f'Коллект {order[1]}: {status_name}')
+                    vk.edit_collects_activity_comment(topic_id = collectTopicInfo[0], comment_id = collectTopicInfo[1], 
+                                                    status_text = status_name)
+                    DB_Operations.updateCollectSelector(collectType = order[0], collectId = order[1], status_id = darom_orders[order[2]]['status'])
+
 class DagLinkerValues:
 
     addTaggedUsers = 'addNewUsers'
@@ -211,16 +231,13 @@ class DagLinkerValues:
     updateTrackingStatuses = 'updateTrackingStatuses'
     updateCoverPhoto = 'updateCoverPhoto'
     checkDeliveryStatusToParticipants = 'checkDeliveryStatusToParticipants'
+    updateActivePosredCollects = 'updateActivePosredCollects'
 
 if __name__ == "__main__":
 
     vk = vk()
-    ts = ts()
-    cs = cs()
-    collectOrdersSheet = CollectOrdersSheet()
-    storesCollectOrdersSheets = StoresCollectOrdersSheets()
-
     pprint(sys.argv)
+
     if sys.argv[1] == DagLinkerValues.monitorCollectsList:
         checkCollects()
     elif sys.argv[1] == DagLinkerValues.addTaggedUsers:
@@ -233,3 +250,5 @@ if __name__ == "__main__":
         updateCoverPhoto(sys.argv[2])
     elif sys.argv[1] == DagLinkerValues.checkDeliveryStatusToParticipants:
         checkDeliveryStatusToParticipants()
+    elif sys.argv[1] == DagLinkerValues.updateActivePosredCollects:
+        updateActivePosredCollects()

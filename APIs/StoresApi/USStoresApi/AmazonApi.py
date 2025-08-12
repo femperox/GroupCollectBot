@@ -2,7 +2,7 @@ from APIs.webUtils import WebUtils
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from APIs.posredApi import PosredApi
+from APIs.PosredApi.posredApi import PosredApi
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from confings.Consts import PosrednikConsts, OrdersConsts

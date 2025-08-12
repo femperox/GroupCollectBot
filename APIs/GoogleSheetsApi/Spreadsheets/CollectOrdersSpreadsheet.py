@@ -6,7 +6,7 @@ from pprint import pprint
 from dateutil.relativedelta import *
 from multipledispatch import dispatch
 from confings.Consts import CollectOrdersSheetNames as sheetNames, OrdersConsts
-from APIs.posredApi import PosredApi
+from APIs.PosredApi.posredApi import PosredApi
 from APIs.GoogleSheetsApi.API.Constants import ConditionType
 from APIs.utils import getExpiryDateString
 from APIs.StoresApi.ProductInfoClass import ProductInfoClass

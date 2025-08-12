@@ -6,7 +6,7 @@ import json
 from APIs.webUtils import WebUtils 
 from confings.Consts import PosrednikConsts, PathsConsts, OrdersConsts
 from traceback import print_exc
-from APIs.posredApi import PosredApi
+from APIs.PosredApi.posredApi import PosredApi
 
 class yahooApi:
 

@@ -4,7 +4,7 @@ from APIs.GoogleSheetsApi.API.Styles.Colors import Colors as c
 from APIs.GoogleSheetsApi.API.Constants import ConditionType
 from confings.Consts import OrdersConsts
 from APIs.utils import getExpiryDateString
-from APIs.posredApi import PosredApi
+from APIs.PosredApi.posredApi import PosredApi
 from APIs.utils import getChar
 from pprint import pprint
 

@@ -4,8 +4,26 @@ from APIs.StoresApi.StoreSelectorParent import StoreSelectorParent
 import requests
 import json
 from pprint import pprint
+import re
 
 class PosredApi:
+
+    @staticmethod
+    def getPosredByOrderId(order_id):
+        """Получить посреда по id заказа
+
+        Args:
+            order_id (string): id заказа
+
+        Returns:
+            string: посредник
+        """
+
+        if re.fullmatch(r'D-\d+', order_id):
+            return PosrednikConsts.DaromJp
+        elif re.fullmatch(r's\d{7,10}', order_id):
+            return PosrednikConsts.EasyShip
+        return ''
     
     @staticmethod
     def getCurrentCurrencyRate():

@@ -9,7 +9,7 @@ import uuid
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from SQLS.DB_Operations import IsExistBannedSeller
-from APIs.posredApi import PosredApi
+from APIs.PosredApi.posredApi import PosredApi
 from traceback import print_exc
 
 class MercariApi:

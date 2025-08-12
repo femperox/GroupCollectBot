@@ -7,7 +7,7 @@ import locale
 import time 
 from SQLS.DB_Operations import GetNotSeenProducts, insertNewSeenProducts
 from pprint import pprint
-from APIs.posredApi import PosredApi
+from APIs.PosredApi.posredApi import PosredApi
 from APIs.StoresApi.ProductInfoClass import ProductInfoClass
 import sys
 sys.argv.append("-n")  # Tell SeleniumBase to do thread-locking as needed

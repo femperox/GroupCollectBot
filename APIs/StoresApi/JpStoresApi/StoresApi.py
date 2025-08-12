@@ -5,7 +5,7 @@ from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from time import sleep
 from pprint import pprint
-from APIs.posredApi import PosredApi
+from APIs.PosredApi.posredApi import PosredApi
 
 class StoreApi:
 

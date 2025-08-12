@@ -33,7 +33,7 @@ class WebUtils:
         htmlParser = 'html.parser'
 
     @staticmethod
-    def getSoup(url, timeout = 0, parser = Bs4Parsers.htmlParser, isSeleniumNeeded = False, proxyServer = '', isUcSeleniumNeeded = False):
+    def getSoup(url = '', rawText = '', timeout = 0, parser = Bs4Parsers.htmlParser, isSeleniumNeeded = False, proxyServer = '', isUcSeleniumNeeded = False):
         """Получить bs4 soup по заданной ссылке
 
         Args:
@@ -59,13 +59,16 @@ class WebUtils:
             soup = BeautifulSoup(browser.page_source, parser)
             browser.quit()
         else:    
-            headers = { 'User-Agent': LINUX_USER_AGENT}
-            if proxyServer:
-                page = requests.get(url, headers, proxies={'http': f'http://{proxyServer}'})
-            else:
-                page = requests.get(url, headers)
-            # где-то таймаут был 20
-            soup = BeautifulSoup(page.text, parser)
+            if url:
+                headers = { 'User-Agent': LINUX_USER_AGENT}
+                if proxyServer:
+                    page = requests.get(url, headers, proxies={'http': f'http://{proxyServer}'})
+                else:
+                    page = requests.get(url, headers)
+                # где-то таймаут был 20
+                soup = BeautifulSoup(page.text, parser)
+            elif rawText:
+                soup = BeautifulSoup(rawText, parser)
         return soup
 
     @staticmethod

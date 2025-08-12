@@ -7,7 +7,7 @@ from dateutil.relativedelta import relativedelta
 from confings.Consts import OrdersConsts
 from selenium.webdriver.common.by import By
 from traceback import print_exc
-from APIs.posredApi import PosredApi
+from APIs.PosredApi.posredApi import PosredApi
 import time
 
 

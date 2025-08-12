@@ -4,7 +4,7 @@ from datetime import datetime
 from dateutil.relativedelta import relativedelta
 import json
 from confings.Consts import OrdersConsts
-from APIs.posredApi import PosredApi
+from APIs.PosredApi.posredApi import PosredApi
 import requests
 
 class StoresApi:

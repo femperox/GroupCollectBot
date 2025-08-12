@@ -463,7 +463,8 @@ def insertNewSeenProducts(items_id, type_id):
     cursor.close()
     conn.close()
 
-def updateCollectSelector(collectId, collectType = OrdersConsts.CollectTypes.collect, status = '', sheet_or_range = '', parcel_id = -1, topic_id = 0, comment_id = 0):
+def updateCollectSelector(collectId, collectType = OrdersConsts.CollectTypes.collect, status = '', sheet_or_range = '', 
+                          parcel_id = -1, topic_id = 0, comment_id = 0, status_id = -1, posred_id = ''):
     """Обновить информацию о коллекте определённого типа
 
     Args:
@@ -478,7 +479,7 @@ def updateCollectSelector(collectId, collectType = OrdersConsts.CollectTypes.col
     conn = getConnection(DbNames.collectDatabase)
     cursor = conn.cursor()  
 
-    cursor.execute(f''' Call CollectUpdateSelector('{collectType}', '{collectId}', '{status}', '{sheet_or_range}', {parcel_id}, {topic_id}, {comment_id});''')
+    cursor.execute(f''' Call CollectUpdateSelector('{collectType}', '{collectId}', '{status}', '{sheet_or_range}', {parcel_id}, {topic_id}, {comment_id}, {status_id}, '{posred_id}');''')
 
     conn.commit() 
     cursor.close()
@@ -678,7 +679,19 @@ def getCollectStatuses():
     cursor.execute(f"select status_name from collects_status order by status_id;")
     result = cursor.fetchall()  
 
-    conn.commit()
+    cursor.close()
+    conn.close()
+    
+    return result
+
+def getCollectStatusNameById(status_id):
+
+    conn = getConnection(DbNames.collectDatabase)
+    cursor = conn.cursor()  
+
+    cursor.execute(f"select status_name from collects_status where status_id = {status_id};")
+    result = cursor.fetchone()[0]
+
     cursor.close()
     conn.close()
     
@@ -761,6 +774,30 @@ def getAllCollectsInParcel(parcel_id):
     cursor = conn.cursor()  
     
     sel = f'''SELECT * from get_collects_in_parcel({parcel_id});
+
+           '''
+    cursor.execute(sel)
+    result = cursor.fetchall()
+        
+    cursor.close()
+    conn.close()
+    
+    return result
+
+def getAllActivePosredCollects():
+    """Получить все коллекты с посылки по parcel_id
+
+    Args:
+        parcel_id (int): id посылки.
+
+    Returns:
+        list of list: записи с посылками
+    """
+
+    conn = getConnection(DbNames.collectDatabase)
+    cursor = conn.cursor()  
+    
+    sel = f'''SELECT * from get_active_posred_collects();
 
            '''
     cursor.execute(sel)
