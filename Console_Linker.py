@@ -714,7 +714,7 @@ def console():
             vk.delete_photos(album_id = album['id'], end_date = date)
 
         elif choise == 8:
-
+            #TODO: BOT-73 Добавить авто-сборщика посылок
             status = flattenList(DB_Operations.getCollectStatuses())
             topicIdParcels = [topic['id'] for topic in topicList 
                               if topic['title'].lower().find('посылки') > -1][0]

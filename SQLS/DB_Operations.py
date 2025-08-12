@@ -808,6 +808,30 @@ def getAllActivePosredCollects():
     
     return result
 
+def getCollectsByPosredList(posred_ids_list):
+    """Получить все коллекты по списку id у посреда
+
+    Args:
+        parcel_id (list[str]): список id у посреда.
+
+    Returns:
+        list of list: записи с коллетками
+    """
+
+    conn = getConnection(DbNames.collectDatabase)
+    cursor = conn.cursor()  
+    
+    sel = f'''SELECT * from get_collects_by_posred_list(ARRAY[{posred_ids_list}]);
+
+           '''
+    cursor.execute(sel)
+    result = cursor.fetchall()
+        
+    cursor.close()
+    conn.close()
+    
+    return result
+
 def getCollectTopicComment(collect_id, collect_type = OrdersConsts.CollectTypes.collect):
     """Получить topic_id и comment_id коллекта по collect_id
 
