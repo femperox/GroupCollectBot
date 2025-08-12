@@ -233,10 +233,10 @@ def addActivePosredCollects():
     new_orders = DB_Operations.GetNotSeenPosredCollects(posred_ids = list(active_orders.keys()))
     empty_posred_id_orders = DB_Operations.getEmptyPosredIdCollects()
     for new_order in new_orders:
-        collect_id = [empty_posred_id_order for empty_posred_id_order in empty_posred_id_orders if empty_posred_id_order[1].lower() in active_orders[new_order]['title'].lower()][0]
+        collect_id = [empty_posred_id_order for empty_posred_id_order in empty_posred_id_orders if empty_posred_id_order[1].lower() in active_orders[new_order]['title'].lower()]
         if not collect_id:
             continue
-
+        collect_id = collect_id[0]
         posred = PosredApi.getPosredByOrderId(order_id = new_order)
         if posred == PosrednikConsts.EasyShip:
             status_id = OrdersConsts.OrderStatus.shipped_US
@@ -248,7 +248,8 @@ def addActivePosredCollects():
         print(f'Коллект {collect_id[1]}: {status_name}')
         vk.edit_collects_activity_comment(topic_id = collectTopicInfo[0], comment_id = collectTopicInfo[1], 
                                         status_text = status_name)
-        DB_Operations.updateCollectSelector(collectType = collect_id[0], collectId = collect_id[1], status_id = status_id)
+        DB_Operations.updateCollectSelector(collectType = collect_id[0], collectId = collect_id[1], 
+                                            status_id = status_id, posred_id = new_order)
 
 class DagLinkerValues:
 
