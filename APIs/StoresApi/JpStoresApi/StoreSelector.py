@@ -83,5 +83,7 @@ class StoreSelector(StoreSelectorParent):
         elif site == OrdersConsts.Stores.suruga:
             item = ssa.parseSuruga(url = url)
         
-        return ProductInfoClass(**item)
+        item = ProductInfoClass(**item)
+        item.set_country(country = OrdersConsts.OrderTypes.jp)
+        return item
     

@@ -1,12 +1,30 @@
 from confings.Consts import PosrednikConsts, OrdersConsts
 from APIs.webUtils import WebUtils
 from APIs.StoresApi.StoreSelectorParent import StoreSelectorParent
+from APIs.PosredApi.DaromApi import DaromApi
+from APIs.PosredApi.EasyShipApi import EasyShipApi
 import requests
 import json
 from pprint import pprint
 import re
 
 class PosredApi:
+
+    @staticmethod
+    def pickRightPosredByOrderType(order_type: OrdersConsts.OrderTypes):
+
+        if order_type == OrdersConsts.OrderTypes.jp:
+            return DaromApi()
+        elif order_type == OrdersConsts.OrderTypes.us:
+            return EasyShipApi()
+
+    @staticmethod
+    def getPosredOrderByOrderId(order_id, formatted_order_id = ''):
+
+        if PosredApi.getPosredByOrderId(order_id = order_id) == PosrednikConsts.DaromJp:
+            return PosrednikConsts.posredUrls[PosrednikConsts.DaromJp].format(formatted_order_id)
+        elif PosredApi.getPosredByOrderId(order_id = order_id) == PosrednikConsts.EasyShip:
+            return PosrednikConsts.posredUrls[PosrednikConsts.EasyShip]
 
     @staticmethod
     def getPosredByOrderId(order_id):

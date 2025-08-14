@@ -212,7 +212,7 @@ def updateActivePosredCollects():
 
     all_orders = DB_Operations.getAllActivePosredCollects()
     darom = DaromApi()
-    darom_orders = darom.get_active_orders()
+    darom_orders = darom.get_active_orders(pages = 500)
     for order in all_orders:
         if PosredApi.getPosredByOrderId(order_id = order[2]) == PosrednikConsts.DaromJp:
             if order[2] in darom_orders.keys() and darom_orders[order[2]]['status'] != OrdersConsts.OrderStatus.procurement and\

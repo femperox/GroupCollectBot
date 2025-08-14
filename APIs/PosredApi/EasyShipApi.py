@@ -128,7 +128,7 @@ class EasyShipApi:
                 return {}
         
 
-    def get_es_order_format(self, id):
+    def get_order_format(self, id):
         """Получить формат id заказов es
 
         Args:
@@ -158,9 +158,10 @@ class EasyShipApi:
                 continue
 
             order_info = {}
-            order_info['id'] = self.get_es_order_format(id = order['uid'])
+            order_info['posred_id'] = self.get_order_format(id = order['uid'])
             order_info['tracking_id'] = order['track_number']
             order_info['title'] = order['title']
+            order_info['product_id'] = ''
             
             order_info['status'] = EasyShipApi.EasyShipOrderStatus.getCollectStatus(order['status'])
             orders_info.append(order_info.copy())
@@ -182,7 +183,7 @@ class EasyShipApi:
                 return []
             order_ids_list = []
             for order in orders['document']['included_documents']:
-                order_ids_list.append(self.get_es_order_format(id = order['uid']))
+                order_ids_list.append(self.get_order_format(id = order['uid']))
             return order_ids_list
     
     def get_active_orders(self):
@@ -193,4 +194,4 @@ class EasyShipApi:
             """
 
             orders = self.get_orders()
-            return {order['id']: order for order in orders if order['status'] not in [OrdersConsts.OrderStatus.packing]}
+            return {order['posred_id']: order for order in orders if order['status'] not in [OrdersConsts.OrderStatus.packing]}

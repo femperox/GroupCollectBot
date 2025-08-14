@@ -9,6 +9,8 @@ import re
 from time import sleep
 from datetime import datetime
 from SQLS import DB_Operations
+from APIs.PosredApi.posredApi import PosredApi
+from APIs.PosredApi.PosredOrderInfoClass import PosredOrderInfoClass
 from APIs.utils import flattenList, flatTableParticipantList, flatTopicParticipantList, pickRightStoreSelector
 
 def updateParticipantDB(participantList, collectId, isYstypka = False):
@@ -310,12 +312,28 @@ def createTableTopic(post_url, site_url ='', spId=0, topic_id=0, items=0, img_ur
     '''
 
     item = {}
-    siteName = ''
     if site_url != '':
         store_selector = pickRightStoreSelector(url = site_url)
         item = store_selector.selectStore(url = site_url)
         if len(img_url) == 0:
             img_url = item.mainPhoto
+    
+    #-- пытаемся найти заказ у посредника
+    posred_info = PosredOrderInfoClass()
+    if item.country == OrdersConsts.OrderTypes.jp: # на текущий момент нужно только для Яп заказов
+        posred_selector = PosredApi.pickRightPosredByOrderType(order_type = item.country)
+        active_orders = posred_selector.get_active_orders()
+
+        for active_order in active_orders.keys():
+            if active_orders[active_order]['product_id'] != item.id:
+                continue
+            else:
+                posred_info = PosredOrderInfoClass(**active_orders[active_order])
+                posred_url = PosredApi.getPosredOrderByOrderId(order_id= posred_info.posred_id, 
+                                                formatted_order_id = posred_selector.get_num_id(id = posred_info.posred_id))
+                posred_info.set_posred_url(url = posred_url)
+                break        
+    #--
 
     namedRange, collect_id = createNamedRange(spId)
 
@@ -329,12 +347,13 @@ def createTableTopic(post_url, site_url ='', spId=0, topic_id=0, items=0, img_ur
 
     topicInfo = vk.post_comment(topic_id = topic_id, message=mes, img_urls=[img_url])
  
-    collect_table.createTable(spId, namedRange, participants = items, image = topicInfo[1][0], item = item)
+    collect_table.createTable(spId, namedRange, participants = items, image = topicInfo[1][0], item = item, posredInfo = posred_info)
 
     collect_table.updateTable(namedRange, transformToTableFormat(participantsList), topicInfo[0])
 
     DB_Operations.updateCollectSelector(collectId = collect_id, sheet_or_range = namedRange,
-                                        topic_id = topicInfo[2]['topic_id'], comment_id = topicInfo[2]['comment_id'])
+                                        topic_id = topicInfo[2]['topic_id'], comment_id = topicInfo[2]['comment_id'],
+                                        posred_id = posred_info.posred_id)
     updateParticipantDB(participantList = participantsList, collectId = namedRange.replace('D', '').replace('nd', '').replace('ollect', ''))
 
 def ShipmentToRussiaEvent(orderList, toSpId = ''):
@@ -368,16 +387,8 @@ def ArchiveCollects():
 
         print('\nВыберите лист из таблицы:\n' + Messages.formConsoleListMes(info_list = lists_name))
         choise1 = int(input('Выбор: '))
-
         spId = lists[choise1 - 1]
-
-        collectList = input("Enter collect's num using comma(, ) (might be empty): ")
-        collectList = collectList.split(', ')
-
-        indList = input("Enter ind's num using comma(, ) (might be empty): ")
-        indList = indList.split(', ')
-
-        orderList = createOrderList(collectList = collectList, indList = indList)
+        orderList = handle_ids_insert(isStores = False)
         ShipmentToRussiaEvent(toSpId = spId, orderList = orderList)
 
     elif choise == 2:
@@ -588,6 +599,34 @@ def storeCollectActivities(topicList):
                                                             user_id = participant['user_url'].split('/')[-1].replace('id', ''), 
                                                             items = participant['items'])
 
+
+def handle_ids_insert(isCollect = True, isInd = True, isStores = True):
+
+    if isCollect:
+        collectList = input("Enter collect's num using comma(, ) (might be empty): ")
+        collectList = collectList.split(', ')
+        collectList = [int(x) for x in collectList if x.isdigit()]
+        collectList.sort()
+    else:
+        collectList = []
+
+    if isInd:
+        indList = input("Enter ind's num using comma(, ) (might be empty): ")
+        indList = indList.split(', ')
+        indList = [int(x) for x in indList if x.isdigit()]
+        indList.sort()
+    else:
+        indList = []
+
+    if isStores:
+        storeCollectList = input("Enter storeCollect title using comma(, ) (might be empty): ")
+        storeCollectList = storeCollectList.split(', ')
+    else:
+        storeCollectList = []
+
+    return createOrderList(collectList = collectList, indList = indList, storeCollectList = storeCollectList)
+
+
 def console():
 
     choise = 0
@@ -598,7 +637,8 @@ def console():
       try: 
         choiseList = ['Сделать лот', 'Отправки в РФ', 'Выход', 'Забанить', 
                       'Уступки', 'Обновление статуса заказов', 'Удаление фотографий', 
-                      'Сформировать посылку', 'Обновление статуса посылки', 'Сделать/Добавить_в закупку']
+                      'Сформировать посылку', 'Обновление статуса посылки', 'Сделать/Добавить_в закупку',
+                      'Изменить номер заказа посреда']
         choise = int(input('\nВведите номер:\n' + Messages.formConsoleListMes(info_list = choiseList, offset = 2) + '\nВыбор: '))
 
         if choise == 1:
@@ -686,20 +726,8 @@ def console():
 
                     choise1 = int(input('Выбор: '))
                     stat = status[choise1-1]
-
-                    collectList = input("Enter collect's num using comma(, ) (might be empty): ")
-                    collectList = collectList.split(', ')
-
-                    indList = input("Enter ind's num using comma(, ) (might be empty): ")
-                    indList = indList.split(', ')
-
-                    storeCollectList = input("Enter storeCollect title using comma(, ) (might be empty): ")
-                    storeCollectList = storeCollectList.split(', ')
-
-                    payment = input('Нужна ли информация об оплатах? y/n: ')
-
-                    orderList = createOrderList(collectList = collectList, indList = indList, storeCollectList = storeCollectList)
-
+                    payment = ''
+                    orderList = handle_ids_insert()
                     changeStatus(stat, orderList, payment)
 
         elif choise == 7:
@@ -724,25 +752,13 @@ def console():
             choiseStatus = int(input('Выбор: '))
             stat = status[choiseStatus-1]
 
-            collectList = input("\nEnter collect's num using comma(, ) (might be empty): ")
-            collectList = collectList.split(', ')
-            collectList = [int(x) for x in collectList if x.isdigit()]
-            collectList.sort()
-
-            indList = input("Enter ind's num using comma(, ) (might be empty): ")
-            indList = indList.split(', ')
-            indList = [int(x) for x in indList if x.isdigit()]
-            indList.sort()
-
-            storeCollectList = input("Enter storeCollect title using comma(, ) (might be empty): ")
-            storeCollectList = storeCollectList.split(', ')
 
             img = input('\nEnter the image url using comma(, ) (might be empty): ')
             img = img.split(', ')
 
             DB_Operations.updateInsertCollectParcel(parcel_id = parcel_id, status = stat)
             
-            orderList = createOrderList(collectList = collectList, indList = indList, storeCollectList = storeCollectList)
+            orderList = handle_ids_insert()
 
             changeStatus(stat, orderList)
             collectListUrl = []
@@ -789,6 +805,15 @@ def console():
 
         elif choise == 10:
             storeCollectActivities(topicList = topicList)
+        elif choise == 11:
+            ordersPrefix = {0: 'C', 1: 'I', 2: ''}
+            choiseListPref = ['Коллект', 'Инда', 'Закупка']
+            choise = int(input('\nВведите номер:\n' + Messages.formConsoleListMes(info_list = choiseListPref, offset = 2) + '\nВыбор: '))
+            prefix = ordersPrefix[choise-1]
+            collectId = prefix + input('Введите номер инды (для закупок название): ')
+            posredId = input('Введите номер заказа у посреда: ')
+            DB_Operations.updateCollectSelector(collectId = collectId, collectType = OrdersConsts.CollectTypes.store if choise == 2 else OrdersConsts.CollectTypes.collect,
+                                                posred_id = posredId)
 
       except Exception as e:
           print(f"\n===== ОШИБКА! \n{format_exc()} - {e}=====")

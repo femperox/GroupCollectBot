@@ -46,8 +46,7 @@ class StoreSelector(StoreSelectorParent):
             item = StoresApi.parseFangamerItem(url = url)
         elif site == OrdersConsts.Stores.mattel:
             item = StoresApi.parseMattelItem(url = url)
-        elif site == OrdersConsts.Stores.funko:
-            item = StoresApi.parseFunkoItem(url = url)
-        
-        return ProductInfoClass(**item)
-    
+
+        item = ProductInfoClass(**item)
+        item.set_country(country = OrdersConsts.OrderTypes.user if site in [OrdersConsts.Stores.makeship, OrdersConsts.Stores.plushshop] else OrdersConsts.OrderTypes.us)
+        return item

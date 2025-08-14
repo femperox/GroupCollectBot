@@ -6,7 +6,7 @@ class ProductInfoClass:
                 shipmentPrice = OrdersConsts.ShipmentPriceType.undefined, page = '', mainPhoto = '',
                 name = '', endTime = None, siteName = '', posredCommission = 0, posredCommissionValue = 0,
                 isMembershipNeeded:bool = False, blitz = -1, seller = '', goodRate = -1, badRate = -1,
-                releaseDate = None, priceForFreeShipment = -1, **kwargs):
+                releaseDate = None, priceForFreeShipment = -1, country = OrdersConsts.OrderTypes.empty, **kwargs):
         
         self.id = id
         self.itemPrice = itemPrice
@@ -29,6 +29,7 @@ class ProductInfoClass:
         self.badRate = badRate
         self.releaseDate = releaseDate
         self.priceForFreeShipment = priceForFreeShipment
+        self.country = country
 
     def __bool__(self):
         return bool(self.id) and bool(self.siteName)
@@ -50,6 +51,9 @@ class ProductInfoClass:
 
     def setSeller(self, seller):
         self.seller = seller
+
+    def set_country(self, country:OrdersConsts.OrderTypes):
+        self.country = country
 
     def copy(self):
         newCopy = ProductInfoClass(

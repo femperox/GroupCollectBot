@@ -115,7 +115,7 @@ class DaromApi:
         else:
             return id
         
-    def get_darom_order_format(self, id):
+    def get_order_format(self, id):
         """Получить формат id заказов Дарома
 
         Args:
@@ -145,7 +145,7 @@ class DaromApi:
             allOrders = soup.findAll('a')
             orderIdsList = []
             for order in allOrders:
-                orderIdsList.append(self.get_darom_order_format(order['href'].split('=')[-1]))
+                orderIdsList.append((order['href'].split('=')[-1]))
             return orderIdsList
         else:
             return []
@@ -186,11 +186,11 @@ class DaromApi:
             ordersInfo = []
             for order in allOrders:
                 orderInfo = {}
-                orderInfo['id'] = order.find('a').text
-                orderInfo['productId'] = order.find('a', class_ = 'highslide')['href'].split('/')[-1].split('-')[0]
+                orderInfo['posred_id'] = order.find('a').text
+                orderInfo['product_id'] = order.find('a', class_ = 'highslide')['href'].split('/')[-1].split('-')[0]
                 orderInfo['status'] = order.findAll('td')[-1].text
                 if orderInfo['status'].find('P-') >= 0:
-                    orderInfo['parcelId'] = orderInfo['status']
+                    orderInfo['parcel_id'] = orderInfo['status']
                     orderInfo['status'] = OrdersConsts.OrderStatus.shipped_transit
                 else:
                     orderInfo['status'] = DaromApi.DaromOrderStatus.getCollectStatus(status = orderInfo['status'])
@@ -201,12 +201,15 @@ class DaromApi:
             return []
 
 
-    def get_active_orders(self):
+    def get_active_orders(self, pages = 100):
         """Получить все активные заказы
+
+        Args:
+            pages (int, optional): количество выводимых заказов. Defaults to 100.
 
         Returns:
             list[dict]: инфо о заказах
         """
 
-        orders = self.get_orders()
-        return {order['id']: order for order in orders if order['status'] not in [OrdersConsts.OrderStatus.cancelled, OrdersConsts.OrderStatus.shipped_transit]}
+        orders = self.get_orders(pages = pages)
+        return {order['posred_id']: order for order in orders if order['status'] not in [OrdersConsts.OrderStatus.cancelled, OrdersConsts.OrderStatus.shipped_transit]}
