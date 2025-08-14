@@ -10,6 +10,7 @@ from APIs.PosredApi.posredApi import PosredApi
 from APIs.GoogleSheetsApi.API.Constants import ConditionType
 from APIs.utils import getExpiryDateString
 from APIs.StoresApi.ProductInfoClass import ProductInfoClass
+from APIs.PosredApi.PosredOrderInfoClass import PosredOrderInfoClass
 
 class CollectOrdersSpreadsheetClass():
 
@@ -17,6 +18,12 @@ class CollectOrdersSpreadsheetClass():
     startLotRow = 0
     startParticipantRow = 0
     summaryRow = 0
+
+    header_columns = {
+        OrdersConsts.OrderTypes.us: ['Позиция (с налогом)', 'Доставка по США', 'Доставка до коллективщика'],
+        OrdersConsts.OrderTypes.user: ['Позиция (с налогом)','Доставка до участника'],
+        OrdersConsts.OrderTypes.jp: ["Позиция (с налогом)", "Доставка по Япе", "Доставка до склада посреда в транзит стране", "Доставка до коллективщика"]
+    }
 
     def __init__(self, sheetList):
 
@@ -86,7 +93,7 @@ class CollectOrdersSpreadsheetClass():
                 return spItems[i][0]
 
 
-    def prepareLot(self, sheetList, spId, participants = 1, rangeName = ""):
+    def prepareLot(self, sheetList, spId, participants = 1, rangeName = "", country = OrdersConsts.OrderTypes.jp ):
         '''
         подготовка json запроса для создания таблицы лота
 
@@ -117,9 +124,22 @@ class CollectOrdersSpreadsheetClass():
         # объдинение ячеек
         request.append(ce.mergeCells(spId, "A{0}:B{0}".format(self.startLotRow)))
         request.append(ce.mergeCells(spId, "D{0}:D{1}".format(self.startLotRow, self.startLotRow+13)))
-        request.append(ce.mergeCells(spId, "E{0}:E{1}".format(self.startLotRow, self.startLotRow+13)))
-        request.append(ce.mergeCells(spId, "F{0}:F{1}".format(self.startLotRow, self.startLotRow+13)))
-        request.append(ce.mergeCells(spId, "G{0}:G{1}".format(self.startLotRow, self.startLotRow+13)))
+        if country == OrdersConsts.OrderTypes.user:
+            request.append(ce.mergeCells(spId, "E{0}:G{1}".format(self.startLotRow, self.startLotRow+13)))  
+            #для цен
+            for i in range(participants):
+                request.append(ce.mergeCells(spId, "E{0}:G{1}".format(self.startParticipantRow+i, self.startParticipantRow+i)))            
+        elif country == OrdersConsts.OrderTypes.us:
+            request.append(ce.mergeCells(spId, "E{0}:E{1}".format(self.startLotRow, self.startLotRow+13)))
+            request.append(ce.mergeCells(spId, "F{0}:G{1}".format(self.startLotRow, self.startLotRow+13)))
+            #для цен
+            for i in range(participants):
+                request.append(ce.mergeCells(spId, "F{0}:G{1}".format(self.startParticipantRow+i, self.startParticipantRow+i)))
+        elif country == OrdersConsts.OrderTypes.jp:
+            request.append(ce.mergeCells(spId, "E{0}:E{1}".format(self.startLotRow, self.startLotRow+13)))
+            request.append(ce.mergeCells(spId, "F{0}:F{1}".format(self.startLotRow, self.startLotRow+13)))
+            request.append(ce.mergeCells(spId, "G{0}:G{1}".format(self.startLotRow, self.startLotRow+13)))
+
         request.append(ce.mergeCells(spId, "H{0}:H{1}".format(self.startLotRow, self.startLotRow + 13)))
         request.append(ce.mergeCells(spId, "A{0}:C{1}".format(self.startLotRow+1, self.startLotRow+13)))  # место для картинки
         request.append(ce.mergeCells(spId, "A{0}:C{0}".format(self.summaryRow))) # для "суммарно"
@@ -161,7 +181,7 @@ class CollectOrdersSpreadsheetClass():
         return collectType, collectNum
 
 
-    def prepareValues(self, spId, image, collect = "", item:ProductInfoClass = None):
+    def prepareValues(self, spId, image, collect = "", item:ProductInfoClass = None, posredInfo: PosredOrderInfoClass = None):
         '''
         подготовка блока data в json-запросе для заполнения таблицы значениями
 
@@ -182,28 +202,30 @@ class CollectOrdersSpreadsheetClass():
         ran = sheetTitle +"!A{0}:B{0}".format(self.startLotRow)
         data.append(ce.insertValue(spId, ran, "{1} №{0}   Трек:".format(collectNum, collectType)))
 
-        words = ["Позиция (с налогом)", "Доставка по Япе", "Доставка до склада посреда в транзит стране", "Доставка до коллективщика", "Задолжность",
-                "Вес лота:", "Беседа лота:", "Лот в обсуждении:", "Ссылка на сайте:", "Номер у посреда:","СУММАРНО"]
-        mergedWordsAm = 5
-        unmergedWordsAm = len(words) - mergedWordsAm
+        words = ["Вес лота:", "Беседа лота:", "Лот в обсуждении:", "Ссылка на сайте:", "Номер у посреда:"]
+        header = self.header_columns[item.country]
 
         # Имена шапок по оплатам и задание формулы суммы
-        for i in range(mergedWordsAm):
+        for i in range(len(header)):
             letter = chr(i + 3 + ord('a'))
             ran = sheetTitle +"!{0}{1}".format(letter, self.startLotRow)
-            data.append(ce.insertValue(spId, ran, words[i]))
-
+            data.append(ce.insertValue(spId, ran, header[i]))
             ran = sheetTitle + "!{0}{1}".format(letter, self.summaryRow)
-            if letter == 'h':
-                formula = "=SUM(D{0}:G{0})".format(self.summaryRow)
-            else:
-                formula = "=SUM({0}{1}:{0}{2})".format(letter, self.startParticipantRow, self.summaryRow-1)
+            formula = "=SUM({0}{1}:{0}{2})".format(letter, self.startParticipantRow, self.summaryRow-1)
             data.append(ce.insertValue(spId, ran, formula))
+        # Итоговая сумма
+        formula = "=SUM(D{0}:G{0})".format(self.summaryRow)
+        ran = sheetTitle + "!H{0}".format(self.summaryRow)
+        data.append(ce.insertValue(spId, ran, formula))
+
+        # Шапка задолжности
+        ran = sheetTitle + "!H{0}".format(self.startLotRow)
+        data.append(ce.insertValue(spId, ran, 'Задолжность'))
 
         # Имена шапок инфы о лоте
-        for i in range(unmergedWordsAm-1):
+        for i in range(len(words)):
             ran = sheetTitle + "!I{0}".format(self.startLotRow+i)
-            data.append(ce.insertValue(spId, ran, words[mergedWordsAm+i]))
+            data.append(ce.insertValue(spId, ran, words[i]))
 
         # Нумерация участников и задание формулы задолжности
         for i in range(participants):
@@ -215,7 +237,7 @@ class CollectOrdersSpreadsheetClass():
 
         # Имена шапки "суммарно"
         ran = sheetTitle + "!A{0}".format(self.summaryRow)
-        data.append(ce.insertValue(spId, ran, words[-1]))
+        data.append(ce.insertValue(spId, ran, "СУММАРНО"))
 
         # Изображение лота
         ran = sheetTitle + "!A{0}".format(self.startLotRow+1)
@@ -226,6 +248,12 @@ class CollectOrdersSpreadsheetClass():
         url = f'=HYPERLINK("{item.page}"; "{item.siteName}")'
         ran = sheetTitle + "!J{0}".format(self.startLotRow+3)
         data.append(ce.insertValue(spId, ran, url))
+
+        # информация о заказе у посреда
+        if posredInfo and posredInfo.posred_url:
+            url = f'=HYPERLINK("{posredInfo.posred_url}"; "{posredInfo.posred_id}")'
+            ran = sheetTitle + "!J{0}".format(self.startLotRow+4)
+            data.append(ce.insertValue(spId, ran, url))
 
         # Для расчётов
 
@@ -255,7 +283,7 @@ class CollectOrdersSpreadsheetClass():
             # стоимость лота со всеми комм и дост
             ran = sheetTitle + "!I{0}".format(self.startLotRow+7)
             tax = item.tax/100 if item.tax > 0 else 0
-            formula = "={0} + {0}*{1} + {2} + {0}*0.15".format(item.itemPrice, tax, item.posredCommission).replace('.', ',')
+            formula = "={0} + {0}*{1} + {2} + {0}*0.1".format(item.itemPrice, tax, item.posredCommission).replace('.', ',')
             data.append(ce.insertValue(spId, ran, formula))
 
             ran = sheetTitle + "!I{0}".format(self.startLotRow+8)
@@ -290,7 +318,7 @@ class CollectOrdersSpreadsheetClass():
 
 
 
-    def prepareBody(self, spId, image, collect = "", item:ProductInfoClass = None):
+    def prepareBody(self, spId, image, collect = "", item:ProductInfoClass = None, posredInfo: PosredOrderInfoClass = None):
         '''
         подготовка json запроса для заполнения таблицы лота информауией
 
@@ -301,7 +329,7 @@ class CollectOrdersSpreadsheetClass():
 
         body = {}
         body["valueInputOption"] = "USER_ENTERED"
-        body["data"] = self.prepareValues(spId, image, collect, item)
+        body["data"] = self.prepareValues(spId, image, collect, item, posredInfo)
 
         return body
 

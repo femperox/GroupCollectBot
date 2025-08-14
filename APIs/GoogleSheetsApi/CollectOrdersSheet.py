@@ -6,6 +6,7 @@ from APIs.GoogleSheetsApi.API.Styles.Borders import Borders as b
 from APIs.GoogleSheetsApi.API.Styles.Colors import Colors as c
 from APIs.utils import concatList
 from APIs.StoresApi.ProductInfoClass import ProductInfoClass
+from APIs.PosredApi.PosredOrderInfoClass import PosredOrderInfoClass
 
 class CollectOrdersSheet(ParentSheetClass):
 
@@ -134,7 +135,9 @@ class CollectOrdersSheet(ParentSheetClass):
 
        return participantList
     
-    def createTable(self, spId, namedRange, participants = 1, item:ProductInfoClass = None, image = "https://i.pinimg.com/originals/50/d8/03/50d803bda6ba43aaa776d0e243f03e7b.png"):
+    def createTable(self, spId, namedRange, participants = 1, 
+                    item:ProductInfoClass = None, posredInfo: PosredOrderInfoClass = None,
+                    image = "https://i.pinimg.com/originals/50/d8/03/50d803bda6ba43aaa776d0e243f03e7b.png"):
         '''
         Создаёт и заполняет базовую таблицу по заданным параметрам
 
@@ -146,10 +149,10 @@ class CollectOrdersSheet(ParentSheetClass):
         :return:
         '''
         self.service.spreadsheets().batchUpdate(spreadsheetId=self.getSpreadsheetId(),
-                                                  body={"requests": self.sp.prepareLot(self.getSheetListProperties(), spId, participants=participants, rangeName=namedRange)}).execute()
+                                                  body={"requests": self.sp.prepareLot(self.getSheetListProperties(), spId, participants=participants, rangeName=namedRange, country = item.country)}).execute()
 
         self.service.spreadsheets().values().batchUpdate(spreadsheetId=self.getSpreadsheetId(),
-                                                           body=self.sp.prepareBody(spId, image, collect= namedRange, item = item)).execute()
+                                                           body=self.sp.prepareBody(spId, image, collect= namedRange, item = item, posredInfo = posredInfo)).execute()
 
     def updateTable(self, namedRange, request, topicUrl):
         '''
