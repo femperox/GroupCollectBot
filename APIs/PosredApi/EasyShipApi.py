@@ -14,6 +14,7 @@ class EasyShipApi:
         packing = 26
         procurement = 1
         shipped_admin = 15
+        at_warehouse = 20
 
         @staticmethod
         def getCollectStatus(status: int):
@@ -32,6 +33,8 @@ class EasyShipApi:
                 return OrdersConsts.OrderStatus.procurement
             elif status in [EasyShipApi.EasyShipOrderStatus.shipped_admin]:
                 return OrdersConsts.OrderStatus.shipped_admin
+            elif status in [EasyShipApi.EasyShipOrderStatus.at_warehouse]:
+                return OrdersConsts.OrderStatus.at_warehouse_US
             else:
                 return OrdersConsts.OrderStatus.empty
 
