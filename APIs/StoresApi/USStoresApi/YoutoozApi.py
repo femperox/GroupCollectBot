@@ -5,13 +5,14 @@ from dateutil.relativedelta import relativedelta
 import json
 from confings.Consts import OrdersConsts
 from APIs.PosredApi.posredApi import PosredApi
+from APIs.StoresApi.USStoresApi.StoresApi import StoresApi
 import re 
 
 class YoutoozApi:
 
     @staticmethod
     def getShipmentRates():
-        """DEPRECATED Спарсить стоимости доставок youtooz
+        """Спарсить стоимости доставок youtooz
 
         Returns:
             dict: словарь соответсвий стоимости доставок к типам товаров
@@ -19,86 +20,34 @@ class YoutoozApi:
         soup = WebUtils.getSoup('https://youtooz.com/pages/shipping-policy', )
 
         try:
-            table = soup.find('tbody')
-            #rows = table.findAll("tr", {'data-mce-fragment': '1'})
+            table = soup.find('div', {'dir': 'ltr'})
             rows = table.findAll("tr")
 
             shipment_prices = {}
             for row in rows[1:]:
-                if row.find('td', {'colspan': '5'}) is not None:
+                columns = row.findAll("td")
+                if len(columns) == 1:
                     continue
-                
-                item_shipment = row.find('td', {'style': re.compile(r'text-align: center; height: 22px; width: 2')}).text
-                if item_shipment not in ['INTL', 'US']:
-                    continue
-
-                if row.find('strong') is not None:
-                    item_type = row.find('strong').text.lower()
-                if row.find('td', {'style': re.compile(r'text-align: center; height: 22px; width: 1')}) is not None:
-                    item_size = row.find('td', {'style': re.compile(r'text-align: center; height: 22px; width: 1')}).text
-                elif row.find('td', {'rowspan' : True}) is not None:
-                    item_size = row.find('td', {'rowspan' : True}).text
-                else:
-                    continue
-                item_size = item_size.replace('\n', '').replace('*', '').lower()
-                try:
-                    item_shipment_price = row.find('td', {'data-sheets-value': re.compile(r'"1":3')}).text.lower()
-                except:
-                    item_shipment_price = row.find('td', {'data-sheets-value': re.compile(r'"1":2,"2":"Free"')}).text.lower()
-                item_shipment_price = OrdersConsts.ShipmentPriceType.free if item_shipment_price == 'free' else int(item_shipment_price.replace('$', ''))
-                
-                if item_type in shipment_prices.keys():
-                    if item_size in shipment_prices[item_type].keys():
+                elif len(columns) == 5:
+                    if 'US' not in columns[2].text.strip():
                         continue
-                    shipment_prices[item_type][item_size] = item_shipment_price
-                else:
-                    shipment_prices[item_type] = {item_size: item_shipment_price}
+                    key_item = columns[0].text.strip().lower()
+                    key_item_type = columns[1].text.strip().lower()
+                    shipment_price = columns[3].text.strip().replace('$', '')
+                elif len(columns) == 3:
+                    if 'US' not in columns[1].text.strip():
+                        continue
+                    key_item_type = columns[0].text.strip().lower()
+                    shipment_price = columns[2].text.strip().replace('$', '')
+
+                if key_item not in shipment_prices:
+                    shipment_prices[key_item] = {}
+                shipment_prices[key_item][key_item_type] = int(shipment_price)
 
             return shipment_prices
         
         except Exception as e:
             pprint(e)
-        
-
-    @staticmethod
-    def setStaticShipmentRates():
-        """_summary_
-
-        Returns:
-            _type_: _description_
-        """
-        shipment_prices = {}
-
-        shipment_prices['vinyl'] = {}
-        shipment_prices['vinyl']['5"'] = 7
-        shipment_prices['vinyl']['1ft'] = 20
-
-        shipment_prices['plush'] = {}
-        shipment_prices['plush']['4"/6"'] = 7
-        shipment_prices['plush']['4"/6"/9"/1ft/16"'] = 7
-        shipment_prices['plush']['weighted 16"'] = 20
-        shipment_prices['plush']['2ft'] = 50
-        shipment_prices['plush']['plush bag'] = 10
-
-        shipment_prices['slippers'] = {}
-        shipment_prices['slippers']['slippers'] = 12
-
-        shipment_prices['jenga'] = {}
-        shipment_prices['jenga']['jenga'] = 10
-
-        shipment_prices['monopoly'] = {}
-        shipment_prices['monopoly']['monopoly'] = 10
-
-        shipment_prices['prints'] = {}
-        shipment_prices['prints']['prints'] = 20
-
-        shipment_prices['mugs'] = {}
-        shipment_prices['mugs']['mug'] = 7
-
-        shipment_prices['pins'] = {}
-        shipment_prices['pins']['set'] = 7
-
-        return shipment_prices
     
 
     @staticmethod
@@ -111,7 +60,7 @@ class YoutoozApi:
         Returns:
             int | ShipmentPriceType: цена доставки
         """
-        shipment_prices = YoutoozApi.setStaticShipmentRates()
+        shipment_prices = YoutoozApi.getShipmentRates()
 
         url_lower = url.lower()
         item_type = 'vinyl'
@@ -133,8 +82,8 @@ class YoutoozApi:
         elif url_lower.find('monopoly') > -1:
             return shipment_prices['monopoly']['monopoly']
         elif url_lower.find('print') > -1:
-            return shipment_prices['prints']['prints']
-        elif url_lower.find('mug') > -1:
+            return shipment_prices['prints']['unframed']
+        elif url_lower.find('unframed') > -1:
             return shipment_prices['mugs']['mug']
         elif url_lower.find('pin') > -1:
             return shipment_prices['pins']['set']
@@ -157,41 +106,15 @@ class YoutoozApi:
             dict: словарь с информацией о товаре
         """
 
-        soup = WebUtils.getSoup(url)
-        js = soup.findAll('script', type='application/ld+json')[0].string.replace('\n','')
-        js = json.loads(js)
-
-        item = {}
-
-        offer_index = 0
-        if url.find('variant') > -1:
-            for i in range(len(js['offers'])):
-                if js['offers'][i]['url'] == url:
-                    offer_index = i
-                    break
-
-        item['itemPrice'] = js['offers'][offer_index]['price']
-        item['id'] = js['offers'][offer_index]['sku']
-
-        item['tax'] = 0
-        item['itemPriceWTax'] = 0
-        item['shipmentPrice'] = YoutoozApi.setShipmentPrice(url = url)
-        item['page'] = url
-        item['mainPhoto'] = js['image'][0].replace('_small', '')
-        item['name'] = js['name']
-        item['endTime'] = datetime.now() + relativedelta(years=3)
-        item['siteName'] = OrdersConsts.Stores.youtooz
-
-
-        commission = PosredApi.getСommissionForItemUSD()
-        if item['shipmentPrice'] == OrdersConsts.ShipmentPriceType.free:
-            format_string = item['itemPrice']
-            format_number = item['itemPrice']
+        variant = None
+        item_id = url.split("products/")[-1]
+        if item_id.find('?variant=') > -1:
+            curl = f'https://youtooz.com/products/{item_id.split("?variant=")[0]}.js'
+            variant = int(item_id.split("?variant=")[1])
         else:
-            format_string = f"( {item['itemPrice']} + {item['shipmentPrice']} )"
-            format_number = item['itemPrice'] + item['shipmentPrice']
-        item['posredCommission'] = commission['posredCommission'].format(format_string)
-        item['posredCommissionValue'] = commission['posredCommissionValue'](format_number)
+            curl = f'https://youtooz.com/products/{item_id}.js'
+
+        item = StoresApi.getInfo(curl = curl, url = url, storeName = OrdersConsts.Stores.youtooz,
+                                 shipmentPrice = YoutoozApi.setShipmentPrice(url = url), variant = variant)
 
         return item
-        
