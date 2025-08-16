@@ -20,4 +20,4 @@ class NewsInfoClass:
 
     def __repr__(self):
         formatted_string = "\n".join([f"'{attr}': {value}," for attr, value in vars(self).items()])
-        return f"ProductInfoClass(\n{formatted_string})"
+        return f"NewsInfoClass(\n{formatted_string})"
