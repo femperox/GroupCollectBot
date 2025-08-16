@@ -3,9 +3,12 @@ from pprint import pprint
 from confings.Consts import RegexType, NewsConsts
 import re
 from APIs.NewsApi.NewsInfoClass import NewsInfoClass
+from APIs.NewsApi.NewsParentClass import NewsParentClass
         
-class YouLoveItApi:
+class YouLoveItApi(NewsParentClass):
     
+    origin = NewsConsts.NewsOrigin.youloveit
+
     newsMainPage = 'https://www.youloveit.com/dolls/page/{}/'
     newsItemPage = 'https://www.youloveit.com/dolls/{}.html'
 
@@ -37,14 +40,14 @@ class YouLoveItApi:
             id (string): id новости
 
         Returns:
-            dict: словарь с информацией о новости
+            NewsInfoClass:информация о новости
         """
 
         soup = WebUtils.getSoup(url = YouLoveItApi.newsItemPage.format(id))
         info = {}
         postContent = soup.find('span', class_ = 'full-story')
         info['id'] = id
-        info['url'] = YouLoveItApi.newsItemPage.format(id)
+        info['news_url'] = YouLoveItApi.newsItemPage.format(id)
         info['images_list'] = ['https://www.youloveit.com'+ x['src'] for x in postContent.findAll('img')]
         info['origin'] = NewsConsts.NewsOrigin.youloveit
 
@@ -53,8 +56,6 @@ class YouLoveItApi:
         price_pattern = r'Price:\s*(.+)\n'
         url_pattern = r'can get it here:\s*(https?://\S+)\n'
 
-
-
         info['prices_list'] = re.findall(price_pattern, text)
         info['additional_urls_list'] = list(set(re.findall(url_pattern, text)))
         info['release_date'] = re.findall(release_pattern, text)
@@ -62,13 +63,5 @@ class YouLoveItApi:
         for line in text.split('\n'):
             if re.search(RegexType.regex_dates_in_text, line) and not re.search(r'Release date:', line):
                 info['additional_dates_list'].append(line.strip())
-
-        '''
-        info['text'] = ''
-        info['text'] += "Дата релиза:\n" + " ".join(release_info) + "\n\n" if release_info else ''
-        info['text'] += "Доп. инфо даты:\n" + " ".join(date_lines) + "\n\n" if date_lines else ''
-        info['text'] += "Цена:\n" + " ".join(price_info) + "\n\n" if price_info else ''
-        info['text'] += "Ссылки:\n" + "\n".join(urls_info) + "\n\n" if urls_info else ''
-        '''
 
         return NewsInfoClass(**info)

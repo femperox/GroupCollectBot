@@ -419,3 +419,34 @@ def isExistingFile(path):
     """
 
     return os.path.exists(path) and os.path.isfile(path)
+
+def parse_japanese_date_range(text, base_year=None):
+
+    if base_year is None:
+        base_year = datetime.now().year
+
+    text = text.strip().replace('～', '~')
+
+    # Регулярное выражение для даты: [ГГГГ年]?ММ月ДД日
+    date_pattern = r'(?:\s*(\d{4})年)?(\d{1,2})月(\d{1,2})日'
+
+
+    matches = re.findall(date_pattern, text)
+    if not matches:
+        return ''
+
+    # Парсим каждую дату
+    parsed_dates = []
+    for match in matches:
+        year_str, month, day = match
+        month = int(month)
+        day = int(day)
+        year = int(year_str) if year_str else base_year
+
+        try:
+            dt = datetime(year, month, day)
+            parsed_dates.append(dt)
+        except ValueError as e:
+            raise ValueError(f"Invalid date: {year}-{month}-{day}") from e
+
+    return list(set([date.strftime('%Y.%m.%d') for date in parsed_dates]))

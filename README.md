@@ -85,7 +85,12 @@
 🌐 [amazon](https://www.amazon.com/) *(с 26.06.2025)*  
 🌐 [bratz](https://www.bratz.com) *(с 26.06.2025)*  
 🌐 [fangamer](https://www.fangamer.com) *(с 26.06.2025)*  
-🌐 [mattel](https://creations.mattel.com) *(с 06.08.2025)*
+🌐 [mattel](https://creations.mattel.com) *(с 06.08.2025)*  
+  
+
+### Связка с новостями: 
+📰 [youloveit](https://www.youloveit.com/)  
+📰 [kurobas-info](https://kurobas-info.sakura.ne.jp)  *(с 17.08.2025)*   
 
 
 ## Что будет дорабатываться/добавляться?
