@@ -1,5 +1,6 @@
 import re
 from confings.Consts import RegexType
+from APIs.StoresApi.ProductInfoClass import ProductInfoClass
 
 class StoreSelectorParent:
 
@@ -29,4 +30,8 @@ class StoreSelectorParent:
         id = id.replace('?source_location=share', '').replace('&utm_source=web&utm_medium=share', '').replace('detail.php?product_id=', '')
         id = id.replace('?scode=', '').replace('?gcode=', '').replace('item?itemCode=', '').replace('detail', '')
         return id
+    
+    def selectStore(url):
+
+        return ProductInfoClass()
 

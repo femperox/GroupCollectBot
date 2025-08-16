@@ -343,7 +343,8 @@ def createTableTopic(post_url, site_url ='', spId=0, topic_id=0, items=0, img_ur
 
     mes = Messages.mes_collect_info(collectId = collect_id,
                                     participantList = transformToTopicFormat(participantsList), 
-                                    lotWallUrl = post_url, siteName = item.siteName)
+                                    lotWallUrl = post_url, siteName = item.siteName,
+                                    where = item.country)
 
     topicInfo = vk.post_comment(topic_id = topic_id, message=mes, img_urls=[img_url])
  
