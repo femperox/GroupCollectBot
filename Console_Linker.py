@@ -325,10 +325,10 @@ def createTableTopic(post_url, site_url ='', spId=0, topic_id=0, items=0, img_ur
         active_orders = posred_selector.get_active_orders()
 
         for active_order in active_orders.keys():
-            if active_orders[active_order]['product_id'] != item.id:
+            if active_orders[active_order].product_id != item.id:
                 continue
             else:
-                posred_info = PosredOrderInfoClass(**active_orders[active_order])
+                posred_info = active_orders[active_order]
                 posred_url = PosredApi.getPosredOrderByOrderId(order_id= posred_info.posred_id, 
                                                 formatted_order_id = posred_selector.get_num_id(id = posred_info.posred_id))
                 posred_info.set_posred_url(url = posred_url)

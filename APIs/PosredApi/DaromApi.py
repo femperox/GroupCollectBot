@@ -5,6 +5,8 @@ from bs4 import BeautifulSoup
 import re
 import json
 from confings.Consts import PathsConsts, OrdersConsts
+from typing import List
+from APIs.PosredApi.PosredOrderInfoClass import PosredOrderInfoClass
 
 class DaromApi:
 
@@ -167,7 +169,7 @@ class DaromApi:
             soup = soup.find('table').find('td', class_='desktop-size').findAll('span', class_='text')
             return DaromApi.DaromOrderStatus.getCollectStatus(soup[-1].text.split(': ')[-1])
 
-    def get_orders(self, pages = 100):
+    def get_orders(self, pages = 100) -> List[PosredOrderInfoClass]:
         """Получить все заказы
 
         Args:
@@ -194,7 +196,7 @@ class DaromApi:
                     orderInfo['status'] = OrdersConsts.OrderStatus.shipped_transit
                 else:
                     orderInfo['status'] = DaromApi.DaromOrderStatus.getCollectStatus(status = orderInfo['status'])
-                ordersInfo.append(orderInfo.copy())
+                ordersInfo.append(PosredOrderInfoClass(**orderInfo.copy()))
 
             return ordersInfo
         else:
@@ -212,4 +214,4 @@ class DaromApi:
         """
 
         orders = self.get_orders(pages = pages)
-        return {order['posred_id']: order for order in orders if order['status'] not in [OrdersConsts.OrderStatus.cancelled, OrdersConsts.OrderStatus.shipped_transit]}
+        return {order.posred_id: order for order in orders if order.status not in [OrdersConsts.OrderStatus.cancelled, OrdersConsts.OrderStatus.shipped_transit]}

@@ -212,17 +212,28 @@ def updateActivePosredCollects():
 
     all_orders = DB_Operations.getAllActivePosredCollects()
     darom = DaromApi()
+    easyShipApi = EasyShipApi()
     darom_orders = darom.get_active_orders(pages = 500)
+    es_orders = easyShipApi.get_active_orders()
+
+    all_posred_orders_keys = list(darom_orders.keys())
+    all_posred_orders_keys.extend(list(es_orders.keys()))
+
     for order in all_orders:
-        if PosredApi.getPosredByOrderId(order_id = order[2]) == PosrednikConsts.DaromJp:
-            if order[2] in darom_orders.keys() and darom_orders[order[2]]['status'] != OrdersConsts.OrderStatus.procurement and\
-                order[3] != darom_orders[order[2]]['status']:
-                    collectTopicInfo = DB_Operations.getCollectTopicComment(collect_id = order[1], collect_type = order[0])
-                    status_name = DB_Operations.getCollectStatusNameById(status_id = darom_orders[order[2]]['status'])
-                    print(f'Коллект {order[1]}: {status_name}')
-                    vk.edit_collects_activity_comment(topic_id = collectTopicInfo[0], comment_id = collectTopicInfo[1], 
-                                                    status_text = status_name)
-                    DB_Operations.updateCollectSelector(collectType = order[0], collectId = order[1], status_id = darom_orders[order[2]]['status'])
+        if order[2] not in all_posred_orders_keys:
+            continue
+        posred = PosredApi.getPosredByOrderId(order_id = order[2])
+        if posred == PosrednikConsts.DaromJp:
+            order_info = darom_orders[order[2]]
+        elif posred == PosrednikConsts.EasyShip:
+            order_info = es_orders[order[2]]
+        if order_info.status != OrdersConsts.OrderStatus.procurement and order[3] != order_info.status:
+                collectTopicInfo = DB_Operations.getCollectTopicComment(collect_id = order[1], collect_type = order[0])
+                status_name = DB_Operations.getCollectStatusNameById(status_id = order_info.status)
+                print(f'Коллект {order[1]}: {status_name}')
+                vk.edit_collects_activity_comment(topic_id = collectTopicInfo[0], comment_id = collectTopicInfo[1], 
+                                                status_text = status_name)
+                DB_Operations.updateCollectSelector(collectType = order[0], collectId = order[1], status_id = order_info.status)
 
 def addActivePosredCollects():
     """Добавить к заказам номер у посреда
@@ -233,7 +244,7 @@ def addActivePosredCollects():
     new_orders = DB_Operations.GetNotSeenPosredCollects(posred_ids = list(active_orders.keys()))
     empty_posred_id_orders = DB_Operations.getEmptyPosredIdCollects()
     for new_order in new_orders:
-        collect_id = [empty_posred_id_order for empty_posred_id_order in empty_posred_id_orders if empty_posred_id_order[1].lower() in active_orders[new_order]['title'].lower()]
+        collect_id = [empty_posred_id_order for empty_posred_id_order in empty_posred_id_orders if empty_posred_id_order[1].lower() in active_orders[new_order].title.lower()]
         if not collect_id:
             continue
         collect_id = collect_id[0]

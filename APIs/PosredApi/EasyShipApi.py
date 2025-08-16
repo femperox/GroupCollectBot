@@ -3,6 +3,8 @@ from APIs.webUtils import WebUtils
 import json
 from confings.Consts import PathsConsts, OrdersConsts
 import certifi
+from APIs.PosredApi.PosredOrderInfoClass import PosredOrderInfoClass
+from typing import List
 
 class EasyShipApi:
 
@@ -143,7 +145,7 @@ class EasyShipApi:
 
         return f's{id}'
 
-    def get_orders(self):
+    def get_orders(self) -> List[PosredOrderInfoClass]:
         """Получить все заказы
 
         Returns:
@@ -167,7 +169,7 @@ class EasyShipApi:
             order_info['product_id'] = ''
             
             order_info['status'] = EasyShipApi.EasyShipOrderStatus.getCollectStatus(order['status'])
-            orders_info.append(order_info.copy())
+            orders_info.append(PosredOrderInfoClass(**order_info.copy()))
 
         return orders_info
     
@@ -197,4 +199,4 @@ class EasyShipApi:
             """
 
             orders = self.get_orders()
-            return {order['posred_id']: order for order in orders if order['status'] not in [OrdersConsts.OrderStatus.packing]}
+            return {order.posred_id: order for order in orders if order.status not in [OrdersConsts.OrderStatus.packing]}
