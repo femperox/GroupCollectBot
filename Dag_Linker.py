@@ -250,7 +250,10 @@ def addActivePosredCollects():
         collect_id = collect_id[0]
         posred = PosredApi.getPosredByOrderId(order_id = new_order)
         if posred == PosrednikConsts.EasyShip:
-            status_id = OrdersConsts.OrderStatus.shipped_US
+            if active_orders[new_order].status == OrdersConsts.OrderStatus.procurement:
+                status_id = OrdersConsts.OrderStatus.shipped_US
+            elif active_orders[new_order].status == OrdersConsts.OrderStatus.at_warehouse_US:
+                status_id = OrdersConsts.OrderStatus.at_warehouse_US
         elif posred == PosrednikConsts.DaromJp:
             status_id = OrdersConsts.OrderStatus.shipped_JP
         status_name = DB_Operations.getCollectStatusNameById(status_id = status_id)
