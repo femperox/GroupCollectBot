@@ -107,7 +107,7 @@ class EasyShipApi:
         else:
             return {}
         
-    def get_good_item_document(self, parcel_id = -1):
+    def get_good_item_document(self, parcel_id = None, order_id = None):
             """Исполнить метод апи getGoodItemDocument - для единичных айтемо
 
             Args:
@@ -120,9 +120,17 @@ class EasyShipApi:
             if self.session:
                 url = 'https://lk.easyship.ru/api/getGoodItemDocument'
                 payload_dict = {}
-                if self.get_num_id(id = parcel_id) > 0:
-                    payload_dict = {"xEntity":{"id": self.get_num_id(id = parcel_id), 
-                                            "table": "x_orders",
+                if parcel_id:
+                    id = parcel_id
+                    table = 'x_orders'
+                elif order_id:
+                    id = order_id
+                    table = 'x_sets'
+                else:
+                    id = -1
+                if self.get_num_id(id = id) > 0:
+                    payload_dict = {"xEntity":{"id": self.get_num_id(id = id), 
+                                            "table": table,
                                             "value": {}}}
                 if payload_dict:
                     response = self.session.post(url = url, json = payload_dict)
@@ -132,6 +140,21 @@ class EasyShipApi:
             else:
                 return {}
         
+    def get_order_pictures(self, order_id):
+        """Получить изображения заказа
+
+        Args:
+            order_id (string or int): id заказа
+
+        Returns:
+            list[str]: список ссылок
+        """
+        
+        order_info = self.get_good_item_document(order_id = order_id)
+        if order_info and order_info['document']['photosFiles']:
+            return [photo['path'] for photo in order_info['document']['photosFiles']]
+        else:
+            return []
 
     def get_order_format(self, id):
         """Получить формат id заказов es
@@ -174,29 +197,29 @@ class EasyShipApi:
         return orders_info
     
     def get_parcel_orders(self, parcel_id):
-            """Получить заказы из посылки
+        """Получить заказы из посылки
 
-            Args:
-                parcel_id (string or int): id посылки
+        Args:
+            parcel_id (string or int): id посылки
 
-            Returns:
-                list[string]: список id
-            """
+        Returns:
+            list[string]: список id
+        """
 
-            orders = self.get_good_item_document(parcel_id = parcel_id)
-            if not orders:
-                return []
-            order_ids_list = []
-            for order in orders['document']['included_documents']:
-                order_ids_list.append(self.get_order_format(id = order['uid']))
-            return order_ids_list
+        orders = self.get_good_item_document(parcel_id = parcel_id)
+        if not orders:
+            return []
+        order_ids_list = []
+        for order in orders['document']['included_documents']:
+            order_ids_list.append(self.get_order_format(id = order['uid']))
+        return order_ids_list
     
     def get_active_orders(self):
-            """Получить все активные заказы
+        """Получить все активные заказы
 
-            Returns:
-                list[dict]: инфо о заказах
-            """
+        Returns:
+            list[dict]: инфо о заказах
+        """
 
-            orders = self.get_orders()
-            return {order.posred_id: order for order in orders if order.status not in [OrdersConsts.OrderStatus.packing]}
+        orders = self.get_orders()
+        return {order.posred_id: order for order in orders if order.status not in [OrdersConsts.OrderStatus.packing]}

@@ -168,6 +168,29 @@ class DaromApi:
             soup = WebUtils.getSoup(rawText = response.text)
             soup = soup.find('table').find('td', class_='desktop-size').findAll('span', class_='text')
             return DaromApi.DaromOrderStatus.getCollectStatus(soup[-1].text.split(': ')[-1])
+        
+    def get_order_pictures(self, order_id):
+        """Получить изображения заказа
+
+        Args:
+            order_id (string or int): id заказа
+
+        Returns:
+            list[str]: список ссылок
+        """
+
+        if self.session:
+            url = f'https://www.darom.jp/personal/orders/details?orderId={self.get_num_id(id = order_id)}'
+            response = self.session.get(url)
+            soup = WebUtils.getSoup(rawText = response.text)
+            table = soup.find('table', class_='std table-responsive-stack', id = 'stack7')
+            if table:
+                imgs = list(set(['https://www.darom.jp'+a.get('href') for a in table.findAll('a')]))
+                return imgs
+            else: 
+                return []
+        else:
+            return []
 
     def get_orders(self, pages = 100) -> List[PosredOrderInfoClass]:
         """Получить все заказы
