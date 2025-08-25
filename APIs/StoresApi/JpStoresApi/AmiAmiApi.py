@@ -197,7 +197,6 @@ class AmiAmiApi():
         item['page'] = url
         item['mainPhoto'] = 'https://img.amiami.com'+js['item']['main_image_url']
         item['name'] = js['item']['gname']
-        item['endTime'] = datetime.now() + relativedelta(years=3)
 
         commission = PosredApi.getСommissionForItem(item['page'])
         item['posredCommission'] = commission['posredCommission'].format(item['itemPrice'])
@@ -232,7 +231,6 @@ class AmiAmiApi():
         item['page'] = url
         item['mainPhoto'] = soup.find('a', class_ = 'nolink sponly')['src']
         item['name'] = soup.find('h2', class_ = 'item-detail__section-title').text
-        item['endTime'] = datetime.now() + relativedelta(years=3)
 
         commission = PosredApi.getСommissionForItem(item['page'])
         item['posredCommission'] = commission['posredCommission'].format(item['itemPrice'])
@@ -266,7 +264,6 @@ class AmiAmiApi():
         item['page'] = url
         item['mainPhoto'] = soup.find('img', class_ = 'gallery_item_main ofi')['src']
         item['name'] = soup.find('h2', class_ = 'heading_10').text
-        item['endTime'] = datetime.now() + relativedelta(years=3)
 
         commission = PosredApi.getСommissionForItem(item['page'])
         item['posredCommission'] = commission['posredCommission'].format(item['itemPrice'])

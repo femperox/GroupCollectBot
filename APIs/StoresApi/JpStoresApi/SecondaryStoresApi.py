@@ -32,20 +32,27 @@ class SecondaryStoreApi:
         js = page.json()
 
         item = {}
-        item['itemPrice'] = js['price']
-        item['tax'] = 0
-        item['itemPriceWTax'] = 0 # всегда включено в цену
-        item['shipmentPrice'] = OrdersConsts.ShipmentPriceType.free
-        item['page'] = url
-        item['mainPhoto'] = js['images'][0]['url']
-        item['endTime'] = datetime.now() + relativedelta(years=3)
+        if 'error' not in js:
+            item['itemPrice'] = js['price']
+            item['tax'] = 0
+            item['itemPriceWTax'] = 0 # всегда включено в цену
+            item['shipmentPrice'] = OrdersConsts.ShipmentPriceType.free
+            item['page'] = url
+            item['mainPhoto'] = js['images'][0]['url']
 
-        commission = PosredApi.getСommissionForItem(item['page'])
-        item['posredCommission'] = commission['posredCommission'].format(item['itemPrice'])
-        item['posredCommissionValue'] = commission['posredCommissionValue'](item['itemPrice'])  
+            commission = PosredApi.getСommissionForItem(item['page'])
+            item['posredCommission'] = commission['posredCommission'].format(item['itemPrice'])
+            item['posredCommissionValue'] = commission['posredCommissionValue'](item['itemPrice'])  
 
-        item['siteName'] = OrdersConsts.Stores.payPay
-        item['id'] = item_id   
+            item['siteName'] = OrdersConsts.Stores.payPay
+            item['id'] = item_id   
+            item['status'] = js['status']
+            if item['status'] == 'OPEN':
+                item['status'] = OrdersConsts.StoreStatus.in_stock
+            elif item['status'] == 'SOLD':
+                item['status'] = OrdersConsts.StoreStatus.sold
+            else:
+                item['status'] = OrdersConsts.StoreStatus.undefined
 
         return item
     
@@ -59,7 +66,7 @@ class SecondaryStoreApi:
         Returns:
             dict: словарь с информацией о лоте
         """
-        
+        #TODO: разобраться с сайтом
         item = {}
         soup = WebUtils.getSoup(url, parser= WebUtils.Bs4Parsers.htmlParser)
 
@@ -83,7 +90,6 @@ class SecondaryStoreApi:
         item['tax'] = 0
         item['itemPriceWTax'] = 0
         item['page'] = url
-        item['endTime'] = datetime.now() + relativedelta(years=3)
         item['siteName'] = OrdersConsts.Stores.suruga
         commission = PosredApi.getСommissionForItem(item['page'])
         item['posredCommission'] = commission['posredCommission'].format(item['itemPrice'])
@@ -134,7 +140,13 @@ class SecondaryStoreApi:
                 item['shipmentPrice'] = OrdersConsts.ShipmentPriceType.undefined
                 item['page'] = url
                 item['mainPhoto'] = img 
-                item['endTime'] = datetime.now() + relativedelta(years=3)
+
+                if info['zaiko'] == 1:
+                    item['status'] = OrdersConsts.StoreStatus.in_stock
+                elif info['zaiko'] == 0:
+                    item['status'] = OrdersConsts.StoreStatus.sold
+                else:
+                    item['status'] = OrdersConsts.StoreStatus.undefined 
 
                 commission = PosredApi.getСommissionForItem(item['page'])
                 item['posredCommission'] = commission['posredCommission'].format(item['itemPriceWTax'])
@@ -142,7 +154,6 @@ class SecondaryStoreApi:
 
                 item['siteName'] = OrdersConsts.Stores.mandarake
                 item['id'] = item_id   
-                
         except:
             pprint('cant get item info.')
             print_exc()

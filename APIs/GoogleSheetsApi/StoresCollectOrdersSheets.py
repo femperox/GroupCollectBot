@@ -2,7 +2,7 @@
 from APIs.GoogleSheetsApi.ParentSheetClass import ParentSheetClass
 from APIs.GoogleSheetsApi.Spreadsheets.StoresCollectOrdersList import StoresCollectOrdersList
 from confings.Consts import OrdersConsts, PathsConsts
-from APIs.utils import getCurrentMonthString
+from _utils.dateUtils import DateUtils
 from pprint import pprint
 import json
 
@@ -46,7 +46,7 @@ class StoresCollectOrdersSheets(ParentSheetClass):
         """
         list_title = title
         if order_type != OrdersConsts.OrderTypes.ami:
-            list_title += ' ' + getCurrentMonthString()
+            list_title += ' ' + DateUtils.getCurrentMonthString()
 
         list_id = self.createSheetList(title = list_title)
         

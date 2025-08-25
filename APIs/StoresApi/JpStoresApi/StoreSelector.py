@@ -55,8 +55,6 @@ class StoreSelector(StoreSelectorParent):
 
             if site in [OrdersConsts.Stores.yahooAuctions, OrdersConsts.Stores.yahooAuctionsShort]:
                 item['endTime'] = yahooApi.getEndTime(item_id)
-            else:
-                item['endTime'] = datetime.now() + relativedelta(years=3)
 
             return ProductInfoClass(**item)
 

@@ -28,7 +28,6 @@ class StoreSelector(StoreSelectorParent):
             item['siteName'] = site
             item['id'] = item_id
             item['page'] = url
-            item['endTime'] = datetime.now() + relativedelta(years=3)
 
             return ProductInfoClass(**item)
         

@@ -10,6 +10,28 @@ from APIs.PosredApi.posredApi import PosredApi
 
 class yahooApi:
 
+    class YahooItemStatus:
+
+        sold = 'closed'
+        on_sale = 'open'
+
+        @staticmethod
+        def getProductStatus(status: str):
+            """Получить статус айтема в соотвествии с принятыми обозначениями
+
+            Args:
+                status (str): статус айтема
+
+            Returns:
+                OrdersConsts.StoreStatus: статус айтема общепринятый
+            """
+            if status in [yahooApi.YahooItemStatus.sold]:
+                return OrdersConsts.StoreStatus.sold
+            elif status == yahooApi.YahooItemStatus.on_sale:
+                return OrdersConsts.StoreStatus.in_stock
+            else:
+                return OrdersConsts.StoreStatus.undefined
+
     def __init__(self):
 
         self.app_id = json.load(open(PathsConsts.PRIVATES_PATH, encoding='utf-8'))['yahoo_jp_app_id']
@@ -51,11 +73,14 @@ class yahooApi:
 
         curl = f'https://auctions.yahooapis.jp/AuctionWebService/V2/auctionItem?appid={self.app_id}&auctionID={id}'
 
-        headers = WebUtils.getHeader()
-        page = requests.get(curl, headers=headers)
-        xml = xmltodict.parse(page.content)
+        try:
+            headers = WebUtils.getHeader()
+            page = requests.get(curl, headers=headers)
+            xml = xmltodict.parse(page.content)
 
-        return xml['ResultSet']['Result']['Img']['Image1']['#text']
+            return xml['ResultSet']['Result']['Img']['Image1']['#text']
+        except:
+            return ''
 
 
     def getShipmentPrice(self, id, seller_id , postage_id = 1, item_weight = 0):
@@ -110,8 +135,8 @@ class yahooApi:
 
             return float(xml['ResultSet']['Result']['Price'])
         except Exception as e:
-            
             pprint(e)
+            return -1
 
     def getEndTime(self, id):
         """Получение даты окончания лота
@@ -213,9 +238,12 @@ class yahooApi:
 
             info['siteName'] = OrdersConsts.Stores.yahooAuctions
             info['id'] = id   
+            info['status'] = yahooApi.YahooItemStatus.getProductStatus(status = xml['ResultSet']['Result']['Status'])
+            
             return info
             
         except Exception as e:
             pprint(e)
             print_exc()
+            return {}
     

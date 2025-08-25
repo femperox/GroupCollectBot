@@ -1,11 +1,13 @@
 from bs4 import BeautifulSoup
 from confings.Consts import LINUX_USER_AGENT
+from selenium.webdriver.support.ui import WebDriverWait
 import cfscrape
 from seleniumbase import Driver
 import requests
 import time
 from pprint import pprint
 import random
+from selenium.common.exceptions import TimeoutException
 
 class WebUtils:
 
@@ -70,9 +72,30 @@ class WebUtils:
             elif rawText:
                 soup = BeautifulSoup(rawText, parser)
         return soup
+    
+    @staticmethod
+    def wait_for_page_update(driver, timeout=10):
+        """Дождаться обновления страницы
+
+        Args:
+            driver (seleniumwire.webdriver.Chrome): драйвер
+            timeout (int, optional): таймаут. Defaults to 10.
+
+        Returns:
+            bool: флаг прогрузки
+        """
+        try:
+            # Ждем пока страница полностью загрузится
+            WebDriverWait(driver, timeout).until(
+                lambda d: d.execute_script("return document.readyState") == "complete"
+            )
+            return True
+        except TimeoutException:
+            print("Страница не загрузилась за отведенное время")
+            return False
 
     @staticmethod
-    def getSelenium(isUC = False, proxy = '', wire = True):
+    def getSelenium(isUC = False, proxy = '', wire = True, incognito = True):
         """получить веб-драйве
 
         Args:
@@ -82,9 +105,9 @@ class WebUtils:
             seleniumwire.webdriver.Chrome: веб-драйвер
         """
         if proxy:
-            return Driver(uc=True, incognito= True, proxy = proxy) if isUC else Driver(incognito= True, wire=True, proxy  = proxy)
+            return Driver(uc=True, incognito= incognito, proxy = proxy) if isUC else Driver(incognito= incognito, wire=wire, proxy  = proxy)
         else:
-            return Driver(uc=True, incognito= True) if isUC else Driver(incognito= True, wire=wire)
+            return Driver(uc=True, incognito= incognito) if isUC else Driver(incognito= incognito, wire=wire)
     
     @staticmethod
     def getScraperSessoin(session):

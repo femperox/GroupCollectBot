@@ -61,7 +61,7 @@ def checkTime(usr_id):
                 # если товар выкупил кто-то или сняли с продажи
                 if fav[4] == OrdersConsts.Stores.mercari:
                     info = MercariApi.parseMercariPage(url = item_url, item_id = fav[1])
-                    if info['itemStatus'] != MercariApi.MercariItemStatus.on_sale:
+                    if info['status'] != OrdersConsts.StoreStatus.in_stock:
                         
                         deleteFav(fav[0], fav[1], fav[-2])
                         mess = Messages.formSoldOutReminderMes(vk.get_name(fav[0]), f'{fav[-2]}_{fav[1]}', item_url)

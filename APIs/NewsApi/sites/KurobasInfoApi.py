@@ -2,7 +2,7 @@ import requests
 from APIs.NewsApi.NewsInfoClass import NewsInfoClass
 from confings.Consts import RegexType, NewsConsts
 from APIs.webUtils import WebUtils 
-from APIs.utils import parse_japanese_date_range
+from _utils.dateUtils import DateUtils
 import re
 from APIs.NewsApi.NewsParentClass import NewsParentClass
 
@@ -58,7 +58,7 @@ class KurobasInfoApi(NewsParentClass):
             
 
             info['prices_list'] = re.findall(price_pattern, postContent['content']['rendered']) 
-            info['additional_dates_list'] = parse_japanese_date_range(text = postContent['content']['rendered'])
+            info['additional_dates_list'] = DateUtils.parse_japanese_date_range(text = postContent['content']['rendered'])
             info['additional_urls_list'] = list(set(re.findall(RegexType.regex_url, soup.text)))
 
         return NewsInfoClass(**info)

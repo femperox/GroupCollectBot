@@ -1,4 +1,4 @@
-from datetime import datetime
+
 import os
 import json
 from confings.Consts import PathsConsts, RegexType, PosrednikConsts, OrdersConsts, VkConsts
@@ -7,8 +7,6 @@ from itertools import chain
 from pprint import pprint
 from APIs.StoresApi.JpStoresApi.StoreSelector import StoreSelector as StoreSelectorJp
 from APIs.StoresApi.USStoresApi.StoreSelector import StoreSelector as StoreSelectorUs
-from dateutil.relativedelta import relativedelta
-import locale
 from random import randint
 import requests
 from traceback import print_exc
@@ -57,39 +55,6 @@ def getChar(char, step):
         char: след символ   
     """
     return chr(ord(char) + step)
-
-def getCurrentDate():
-    """Получить текущую дату
-
-    Returns:
-        string: текущая дата
-    """
-    
-    return datetime.now().strftime('%Y-%m-%d')
-
-def getCurrentMonthString():
-    """Получить текущий месяц на русском языке
-
-    Returns:
-        string: текущий месяц на русском языке
-    """
-
-    locale.setlocale(locale.LC_TIME, 'ru_RU.UTF-8')
-    month = datetime.strftime(datetime.now(), '%b %Y')
-    locale.setlocale(locale.LC_TIME, 'en_US.UTF-8')
-    return month
-
-def getExpiryDateString():
-    """Получить строчку срока хранения
-
-    Returns:
-        string: срок хранения
-    """
-
-    now = datetime.now()
-    gotDate = now.strftime("%d.%m.%Y")
-    takeDate = (now + relativedelta(months=+1)).strftime("%d.%m.%Y")
-    return '{0} - {1}'.format(gotDate, takeDate)
 
 def getMonitorChats():
     """Получить список всех чатов, где сообщество занимается рассылкой
@@ -420,33 +385,4 @@ def isExistingFile(path):
 
     return os.path.exists(path) and os.path.isfile(path)
 
-def parse_japanese_date_range(text, base_year=None):
 
-    if base_year is None:
-        base_year = datetime.now().year
-
-    text = text.strip().replace('～', '~')
-
-    # Регулярное выражение для даты: [ГГГГ年]?ММ月ДД日
-    date_pattern = r'(?:\s*(\d{4})年)?(\d{1,2})月(\d{1,2})日'
-
-
-    matches = re.findall(date_pattern, text)
-    if not matches:
-        return ''
-
-    # Парсим каждую дату
-    parsed_dates = []
-    for match in matches:
-        year_str, month, day = match
-        month = int(month)
-        day = int(day)
-        year = int(year_str) if year_str else base_year
-
-        try:
-            dt = datetime(year, month, day)
-            parsed_dates.append(dt)
-        except ValueError as e:
-            raise ValueError(f"Invalid date: {year}-{month}-{day}") from e
-
-    return list(set([date.strftime('%Y.%m.%d') for date in parsed_dates]))

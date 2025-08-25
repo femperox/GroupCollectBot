@@ -1,4 +1,5 @@
 from confings.Consts import OrdersConsts
+from _utils.dateUtils import DateUtils
 
 class ProductInfoClass:
 
@@ -6,7 +7,8 @@ class ProductInfoClass:
                 shipmentPrice = OrdersConsts.ShipmentPriceType.undefined, page = '', mainPhoto = '',
                 name = '', endTime = None, siteName = '', posredCommission = 0, posredCommissionValue = 0,
                 isMembershipNeeded:bool = False, blitz = -1, seller = '', goodRate = -1, badRate = -1,
-                releaseDate = None, priceForFreeShipment = -1, country = OrdersConsts.OrderTypes.empty, **kwargs):
+                releaseDate = None, priceForFreeShipment = -1, country = OrdersConsts.OrderTypes.empty, 
+                status = OrdersConsts.StoreStatus.undefined, **kwargs):
         
         self.id = id
         self.itemPrice = itemPrice
@@ -16,7 +18,7 @@ class ProductInfoClass:
         self.page = page
         self.mainPhoto = mainPhoto
         self.name = name
-        self.endTime = endTime
+        self.endTime = endTime if endTime else DateUtils.getDefaultEndTimeForProduct()
         self.siteName = siteName
         self.posredCommission = posredCommission
         self.posredCommissionValue = posredCommissionValue
@@ -30,6 +32,7 @@ class ProductInfoClass:
         self.releaseDate = releaseDate
         self.priceForFreeShipment = priceForFreeShipment
         self.country = country
+        self.status = status
 
     def __bool__(self):
         return bool(self.id) and bool(self.siteName)

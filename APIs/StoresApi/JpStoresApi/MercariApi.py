@@ -17,9 +17,26 @@ class MercariApi:
     class MercariItemStatus:
 
         on_sale = 'on_sale'
-        trading = 'trading'
+        trading = 'trading' # это видимо процесс после sold
         sold = 'sold_out'
         deleted = 'deleted'
+
+        @staticmethod
+        def getProductStatus(status: str):
+            """Получить статус айтема в соотвествии с принятыми обозначениями
+
+            Args:
+                status (str): статус айтема
+
+            Returns:
+                OrdersConsts.StoreStatus: статус айтема общепринятый
+            """
+            if status in [MercariApi.MercariItemStatus.sold, MercariApi.MercariItemStatus.trading]:
+                return OrdersConsts.StoreStatus.sold
+            elif status == MercariApi.MercariItemStatus.on_sale:
+                return OrdersConsts.StoreStatus.in_stock
+            else:
+                return OrdersConsts.StoreStatus.undefined
 
     class MercariItemTypes:
         mercari_shops = 'ITEM_TYPE_BEYOND'
@@ -187,8 +204,8 @@ class MercariApi:
             item['shipmentPrice'] = OrdersConsts.ShipmentPriceType.free if int(js['productDetail']['shippingPayer']['shippingPayerId']) == MercariApi.FREE_SHIPPING_SHOPS else OrdersConsts.ShipmentPriceType.undefined
             item['page'] = url
             item['mainPhoto'] = js['productDetail']['photos'][0]
-            item['itemStatus'] = MercariApi.MercariItemStatus.sold if len(js["productTags"]) else MercariApi.MercariItemStatus.on_sale 
-            item['endTime'] = datetime.now() + relativedelta(years=3)
+            item['status'] = MercariApi.MercariItemStatus.sold if len(js["productTags"]) else MercariApi.MercariItemStatus.on_sale
+            item['status'] = MercariApi.MercariItemStatus.getProductStatus(status = item['status']) 
             
             commission = PosredApi.getСommissionForItem(item['page'])
             item['posredCommission'] = commission['posredCommission'].format(item['itemPrice'])
@@ -198,7 +215,7 @@ class MercariApi:
             item['id'] = item_id     
 
         elif js['code'] == 5:
-            item['itemStatus'] = MercariApi.MercariItemStatus.deleted   
+            item['status'] = MercariApi.MercariItemStatus.deleted   
         return item
 
         
@@ -230,8 +247,7 @@ class MercariApi:
             item['shipmentPrice'] = OrdersConsts.ShipmentPriceType.free if int(js['data']['shipping_payer']['id']) == MercariApi.FREE_SHIPPING else OrdersConsts.ShipmentPriceType.undefined
             item['page'] = url
             item['mainPhoto'] = js['data']['photos'][0]
-            item['itemStatus'] = js['data']['status']
-            item['endTime'] = datetime.now() + relativedelta(years=3)
+            item['status'] = MercariApi.MercariItemStatus.getProductStatus(status = js['data']['status'])
             
             commission = PosredApi.getСommissionForItem(item['page'])
             item['posredCommission'] = commission['posredCommission'].format(item['itemPrice'])
@@ -241,6 +257,6 @@ class MercariApi:
             item['id'] = item_id      
 
         elif js['result'] == "error":
-            item['itemStatus'] = MercariApi.MercariItemStatus.deleted
+            item['status'] = MercariApi.MercariItemStatus.getProductStatus(status = MercariApi.MercariItemStatus.deleted)
             
         return item

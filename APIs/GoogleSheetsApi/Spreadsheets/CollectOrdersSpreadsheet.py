@@ -8,7 +8,7 @@ from multipledispatch import dispatch
 from confings.Consts import CollectOrdersSheetNames as sheetNames, OrdersConsts
 from APIs.PosredApi.posredApi import PosredApi
 from APIs.GoogleSheetsApi.API.Constants import ConditionType
-from APIs.utils import getExpiryDateString
+from _utils.dateUtils import DateUtils
 from APIs.StoresApi.ProductInfoClass import ProductInfoClass
 from APIs.PosredApi.PosredOrderInfoClass import PosredOrderInfoClass
 
@@ -409,7 +409,7 @@ class CollectOrdersSpreadsheetClass():
         print(namedRange)
 
         if spId == self.spreadsheetsIds[sheetNames.collectArchive][0]:
-            info = getExpiryDateString()
+            info = DateUtils.getExpiryDateString()
             label = 'Получено - Забрать:'
         else:
             info = ''

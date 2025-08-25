@@ -37,7 +37,6 @@ class StoreApi:
         item['page'] = curl
         item['mainPhoto'] = img
         item['name'] = name
-        item['endTime'] = datetime.now() + relativedelta(years=3)
 
         commission = PosredApi.getСommissionForItem(item['page'])
         item['posredCommission'] = commission['posredCommission'].format(item['itemPrice'])

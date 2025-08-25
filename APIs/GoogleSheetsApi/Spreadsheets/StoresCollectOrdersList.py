@@ -3,7 +3,7 @@ from APIs.GoogleSheetsApi.API.Styles.Borders import Borders as b
 from APIs.GoogleSheetsApi.API.Styles.Colors import Colors as c
 from APIs.GoogleSheetsApi.API.Constants import ConditionType
 from confings.Consts import OrdersConsts
-from APIs.utils import getExpiryDateString
+from _utils.dateUtils import DateUtils
 from APIs.PosredApi.posredApi import PosredApi
 from APIs.utils import getChar
 from pprint import pprint
@@ -316,7 +316,7 @@ class StoresCollectOrdersList:
         valueRange = list_title + '!{0}{1}'
 
         label = 'Получено - Забрать:'
-        expiry_date = getExpiryDateString()
+        expiry_date = DateUtils.getExpiryDateString()
 
         data.append(ce.insertValue(list_id, valueRange.format('C', self.startRow), label))
         data.append(ce.insertValue(list_id, valueRange.format('E', self.startRow), expiry_date))

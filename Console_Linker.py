@@ -813,7 +813,8 @@ def console():
             prefix = ordersPrefix[choise-1]
             collectId = prefix + input('Введите номер инды (для закупок название): ')
             posredId = input('Введите номер заказа у посреда: ')
-            DB_Operations.updateCollectSelector(collectId = collectId, collectType = OrdersConsts.CollectTypes.store if choise == 2 else OrdersConsts.CollectTypes.collect,
+            collectType = OrdersConsts.CollectTypes.store if choise == 3 else OrdersConsts.CollectTypes.collect
+            DB_Operations.updateCollectSelector(collectId = collectId, collectType = collectType,
                                                 posred_id = posredId)
 
       except Exception as e:
