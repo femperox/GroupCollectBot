@@ -1,13 +1,10 @@
 from APIs.TrackingAPIs.YandexDeliveryApi import YandexDeliveryApi
 from APIs.TrackingAPIs.pochtaApi import PochtaApi
 from APIs.TrackingAPIs.cdekApi import CdekApi
+from APIs.TrackingAPIs.TrackInfoClass import TrackingTypes
+from APIs.TrackingAPIs.TrackInfoClass import TrackInfoClass
 from confings.Consts import RegexType
 
-class TrackingTypes():
-     ids = {RegexType.regex_track : 'pochta_RF',
-            RegexType.regex_track_yandex: 'yandex_delivery',
-            RegexType.regex_track_cdek: 'cdek'
-            }
 
 class TrackingSelector():
 
@@ -55,5 +52,5 @@ class TrackingSelector():
                  item = cdek.getTracking(track)
                  cdek.stopDriver()
   
-            return item
+            return TrackInfoClass(**item)
     

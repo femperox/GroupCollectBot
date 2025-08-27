@@ -14,7 +14,8 @@ from Logger import logger, logger_fav, logger_utils
 from SQLS import DB_Operations
 from confings.Consts import VkConsts, RegexType, PathsConsts, OrdersConsts
 from APIs.utils import getMonitorChats, getFavInfo, getStoreMonitorChats, local_image_upload, isExistingFile, generate_random_integer
-from APIs.TrackingAPIs.TrackingSelector import TrackingSelector, TrackingTypes
+from APIs.TrackingAPIs.TrackingSelector import TrackingSelector
+from APIs.TrackingAPIs.TrackInfoClass import TrackingTypes
 from APIs.StoresApi.JpStoresApi.StoreSelector import StoreSelector
 from APIs.VkApi.objects.VkButtons import VkButtons
 from APIs.VkApi.objects.VkParams import VkParams
@@ -557,13 +558,13 @@ class VkApi:
                             tracking_info = {}
                             try:
                                 tracking_info = TrackingSelector.selectTracker(track = track.group(), type = tracking_type)
-                                tracking_info['rcpnVkId'] = chat 
-                                tracking_info['trackingType'] = tracking_type
+                                tracking_info.setRcpnVkId(rcpnVkId = chat) 
+                                tracking_info.setTrackingType(trackingType = tracking_type) 
 
                                 DB_Operations.insertUpdateParcel(tracking_info)      
-                                logger_utils.info(f"[INSERT-TRACK] пользователю [{chat}] выдан трек [{tracking_info['barcode']}] ")    
+                                logger_utils.info(f"[INSERT-TRACK] пользователю [{chat}] выдан трек [{tracking_info.barcode}] ")    
                             except Exception as e:
-                                logger_utils.info(f"[INSERT-TRACK-ERROR] ОШИБКА: {e} - пользователю [{chat}] выдан трек [{tracking_info['barcode']}] ")   
+                                logger_utils.info(f"[INSERT-TRACK-ERROR] ОШИБКА: {e} - пользователю [{chat}] выдан трек [{tracking_info.barcode}] ")   
                         except:
                             continue   
 

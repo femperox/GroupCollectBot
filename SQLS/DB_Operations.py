@@ -4,6 +4,7 @@ import json
 from pprint import pprint
 from confings.Consts import DbNames, OrdersConsts
 from APIs.StoresApi.ProductInfoClass import ProductInfoClass
+from APIs.TrackingAPIs.TrackInfoClass import TrackInfoClass
 
 def getConnection(connection = DbNames.database):
     """Получить подключение к базе PostgreSQL
@@ -295,7 +296,7 @@ def getParcelExpireDate(barcode):
     
     return result
 
-def insertUpdateParcel(parcelInfo):
+def insertUpdateParcel(parcelInfo:TrackInfoClass):
     """Добавить/обновить запись об отправлени
 
     Args:
@@ -305,10 +306,10 @@ def insertUpdateParcel(parcelInfo):
     conn = getConnection(DbNames.collectDatabase)
     cursor = conn.cursor() 
 
-    cursor.execute(f'''Call ParcelInsertUpdate( '{parcelInfo['barcode']}', '{parcelInfo['sndr']}', '{parcelInfo['rcpn']}', 
-                       '{parcelInfo['destinationIndex']}', '{parcelInfo['operationIndex']}', '{parcelInfo['operationDate']}', 
-                       '{parcelInfo['operationType']}', '{parcelInfo['operationAttr']}', 
-                       {parcelInfo['mass']}, '{parcelInfo['rcpnVkId']}', '{parcelInfo['trackingType']}');''')
+    cursor.execute(f'''Call ParcelInsertUpdate( '{parcelInfo.barcode}', '{parcelInfo.sndr}', '{parcelInfo.rcpn}', 
+                       '{parcelInfo.destinationIndex}', '{parcelInfo.operationIndex}', '{parcelInfo.operationDate}', 
+                       '{parcelInfo.operationType}', '{parcelInfo.operationAttr}', 
+                       {parcelInfo.mass}, '{parcelInfo.rcpnVkId}', '{parcelInfo.trackingType}');''')
 
     conn.commit() 
     cursor.close()
@@ -936,6 +937,33 @@ def getOrderParticipants(collect_id, collect_type = OrdersConsts.CollectTypes.co
 
 
 #============================
+
+def updateInsertDirectCollectParcel(collect_id, parcel_info:TrackInfoClass):
+    """Обновить таблицу с треком прямой доставки
+
+    Args:
+        collect_id (string): id посылки
+        barcode (string, optional): статус. Defaults to ''.
+        parcel_info (TrackInfoClass): информация о трекинге.
+
+    Returns:
+        int: результат обновления таблицы. 0 - запись обновлена, 1 - запись добавлена
+    """
+
+    conn = getConnection(DbNames.collectDatabase)
+    cursor = conn.cursor()  
+    if parcel_info:
+        sql = f'''SELECT InsertUpdateDirectRecipient('{collect_id}', '{parcel_info.barcode}', '{parcel_info.destinationIndex}', '{parcel_info.operationIndex}', '{parcel_info.operationType}', '{parcel_info.operationAttr}', cast({parcel_info.notified} as bool);'''
+    else:
+        sql = f'''SELECT InsertUpdateDirectRecipient('{collect_id}', '{parcel_info.barcode}', null, null, null, null, cast({parcel_info.notified} as bool);'''
+    cursor.execute(sql)
+    result = cursor.fetchone()[0]
+   
+    conn.commit() 
+    cursor.close()
+    conn.close()
+
+    return result
 
 def updateInsertCollectParcel(parcel_id, status = '', topic_id = 0, comment_id = 0):
     """Обновить таблицу с посылками коллектов
