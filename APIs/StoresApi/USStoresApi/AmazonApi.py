@@ -91,7 +91,7 @@ class AmazonApi:
             driver.get(url)
             AmazonApi.changeZipCode(driver = driver)
             #WebUtils.wait_for_page_update(driver = driver)
-            
+            '''
             html_content = driver.page_source
             driver.quit()
             soup = WebUtils.getSoup(rawText=html_content)
@@ -140,8 +140,6 @@ class AmazonApi:
             except:
                 item['itemPrice'] = float(driver.find_element(By.CSS_SELECTOR, "span.a-price.aok-align-center").get_attribute("textContent").replace('$', ''))
             item['id'] = item_id
-            driver.quit()
-            return item
 
             item['shipmentPrice'] = OrdersConsts.ShipmentPriceType.free if item['itemPrice'] >= AmazonApi.freeDeliveryPrice else OrdersConsts.ShipmentPriceType.undefined
             item['page'] = WebUtils.cleanUrl(url)
@@ -159,7 +157,7 @@ class AmazonApi:
                 format_number = item['itemPrice'] + item['shipmentPrice']
             item['posredCommission'] = commission['posredCommission'].format(format_string)
             item['posredCommissionValue'] = commission['posredCommissionValue'](format_number)
-            '''
+            driver.quit()
         except Exception as e:
             pprint(e)
         finally:

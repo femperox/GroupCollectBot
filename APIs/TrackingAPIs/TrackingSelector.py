@@ -25,6 +25,19 @@ class TrackingSelector():
         elif type == TrackingTypes.ids[RegexType.regex_track]:
             return [PochtaApi.arrived_status, PochtaApi.notice_arrived_status]
         
+    def selectRecievedStatusesTypes(type):
+        """определяет значение статуса "доставлено" для каждого типа доставки
+
+        Args:
+            type (string): тип доставки
+
+        Returns:
+            array of string: статусы
+        """
+         
+        if type == TrackingTypes.ids[RegexType.regex_track]:
+            return [PochtaApi.recieved_status_type]
+        
 
     def selectTracker(track, type):
             

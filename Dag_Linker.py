@@ -266,6 +266,34 @@ def addActivePosredCollects():
                                         status_text = status_name)
         DB_Operations.updateCollectSelector(collectType = collect_id[0], collectId = collect_id[1], 
                                             status_id = status_id, posred_id = new_order)
+        
+def updateDirectTrackingStatuses():
+
+    active_direct_tracking = DB_Operations.getAllDirectCollectParcel()
+    for tracking in active_direct_tracking:
+        tracking_info = TrackingSelector.selectTracker(track = tracking[1], type = TrackingTypes.ids[RegexType.regex_track])
+        
+        if tracking_info:
+            # Посылка прибыла в отделение
+            if tracking_info.operationAttr in TrackingSelector.selectArrivedStatuses(tracking_info.trackingType):
+                vk_id = DB_Operations.getOrderParticipants(collect_id = tracking[0])[0][0]
+                message = mess.mess_notify_arrival.format(tracking_info.barcode, tracking_info.operationIndex, DB_Operations.getParcelExpireDate(tracking_info.barcode))         
+                vk.sendMes(mess = message, users = vk_id)
+                tracking_info.setNotified(notified = 1)
+            # Посылка получена
+            elif tracking_info.operationType in TrackingSelector.selectRecievedStatusesTypes(type = tracking_info.trackingType):
+                collectTopicInfo = DB_Operations.getCollectTopicComment(collect_id = tracking[0])
+                status_name = DB_Operations.getCollectStatusNameById(status_id = OrdersConsts.OrderStatus.user_on_hands)
+                vk.edit_collects_activity_comment(topic_id = collectTopicInfo[0], comment_id = collectTopicInfo[1], 
+                                    status_text = status_name)
+                collect_order_sheet = CollectOrdersSheet()
+                sp_id = collect_order_sheet.sp.spreadsheetsIds['Дашины лоты (Архив)'][0]
+                named_range = DB_Operations.getCollectNamedRange(collect_id = tracking[0])
+                collect_order_sheet.moveTable(sp_id , named_range)
+
+                DB_Operations.updateCollectSelector(collectId = tracking[0], status_id = OrdersConsts.OrderStatus.user_on_hands)
+
+            DB_Operations.updateInsertDirectCollectParcel(collect_id = tracking[0], parcel_info = tracking_info)
 
 class DagLinkerValues:
 
@@ -277,6 +305,7 @@ class DagLinkerValues:
     checkDeliveryStatusToParticipants = 'checkDeliveryStatusToParticipants'
     updateActivePosredCollects = 'updateActivePosredCollects'
     addActivePosredCollects = 'addActivePosredCollects'
+    updateDirectTrackingStatuses = 'updateDirectTrackingStatuses'
 
 if __name__ == "__main__":
 
@@ -299,3 +328,5 @@ if __name__ == "__main__":
         updateActivePosredCollects()
     elif sys.argv[1] == DagLinkerValues.addActivePosredCollects:
         addActivePosredCollects()
+    elif sys.argv[1] == DagLinkerValues.updateDirectTrackingStatuses:
+        updateDirectTrackingStatuses()

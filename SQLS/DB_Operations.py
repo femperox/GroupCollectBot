@@ -953,9 +953,9 @@ def updateInsertDirectCollectParcel(collect_id, parcel_info:TrackInfoClass):
     conn = getConnection(DbNames.collectDatabase)
     cursor = conn.cursor()  
     if parcel_info:
-        sql = f'''SELECT InsertUpdateDirectRecipient('{collect_id}', '{parcel_info.barcode}', '{parcel_info.destinationIndex}', '{parcel_info.operationIndex}', '{parcel_info.operationType}', '{parcel_info.operationAttr}', cast({parcel_info.notified} as bool);'''
+        sql = f'''SELECT InsertUpdateDirectRecipient('{collect_id}', '{parcel_info.barcode}', '{parcel_info.destinationIndex}', '{parcel_info.operationIndex}', '{parcel_info.operationType}', '{parcel_info.operationAttr}', cast({parcel_info.notified} as bool));'''
     else:
-        sql = f'''SELECT InsertUpdateDirectRecipient('{collect_id}', '{parcel_info.barcode}', null, null, null, null, cast({parcel_info.notified} as bool);'''
+        sql = f'''SELECT InsertUpdateDirectRecipient('{collect_id}', '{parcel_info.barcode}', null, null, null, null, cast({parcel_info.notified} as bool));'''
     cursor.execute(sql)
     result = cursor.fetchone()[0]
    
@@ -963,6 +963,28 @@ def updateInsertDirectCollectParcel(collect_id, parcel_info:TrackInfoClass):
     cursor.close()
     conn.close()
 
+    return result
+
+def getAllDirectCollectParcel():
+    """Получить все записи с посылками-прямыми-заказами
+
+    Returns:
+        list of list: записи с посылками
+    """
+
+    conn = getConnection(DbNames.collectDatabase)
+    cursor = conn.cursor()  
+    
+    sel = f'''SELECT collect_id, barcode FROM collect_direct_recipient 
+              where rcpn_got = false and notified = false
+              ORDER BY collect_id
+           '''
+    cursor.execute(sel)
+    result = cursor.fetchall()
+        
+    cursor.close()
+    conn.close()
+    
     return result
 
 def updateInsertCollectParcel(parcel_id, status = '', topic_id = 0, comment_id = 0):

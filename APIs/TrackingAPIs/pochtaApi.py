@@ -7,6 +7,8 @@ class PochtaApi():
     arrived_status = "Прибыло в место вручения"
     notice_arrived_status = "Доставлено извещение"
 
+    recieved_status_type = "Вручение"
+
     def getClient():
         """Получение suds-клиента для работы с API ПР
 
@@ -80,12 +82,12 @@ class PochtaApi():
         try:
             parcel['destinationIndex'] = current_stat['AddressParameters']['DestinationAddress']['Index']
         except:
-            parcel['destinationIndex'] = -1
+            parcel['destinationIndex'] = ''
 
         try:
             parcel['operationIndex'] = current_stat['AddressParameters']['OperationAddress']['Index']
         except:
-            parcel['operationIndex'] = -1
+            parcel['operationIndex'] = ''
 
         parcel['operationDate'] = current_stat['OperationParameters']['OperDate']
         parcel['operationType'] = current_stat['OperationParameters']['OperType']['Name']
@@ -93,7 +95,7 @@ class PochtaApi():
         try:
             parcel['operationAttr'] = current_stat['OperationParameters']['OperAttr']['Name']
         except:
-            parcel['operationAttr'] = 'none'
+            parcel['operationAttr'] = ''
 
         try:
             parcel['mass'] = current_stat['ItemParameters']['Mass']

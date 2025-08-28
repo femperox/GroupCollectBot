@@ -3,10 +3,11 @@ from _utils.dateUtils import DateUtils
 from confings.Consts import RegexType
 
 class TrackingTypes():
-     ids = {RegexType.regex_track : 'pochta_RF',
+    ids = {RegexType.regex_track : 'pochta_RF',
             RegexType.regex_track_yandex: 'yandex_delivery',
             RegexType.regex_track_cdek: 'cdek'
             }
+     
 
 class TrackInfoClass:
 
@@ -43,3 +44,6 @@ class TrackInfoClass:
     
     def setTrackingType(self, trackingType):
         self.trackingType = trackingType
+
+    def setNotified(self, notified):
+        self.notified = notified

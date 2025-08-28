@@ -16,6 +16,7 @@ from confings.Consts import VkConsts, RegexType, PathsConsts, OrdersConsts
 from APIs.utils import getMonitorChats, getFavInfo, getStoreMonitorChats, local_image_upload, isExistingFile, generate_random_integer
 from APIs.TrackingAPIs.TrackingSelector import TrackingSelector
 from APIs.TrackingAPIs.TrackInfoClass import TrackingTypes
+from APIs.TrackingAPIs.TrackInfoClass import TrackInfoClass
 from APIs.StoresApi.JpStoresApi.StoreSelector import StoreSelector
 from APIs.VkApi.objects.VkButtons import VkButtons
 from APIs.VkApi.objects.VkParams import VkParams
@@ -545,27 +546,46 @@ class VkApi:
                 elif event.type == VkBotEventType.MESSAGE_REPLY:
                     sender = event. obj['from_id']
                     chat = event.obj['peer_id']
- 
                     if chat not in not_dm_chats:
                         try:
-                            tracking_type = ''
-                            for regex in RegexType.tracking_types_list:
-                                track = re.match(regex, event.obj['text'])
+                            track = None
+                            
+                            # проверка международных отправлений до получателя
+                            match_new = re.search(RegexType.regex_track_worldwide, event.obj['text'].strip())
+                            track = match_new.group()
+                            if track:
+                                message_text = event.obj['text'].replace(track, '')
+                                collect_id = 'I' + re.search(r'-?\d+(?:\.\d+)?', message_text).group()
 
-                                if track: 
-                                    tracking_type = TrackingTypes.ids[regex]
-                                    break
-                            tracking_info = {}
-                            try:
-                                tracking_info = TrackingSelector.selectTracker(track = track.group(), type = tracking_type)
-                                tracking_info.setRcpnVkId(rcpnVkId = chat) 
-                                tracking_info.setTrackingType(trackingType = tracking_type) 
+                                insert_result = DB_Operations.updateInsertDirectCollectParcel(collect_id = collect_id, parcel_info = TrackInfoClass(barcode = track))
+                                if insert_result == 1:
+                                    collectTopicInfo = DB_Operations.getCollectTopicComment(collect_id = collect_id)
+                                    status_name = DB_Operations.getCollectStatusNameById(status_id = OrdersConsts.OrderStatus.shipped_user)
+                                    self.edit_collects_activity_comment(topic_id = collectTopicInfo[0], comment_id = collectTopicInfo[1], 
+                                                                    status_text = status_name)
+                                    DB_Operations.updateCollectSelector(collectId = collect_id, status_id = OrdersConsts.OrderStatus.shipped_user)
+                                    logger_utils.info(f"[INSERT-DIRECT-TRACK] пользователю [{chat}] выдан трек [{track}] для индивидуалки [{collect_id}] ")  
+                            else:
+                                # проверка обычных отправалений по РФ
+                                tracking_type = ''
+                                for regex in RegexType.tracking_types_list:
+                                    track = re.match(regex, event.obj['text'])
 
-                                DB_Operations.insertUpdateParcel(tracking_info)      
-                                logger_utils.info(f"[INSERT-TRACK] пользователю [{chat}] выдан трек [{tracking_info.barcode}] ")    
-                            except Exception as e:
-                                logger_utils.info(f"[INSERT-TRACK-ERROR] ОШИБКА: {e} - пользователю [{chat}] выдан трек [{tracking_info.barcode}] ")   
-                        except:
+                                    if track: 
+                                        tracking_type = TrackingTypes.ids[regex]
+                                        break
+                                tracking_info = {}
+                                try:
+                                    tracking_info = TrackingSelector.selectTracker(track = track.group(), type = tracking_type)
+                                    tracking_info.setRcpnVkId(rcpnVkId = chat) 
+                                    tracking_info.setTrackingType(trackingType = tracking_type) 
+
+                                    DB_Operations.insertUpdateParcel(tracking_info)      
+                                    logger_utils.info(f"[INSERT-TRACK] пользователю [{chat}] выдан трек [{tracking_info.barcode}] ")    
+                                except Exception as e:
+                                    logger_utils.info(f"[INSERT-TRACK-ERROR] ОШИБКА: {e} - пользователю [{chat}] выдан трек [{tracking_info.barcode}] ")   
+                        except Exception as e:
+                            pprint(e)
                             continue   
 
                 elif event.type ==VkBotEventType.MESSAGE_EVENT:
