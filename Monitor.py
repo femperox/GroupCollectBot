@@ -147,11 +147,10 @@ def bs4SellerMonitorYahoo(curl, params):
     firstSeen = True # при первом запуске просматривается только 1 элемент
 
     while True:
-        sleep(50)
+        #sleep(50)
         try:
             
             soup = WebUtils.getSoup(curl, parser= WebUtils.Bs4Parsers.htmlParser)
-
             allLots = soup.findAll('div', class_='Product__bonus')
 
             notBreakSeen = True
@@ -162,7 +161,6 @@ def bs4SellerMonitorYahoo(curl, params):
                 currentSize = 1
                 allLots = allLots[:1]
                 firstSeen = False
-            
             for lot in allLots:
                 item['id'] = lot['data-auction-id']
 
@@ -172,15 +170,11 @@ def bs4SellerMonitorYahoo(curl, params):
 
                 tmp_seen_aucs.append(item['id'])
                 i += 1
-                
-                item['seller'] = lot['data-auction-sellerid']
 
                 info = ProductInfoClass(**yahooApi.getAucInfo(item['id']))
-                info.setSeller(seller = item['seller'])
 
                 if not info or info.mainPhoto == '':
                     continue
-
                 items.append(info.copy())
                 if len(items) == 10:              
                     sendMessage(items, params)

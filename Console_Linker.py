@@ -510,14 +510,21 @@ def storeCollectActivities(topicList):
         order_title += f' #{DB_Operations.getMaxStoreCollectId(collect_title = order_title.split(" ")[0]) + 1}'
 
         wallPost = input('\nВведите ссылку на набор. (might be empty): ')
-    
+
+        items_info = {}
+    else:
+        collectTopicInfo = DB_Operations.getCollectTopicComment(collect_id = order_title, collect_type = OrdersConsts.CollectTypes.store)
+        comment=vk.find_board_comment(topic_id = collectTopicInfo[0], comment_id = collectTopicInfo[1])
+        comment_text = comment['text']
+        item_urls = re.findall(RegexType.regex_url, comment_text)
+        items_info = {url: {"item_name": '', "item_price": '', "users": []} for url in item_urls if url.find('vk') < 0}
+
     img = input('\nКартинки через запятую(, ) (might be empty): ')
     img = [] if img.split(', ') == [''] else img.split(', ')
     
     print('\nПодготовим участников.')
     print('\nTo stop enter any symbol\n')
     participant_list = []
-    items_info = {}
     
     i = 0
     while True:
@@ -570,6 +577,8 @@ def storeCollectActivities(topicList):
 
         participants_start_part = re.search('\n\n\d', old_text).span()[1] - 1
         participants_end_part = re.search('\n\nПоедет', old_text).span()[0] + 1
+
+        items_info = {info_key:items_info[info_key] for info_key in items_info.keys() if items_info[info_key]['users']}
 
         index_number = int(re.findall(r"\n\d+. ", old_text)[-1].replace('\n', '').replace('. ', ''))
         participant_mes = old_text[participants_start_part:participants_end_part] + '\n' + Messages.formStoreCollectItemsList(items_info = items_info, index = index_number) + '\n'
