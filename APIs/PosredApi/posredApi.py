@@ -44,6 +44,22 @@ class PosredApi:
         return ''
     
     @staticmethod
+    def getPosredByParcelId(parcel_id):
+        """Получить посреда по id заказа
+
+        Args:
+            order_id (string): id заказа
+
+        Returns:
+            class: посредник
+        """
+        if re.fullmatch(r'P-\d+', parcel_id):
+            return DaromApi()
+        elif re.fullmatch(r'o\d{6,10}', parcel_id):
+            return EasyShipApi()
+        return None
+    
+    @staticmethod
     def getCurrentCurrencyRate():
         """Получить текущий курс рубля по отношению к йене
 

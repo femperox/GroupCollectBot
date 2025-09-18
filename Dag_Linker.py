@@ -211,31 +211,42 @@ def updateActivePosredCollects():
     """Обновить статусы лотов, что ещё находятся в "руках" посреда
     """
 
-    all_orders = DB_Operations.getAllActivePosredCollects()
+    all_collects = DB_Operations.getAllActivePosredCollects()
     darom = DaromApi()
     easyShipApi = EasyShipApi()
-    darom_orders = darom.get_active_orders(pages = 500)
+    darom_orders = darom.get_active_orders(pages = 650)
     es_orders = easyShipApi.get_active_orders()
 
     all_posred_orders_keys = list(darom_orders.keys())
     all_posred_orders_keys.extend(list(es_orders.keys()))
     
 
-    for order in all_orders:
-        if order[2] not in all_posred_orders_keys:
-            continue
-        posred = PosredApi.getPosredByOrderId(order_id = order[2])
-        if posred == PosrednikConsts.DaromJp:
-            order_info = darom_orders[order[2]]
-        elif posred == PosrednikConsts.EasyShip:
-            order_info = es_orders[order[2]]
-        if order_info.status != OrdersConsts.OrderStatus.procurement and order[3] != order_info.status:
-                collectTopicInfo = DB_Operations.getCollectTopicComment(collect_id = order[1], collect_type = order[0])
-                status_name = DB_Operations.getCollectStatusNameById(status_id = order_info.status)
-                print(f'Коллект {order[1]}: {status_name}')
+    for collect in all_collects:
+        if collect[0] == OrdersConsts.CollectTypes.store:
+            orders_list = collect[2].split(',')
+            if orders_list:
+                posred = PosredApi.getPosredByOrderId(order_id = orders_list[0])
+                current_orders_list = es_orders if posred == PosrednikConsts.EasyShip else darom_orders
+                if len(set(item.status for item in current_orders_list)) == 1:
+                    order_info_status = current_orders_list[0].status
+        elif collect[0] == OrdersConsts.CollectTypes.collect:
+            if collect[2] not in all_posred_orders_keys:
+                continue
+            posred = PosredApi.getPosredByOrderId(order_id = collect[2])
+            if posred == PosrednikConsts.DaromJp:
+                order_info = darom_orders[collect[2]]
+            elif posred == PosrednikConsts.EasyShip:
+                order_info = es_orders[collect[2]]
+            order_info_status = order_info.status
+        
+        if order_info_status != OrdersConsts.OrderStatus.procurement and collect[3] != order_info_status:
+                collectTopicInfo = DB_Operations.getCollectTopicComment(collect_id = collect[1], collect_type = collect[0])
+                status_name = DB_Operations.getCollectStatusNameById(status_id = order_info_status)
+                print(f'Коллект {collect[1]}: {status_name}')
                 vk.edit_collects_activity_comment(topic_id = collectTopicInfo[0], comment_id = collectTopicInfo[1], 
                                                 status_text = status_name)
-                DB_Operations.updateCollectSelector(collectType = order[0], collectId = order[1], status_id = order_info.status)
+                DB_Operations.updateCollectSelector(collectType = collect[0], collectId = collect[1], status_id = order_info_status)
+                time.sleep(2)
 
 def addActivePosredCollects():
     """Добавить к заказам номер у посреда
@@ -245,27 +256,46 @@ def addActivePosredCollects():
     active_orders = easyShip.get_active_orders()
     new_orders = DB_Operations.GetNotSeenPosredCollects(posred_ids = list(active_orders.keys()))
     empty_posred_id_orders = DB_Operations.getEmptyPosredIdCollects()
-    for new_order in new_orders:
-        collect_id = [empty_posred_id_order for empty_posred_id_order in empty_posred_id_orders if empty_posred_id_order[1].lower() in active_orders[new_order].title.lower()]
-        if not collect_id:
-            continue
-        collect_id = collect_id[0]
-        posred = PosredApi.getPosredByOrderId(order_id = new_order)
-        if posred == PosrednikConsts.EasyShip:
-            if active_orders[new_order].status == OrdersConsts.OrderStatus.procurement:
-                status_id = OrdersConsts.OrderStatus.shipped_US
-            elif active_orders[new_order].status == OrdersConsts.OrderStatus.at_warehouse_US:
-                status_id = OrdersConsts.OrderStatus.at_warehouse_US
-        elif posred == PosrednikConsts.DaromJp:
-            status_id = OrdersConsts.OrderStatus.shipped_JP
-        status_name = DB_Operations.getCollectStatusNameById(status_id = status_id)
-        collectTopicInfo = DB_Operations.getCollectTopicComment(collect_id = collect_id[1], collect_type = collect_id[0])
+    for collect in empty_posred_id_orders:
+        
+        posred_order = None
+        
+        if collect[0] == OrdersConsts.CollectTypes.store:
+            
+            posred_orders = [new_order for new_order in new_orders if collect[1].lower() in active_orders[new_order].title.lower()]
+            if posred_orders:
+                is_orders_complete = lambda order: 'end' in active_orders[order].title.lower()
+                all_complete = any(is_orders_complete(order) for order in posred_orders)
+                if all_complete:
+                    posred = PosredApi.getPosredByOrderId(order_id = posred_orders[0])
+                    if posred == PosrednikConsts.EasyShip:
+                        status_id = OrdersConsts.OrderStatus.shipped_US
+                    elif posred == PosrednikConsts.DaromJp:
+                        status_id = OrdersConsts.OrderStatus.shipped_JP
+                    posred_order = ','.join(posred_orders)
+        elif collect[0] == OrdersConsts.CollectTypes.collect:
+            posred_order = next((new_order for new_order in new_orders if collect[1].lower() in active_orders[new_order].title.lower()),
+                                 None)
+            if posred_order:
+                posred = PosredApi.getPosredByOrderId(order_id = posred_order)
+                if posred == PosrednikConsts.EasyShip:
+                    if active_orders[posred_order].status == OrdersConsts.OrderStatus.procurement:
+                        status_id = OrdersConsts.OrderStatus.shipped_US
+                    elif active_orders[posred_order].status == OrdersConsts.OrderStatus.at_warehouse_US:
+                        status_id = OrdersConsts.OrderStatus.at_warehouse_US
+                elif posred == PosrednikConsts.DaromJp:
+                    status_id = OrdersConsts.OrderStatus.shipped_JP
+        
+        if posred_order:
+            status_name = DB_Operations.getCollectStatusNameById(status_id = status_id)
+            collectTopicInfo = DB_Operations.getCollectTopicComment(collect_id = collect[1], collect_type = collect[0])
 
-        print(f'Коллект {collect_id[1]}: {status_name}')
-        vk.edit_collects_activity_comment(topic_id = collectTopicInfo[0], comment_id = collectTopicInfo[1], 
-                                        status_text = status_name)
-        DB_Operations.updateCollectSelector(collectType = collect_id[0], collectId = collect_id[1], 
-                                            status_id = status_id, posred_id = new_order)
+            print(f'Коллект {collect[1]}: {status_name}')
+            vk.edit_collects_activity_comment(topic_id = collectTopicInfo[0], comment_id = collectTopicInfo[1], 
+                                            status_text = status_name)
+            DB_Operations.updateCollectSelector(collectType = collect[0], collectId = collect[1], 
+                                                status_id = status_id, posred_id = posred_order)
+            time.sleep(2)
         
 def updateDirectTrackingStatuses():
 
@@ -274,12 +304,15 @@ def updateDirectTrackingStatuses():
         tracking_info = TrackingSelector.selectTracker(track = tracking[1], type = TrackingTypes.ids[RegexType.regex_track])
         
         if tracking_info:
+            
+            DB_Operations.updateInsertDirectCollectParcel(collect_id = tracking[0], parcel_info = tracking_info)
             # Посылка прибыла в отделение
             if tracking_info.operationAttr in TrackingSelector.selectArrivedStatuses(tracking_info.trackingType):
                 vk_id = DB_Operations.getOrderParticipants(collect_id = tracking[0])[0][0]
-                message = mess.mess_notify_arrival.format(tracking_info.barcode, tracking_info.operationIndex, DB_Operations.getParcelExpireDate(tracking_info.barcode))         
+                message = mess.mess_notify_arrival.format(tracking_info.barcode, tracking_info.operationIndex, DB_Operations.getDirectParcelExpireDate(tracking_info.barcode))         
                 vk.sendMes(mess = message, users = vk_id)
-                tracking_info.setNotified(notified = 1)
+                #tracking_info.setNotified(notified = 1)
+                DB_Operations.setParcelNotified(barcode = tracking_info.barcode)
             # Посылка получена
             elif tracking_info.operationType in TrackingSelector.selectRecievedStatusesTypes(type = tracking_info.trackingType):
                 collectTopicInfo = DB_Operations.getCollectTopicComment(collect_id = tracking[0])
@@ -293,7 +326,7 @@ def updateDirectTrackingStatuses():
 
                 DB_Operations.updateCollectSelector(collectId = tracking[0], status_id = OrdersConsts.OrderStatus.user_on_hands)
 
-            DB_Operations.updateInsertDirectCollectParcel(collect_id = tracking[0], parcel_info = tracking_info)
+            time.sleep(2)
 
 class DagLinkerValues:
 

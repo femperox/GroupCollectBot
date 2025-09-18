@@ -552,8 +552,8 @@ class VkApi:
                             
                             # проверка международных отправлений до получателя
                             match_new = re.search(RegexType.regex_track_worldwide, event.obj['text'].strip())
-                            track = match_new.group()
-                            if track:
+                            if match_new:
+                                track = match_new.group()
                                 message_text = event.obj['text'].replace(track, '')
                                 collect_id = 'I' + re.search(r'-?\d+(?:\.\d+)?', message_text).group()
 

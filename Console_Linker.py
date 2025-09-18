@@ -3,7 +3,7 @@ from APIs.GoogleSheetsApi.CollectOrdersSheet import CollectOrdersSheet as collec
 from APIs.GoogleSheetsApi.StoresCollectOrdersSheets import StoresCollectOrdersSheets
 from traceback import format_exc, print_exc
 from pprint import pprint 
-from confings.Consts import OrdersConsts, RegexType, VkConsts
+from confings.Consts import OrdersConsts, RegexType, VkConsts, PosrednikConsts
 from confings.Messages import Messages
 import re
 from time import sleep
@@ -752,7 +752,7 @@ def console():
             vk.delete_photos(album_id = album['id'], end_date = date)
 
         elif choise == 8:
-            #TODO: BOT-73 Добавить авто-сборщика посылок
+            posred_id = input('id посылки у посредника: ')
             status = flattenList(DB_Operations.getCollectStatuses())
             topicIdParcels = [topic['id'] for topic in topicList 
                               if topic['title'].lower().find('посылки') > -1][0]
@@ -766,17 +766,25 @@ def console():
             img = input('\nEnter the image url using comma(, ) (might be empty): ')
             img = img.split(', ')
 
-            DB_Operations.updateInsertCollectParcel(parcel_id = parcel_id, status = stat)
-            
-            orderList = handle_ids_insert()
+            posred = PosredApi.getPosredByParcelId(parcel_id = posred_id)
+            orders = posred.get_parcel_orders(parcel_id = posred_id)
 
-            changeStatus(stat, orderList)
+            present_collects = DB_Operations.getCollectsByPosredId(posred_ids = orders)
+
+            present_posred_ids = [present_collect[2] for present_collect in present_collects]
+            unpresent_orders = [order for order in orders if order not in present_posred_ids]
+
+            print(f'Неиспользованные лоты: {unpresent_orders}')
+
+            DB_Operations.updateInsertCollectParcel(parcel_id = parcel_id, status = stat)
+
+            changeStatus(stat, present_collects)
             collectListUrl = []
             indListUrl = []
 
-            for item in orderList:
-                collectTopicInfo = DB_Operations.getCollectTopicComment(collect_id = item[1], collect_type = item[0])
-                topic_url_template = f'[https://vk.com/topic-{vk.get_current_group_id()}_{collectTopicInfo[0]}?post={collectTopicInfo[1]}|'+'{}]'
+            for item in present_collects:
+                #collectTopicInfo = DB_Operations.getCollectTopicComment(collect_id = item[1], collect_type = item[0])
+                topic_url_template = f'[https://vk.com/topic-{vk.get_current_group_id()}_{item[3]}?post={item[4]}|'+'{}]'
                 if item[0] == OrdersConsts.CollectTypes.store:
                     collectListUrl.append(topic_url_template.format(item[1]))
                 elif item[0] == OrdersConsts.CollectTypes.collect:
@@ -791,7 +799,7 @@ def console():
 
             DB_Operations.updateInsertCollectParcel(parcel_id = parcel_id, topic_id = topicInfo[2]['topic_id'], comment_id = topicInfo[2]['comment_id'])
 
-            for item in orderList:
+            for item in present_collects:
                 DB_Operations.updateCollectSelector(collectType = item[0], collectId = item[1], parcel_id = parcel_id, status = stat)
 
             

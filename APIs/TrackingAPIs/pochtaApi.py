@@ -69,38 +69,39 @@ class PochtaApi():
         Returns:
             dict: информационный справочник по отправлению
         """
-
-        result = PochtaApi.getClient().service.getOperationHistory(__inject={'msg':PochtaApi.createMess(barcode).encode()})
-
-        current_stat = result[0][-1]
-
         parcel = {}
         parcel['barcode'] = barcode
-        parcel['sndr'] = current_stat['UserParameters']['Sndr']
-        parcel['rcpn'] = current_stat['UserParameters']['Rcpn']
 
-        try:
-            parcel['destinationIndex'] = current_stat['AddressParameters']['DestinationAddress']['Index']
-        except:
-            parcel['destinationIndex'] = ''
+        
+        result = PochtaApi.getClient().service.getOperationHistory(__inject={'msg':PochtaApi.createMess(barcode).encode()})
+        if result:
+            current_stat = result[0][-1]
 
-        try:
-            parcel['operationIndex'] = current_stat['AddressParameters']['OperationAddress']['Index']
-        except:
-            parcel['operationIndex'] = ''
+            parcel['sndr'] = current_stat['UserParameters']['Sndr']
+            parcel['rcpn'] = current_stat['UserParameters']['Rcpn']
 
-        parcel['operationDate'] = current_stat['OperationParameters']['OperDate']
-        parcel['operationType'] = current_stat['OperationParameters']['OperType']['Name']
+            try:
+                parcel['destinationIndex'] = current_stat['AddressParameters']['DestinationAddress']['Index']
+            except:
+                parcel['destinationIndex'] = ''
 
-        try:
-            parcel['operationAttr'] = current_stat['OperationParameters']['OperAttr']['Name']
-        except:
-            parcel['operationAttr'] = ''
+            try:
+                parcel['operationIndex'] = current_stat['AddressParameters']['OperationAddress']['Index']
+            except:
+                parcel['operationIndex'] = ''
 
-        try:
-            parcel['mass'] = current_stat['ItemParameters']['Mass']
-        except:
-            parcel['mass'] = 0
+            parcel['operationDate'] = current_stat['OperationParameters']['OperDate']
+            parcel['operationType'] = current_stat['OperationParameters']['OperType']['Name']
+
+            try:
+                parcel['operationAttr'] = current_stat['OperationParameters']['OperAttr']['Name']
+            except:
+                parcel['operationAttr'] = ''
+
+            try:
+                parcel['mass'] = current_stat['ItemParameters']['Mass']
+            except:
+                parcel['mass'] = 0
 
         return parcel
 

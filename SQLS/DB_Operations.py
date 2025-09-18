@@ -296,6 +296,27 @@ def getParcelExpireDate(barcode):
     
     return result
 
+def getDirectParcelExpireDate(barcode):
+    """Получить срок хранения посылки получателя
+
+    Args:
+        barcode (string): трек-номер отправления
+
+    Returns:
+        string: дата последнего срока дня хранения
+    """
+
+    conn = getConnection(DbNames.collectDatabase)
+    cursor = conn.cursor() 
+
+    cursor.execute(f"SELECT expiredate from collect_direct_recipient where barcode='{barcode}';")
+    result = cursor.fetchone()[0]
+   
+    cursor.close()
+    conn.close()
+    
+    return result
+
 def insertUpdateParcel(parcelInfo:TrackInfoClass):
     """Добавить/обновить запись об отправлени
 
@@ -776,6 +797,21 @@ def getAllCollectsInParcel(parcel_id):
     
     sel = f'''SELECT * from get_collects_in_parcel({parcel_id});
 
+           '''
+    cursor.execute(sel)
+    result = cursor.fetchall()
+        
+    cursor.close()
+    conn.close()
+    
+    return result
+
+def getCollectsByPosredId(posred_ids):
+
+    conn = getConnection(DbNames.collectDatabase)
+    cursor = conn.cursor()  
+    
+    sel = f'''SELECT * from get_collects_by_posred_ids(ARRAY[{posred_ids}]);
            '''
     cursor.execute(sel)
     result = cursor.fetchall()

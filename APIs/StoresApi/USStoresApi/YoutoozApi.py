@@ -22,22 +22,22 @@ class YoutoozApi:
         try:
             table = soup.find('div', {'dir': 'ltr'})
             rows = table.findAll("tr")
-
+            key_item = ''
             shipment_prices = {}
             for row in rows[1:]:
                 columns = row.findAll("td")
                 if len(columns) == 1:
                     continue
                 elif len(columns) == 5:
-                    if 'US' not in columns[2].text.strip():
-                        continue
                     key_item = columns[0].text.strip().lower()
                     key_item_type = columns[1].text.strip().lower()
+                    if 'US' not in columns[2].text.strip():
+                        continue
                     shipment_price = columns[3].text.strip().replace('$', '')
                 elif len(columns) == 3:
+                    key_item_type = columns[0].text.strip().lower()
                     if 'US' not in columns[1].text.strip():
                         continue
-                    key_item_type = columns[0].text.strip().lower()
                     shipment_price = columns[2].text.strip().replace('$', '')
 
                 if key_item not in shipment_prices:

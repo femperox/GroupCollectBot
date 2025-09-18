@@ -147,7 +147,7 @@ def bs4SellerMonitorYahoo(curl, params):
     firstSeen = True # при первом запуске просматривается только 1 элемент
 
     while True:
-        #sleep(50)
+        sleep(50)
         try:
             
             soup = WebUtils.getSoup(curl, parser= WebUtils.Bs4Parsers.htmlParser)

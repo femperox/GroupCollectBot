@@ -35,7 +35,7 @@ class DaromApi:
                 return OrdersConsts.OrderStatus.shipped_JP
             elif status in [DaromApi.DaromOrderStatus.cancelled]:
                 return OrdersConsts.OrderStatus.cancelled
-            elif status.find(DaromApi.DaromOrderStatus.at_warehouse) >= 0:
+            elif DaromApi.DaromOrderStatus.at_warehouse in status:
                 return OrdersConsts.OrderStatus.at_warehouse_JP
             else:
                 return OrdersConsts.OrderStatus.empty
@@ -147,7 +147,7 @@ class DaromApi:
             allOrders = soup.findAll('a')
             orderIdsList = []
             for order in allOrders:
-                orderIdsList.append((order['href'].split('=')[-1]))
+                orderIdsList.append(self.get_order_format(order['href'].split('=')[-1]))
             return orderIdsList
         else:
             return []
