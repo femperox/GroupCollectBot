@@ -10,6 +10,10 @@ from APIs.PosredApi.posredApi import PosredApi
 
 class yahooApi:
 
+    current_api_ver = 'V3'
+    shipment_api_ver = 'v1'
+    rep_api_ver = 'V2'
+
     class YahooItemStatus:
 
         sold = 'closed'
@@ -46,12 +50,11 @@ class yahooApi:
             list: список: 1ый элемент - хорошая репутация
         """
 
-        curl = f'https://auctions.yahooapis.jp/AuctionWebService/V1/ShowRating?appid={self.app_id}&id={id}'
+        curl = f'https://auctions.yahooapis.jp/AuctionWebService/{self.rep_api_ver}/ShowRating?appid={self.app_id}&auc_user_id={id}'
 
         headers = WebUtils.getHeader()
         page = requests.get(curl, headers=headers)
         xml = xmltodict.parse(page.content)
-
         try:
             goodRate = xml['ResultSet']['TotalGoodRating']
             badRate = xml['ResultSet']['TotalBadRating']
@@ -71,7 +74,7 @@ class yahooApi:
             string: ссылка на заглавное изображение лота
         """
 
-        curl = f'https://auctions.yahooapis.jp/AuctionWebService/V2/auctionItem?appid={self.app_id}&auctionID={id}'
+        curl = f'https://auctions.yahooapis.jp/AuctionWebService/{self.current_api_ver}/auctionItem?appid={self.app_id}&auctionID={id}'
 
         try:
             headers = WebUtils.getHeader()
@@ -96,14 +99,13 @@ class yahooApi:
         pref_code = PosrednikConsts.PREFECTURE_CODE[PosrednikConsts.CURRENT_POSRED]
 
         if seller_id == '':
-            curl = f'https://auctions.yahooapis.jp/v1/public/items/{id}/shipments?pref_code={pref_code}&appid={self.app_id}'
+            curl = f'https://auctions.yahooapis.jp/{self.shipment_api_ver}/public/items/{id}/shipments?pref_code={pref_code}&appid={self.app_id}'
         else:
             weight = f'&weight={item_weight}' if int(item_weight)>0 else ''
-            curl =f'https://auctions.yahooapis.jp/v1/public/shoppinginfo/shipments?&pref_code={pref_code}&appid={self.app_id}&shopping_seller_id={seller_id}&shopping_item_code={id}&shopping_postage_set={postage_id}&price=100{weight}'
+            curl =f'https://auctions.yahooapis.jp/{self.shipment_api_ver}/public/shoppinginfo/shipments?&pref_code={pref_code}&appid={self.app_id}&shopping_seller_id={seller_id}&shopping_item_code={id}&shopping_postage_set={postage_id}&price=100{weight}'
         
         headers = WebUtils.getHeader()
         page = requests.get(curl, headers=headers)
-        
         js = json.loads(page.text)
 
         prices = []
@@ -128,7 +130,7 @@ class yahooApi:
         """
         
         try:
-            curl = f'https://auctions.yahooapis.jp/AuctionWebService/V2/auctionItem?appid={self.app_id}&auctionID={id}'
+            curl = f'https://auctions.yahooapis.jp/AuctionWebService/{self.current_api_ver}/auctionItem?appid={self.app_id}&auctionID={id}'
             headers = WebUtils.getHeader()
             page = requests.get(curl, headers=headers)
             xml = xmltodict.parse(page.content)
@@ -148,7 +150,7 @@ class yahooApi:
             date: дата окончания лота
         """
         try:
-            curl = f'https://auctions.yahooapis.jp/AuctionWebService/V2/auctionItem?appid={self.app_id}&auctionID={id}'
+            curl = f'https://auctions.yahooapis.jp/AuctionWebService/{self.current_api_ver}/auctionItem?appid={self.app_id}&auctionID={id}'
 
             headers = WebUtils.getHeader()
             page = requests.get(curl, headers=headers)
@@ -176,7 +178,7 @@ class yahooApi:
 
         info = {}
         try:
-            curl = f'https://auctions.yahooapis.jp/AuctionWebService/V2/auctionItem?appid={self.app_id}&auctionID={id}'
+            curl = f'https://auctions.yahooapis.jp/AuctionWebService/{self.current_api_ver}/auctionItem?appid={self.app_id}&auctionID={id}'
 
             headers = WebUtils.getHeader()
             page = requests.get(curl, headers=headers)
@@ -224,8 +226,8 @@ class yahooApi:
             info['itemPrice'] = float(xml['ResultSet']['Result']['Price'])
             info['tax'] = float(xml['ResultSet']['Result']['TaxRate'])
             info['itemPriceWTax'] = float(xml['ResultSet']['Result']['TaxinPrice']) if 'TaxinPrice' in xml['ResultSet']['Result'] else info['itemPrice']
-            info['seller'] = xml['ResultSet']['Result']['Seller']['Id']
-
+            info['seller'] = xml['ResultSet']['Result']['Seller']['ShoppingSellerId']
+            info['SellerUserId'] =  xml['ResultSet']['Result']['Seller']['AucUserId']
             commission = PosredApi.getСommissionForItem(info['page'])
             if info['shipmentPrice'] in [OrdersConsts.ShipmentPriceType.free, OrdersConsts.ShipmentPriceType.undefined]:
                 format_string = info['itemPriceWTax']
