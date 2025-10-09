@@ -183,7 +183,7 @@ class yahooApi:
             headers = WebUtils.getHeader()
             page = requests.get(curl, headers=headers)
             xml = xmltodict.parse(page.content)
-            pprint(xml)
+
             info['page'] = xml['ResultSet']['Result']['AuctionItemUrl']
             info['page'] = xml['ResultSet']['Result']['AuctionItemUrl']
             
