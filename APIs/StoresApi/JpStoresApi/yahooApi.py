@@ -183,7 +183,7 @@ class yahooApi:
             headers = WebUtils.getHeader()
             page = requests.get(curl, headers=headers)
             xml = xmltodict.parse(page.content)
-
+            pprint(xml)
             info['page'] = xml['ResultSet']['Result']['AuctionItemUrl']
             info['page'] = xml['ResultSet']['Result']['AuctionItemUrl']
             
@@ -226,7 +226,7 @@ class yahooApi:
             info['itemPrice'] = float(xml['ResultSet']['Result']['Price'])
             info['tax'] = float(xml['ResultSet']['Result']['TaxRate'])
             info['itemPriceWTax'] = float(xml['ResultSet']['Result']['TaxinPrice']) if 'TaxinPrice' in xml['ResultSet']['Result'] else info['itemPrice']
-            info['seller'] = xml['ResultSet']['Result']['Seller']['ShoppingSellerId']
+            info['seller'] = xml['ResultSet']['Result']['Seller']['ShoppingSellerId'] if 'ShoppingSellerId' in xml['ResultSet']['Result']['Seller'] else xml['ResultSet']['Result']['Seller']['AucUserId']
             info['SellerUserId'] =  xml['ResultSet']['Result']['Seller']['AucUserId']
             commission = PosredApi.getСommissionForItem(info['page'])
             if info['shipmentPrice'] in [OrdersConsts.ShipmentPriceType.free, OrdersConsts.ShipmentPriceType.undefined]:
