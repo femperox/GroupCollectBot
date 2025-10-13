@@ -219,11 +219,25 @@ class StoresApi:
         item['status'] = OrdersConsts.StoreStatus.in_stock if js['availableForSale'] else OrdersConsts.StoreStatus.sold
         item['tax'] = 0
         item['itemPriceWTax'] = 0
-        item['shipmentPrice'] = 8.99
         item['page'] = url
         item['mainPhoto'] = js['images']['edges'][0]['node']['transformedSrc']
         item['name'] = js['handle']
         item['siteName'] = OrdersConsts.Stores.makeship
+
+        if 'doughboi' in item['name'] or 'hoodie' in item['name']:
+            item['shipmentPrice'] = 14.99
+        elif 'figure' in item['name']:
+            item['shipmentPrice'] = 5.99
+        elif 'keychain' in item['name'] or 'cap' in item['name'] or 'p-chain' in item['name']:
+            item['shipmentPrice'] = 6.99
+        elif 'sweatpants' in item['name']:
+            item['shipmentPrice'] = 10.99
+        elif 'jumbo' in item['name']:
+            item['shipmentPrice'] = 9.99
+        elif 'socks' in item['name'] or 'pins' in item['name']:
+            item['shipmentPrice'] = 4.99
+        else:
+            item['shipmentPrice'] = 8.99
 
         commission = PosredApi.getСommissionForItemUSD()
 
