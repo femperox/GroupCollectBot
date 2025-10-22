@@ -7,6 +7,7 @@ from APIs.TrackingAPIs.TrackingSelector import TrackingSelector
 from APIs.PosredApi.posredApi import PosredApi
 from APIs.PosredApi.DaromApi import DaromApi
 from APIs.PosredApi.EasyShipApi import EasyShipApi
+from APIs.PosredApi.EglShipApi import EglShipApi
 from confings.Messages import Messages as mess
 from confings.Consts import VkConsts, MboConsts, RegexType, OrdersConsts, PosrednikConsts
 from APIs.GoogleSheetsApi.StoresCollectOrdersSheets import StoresCollectOrdersSheets
@@ -214,13 +215,15 @@ def updateActivePosredCollects():
     all_collects = DB_Operations.getAllActivePosredCollects()
     darom = DaromApi()
     easyShipApi = EasyShipApi()
+    eglShipApi = EglShipApi()
     darom_orders = darom.get_active_orders(pages = 650)
+    egl_orders = eglShipApi.get_active_orders()
     es_orders = easyShipApi.get_active_orders()
 
     all_posred_orders_keys = list(darom_orders.keys())
     all_posred_orders_keys.extend(list(es_orders.keys()))
+    all_posred_orders_keys.extend(list(egl_orders.keys()))
     
-
     for collect in all_collects:
         if collect[0] == OrdersConsts.CollectTypes.store:
             orders_list = collect[2].split(',')
@@ -237,6 +240,8 @@ def updateActivePosredCollects():
                 order_info = darom_orders[collect[2]]
             elif posred == PosrednikConsts.EasyShip:
                 order_info = es_orders[collect[2]]
+            elif posred == PosrednikConsts.EglShip:
+                order_info = egl_orders[collect[2]]
             order_info_status = order_info.status
         
         if order_info_status != OrdersConsts.OrderStatus.procurement and collect[3] != order_info_status:
@@ -253,7 +258,9 @@ def addActivePosredCollects():
     """
 
     easyShip = EasyShipApi()
+    eglShipApi = EglShipApi()
     active_orders = easyShip.get_active_orders()
+    active_orders.update(eglShipApi.get_active_orders())
     new_orders = DB_Operations.GetNotSeenPosredCollects(posred_ids = list(active_orders.keys()))
     empty_posred_id_orders = DB_Operations.getEmptyPosredIdCollects()
     for collect in empty_posred_id_orders:
@@ -268,7 +275,7 @@ def addActivePosredCollects():
                 all_complete = any(is_orders_complete(order) for order in posred_orders)
                 if all_complete:
                     posred = PosredApi.getPosredByOrderId(order_id = posred_orders[0])
-                    if posred == PosrednikConsts.EasyShip:
+                    if posred in [PosrednikConsts.EasyShip, PosrednikConsts.EglShip]:
                         status_id = OrdersConsts.OrderStatus.shipped_US
                     elif posred == PosrednikConsts.DaromJp:
                         status_id = OrdersConsts.OrderStatus.shipped_JP
@@ -278,7 +285,7 @@ def addActivePosredCollects():
                                  None)
             if posred_order:
                 posred = PosredApi.getPosredByOrderId(order_id = posred_order)
-                if posred == PosrednikConsts.EasyShip:
+                if posred in [PosrednikConsts.EasyShip, PosrednikConsts.EglShip]:
                     if active_orders[posred_order].status == OrdersConsts.OrderStatus.procurement:
                         status_id = OrdersConsts.OrderStatus.shipped_US
                     elif active_orders[posred_order].status == OrdersConsts.OrderStatus.at_warehouse_US:
@@ -302,17 +309,15 @@ def updateDirectTrackingStatuses():
     active_direct_tracking = DB_Operations.getAllDirectCollectParcel()
     for tracking in active_direct_tracking:
         tracking_info = TrackingSelector.selectTracker(track = tracking[1], type = TrackingTypes.ids[RegexType.regex_track])
-        
         if tracking_info:
             
             DB_Operations.updateInsertDirectCollectParcel(collect_id = tracking[0], parcel_info = tracking_info)
             # Посылка прибыла в отделение
-            if tracking_info.operationAttr in TrackingSelector.selectArrivedStatuses(tracking_info.trackingType):
+            if not tracking[2] and tracking_info.operationAttr in TrackingSelector.selectArrivedStatuses(tracking_info.trackingType):
                 vk_id = DB_Operations.getOrderParticipants(collect_id = tracking[0])[0][0]
                 message = mess.mess_notify_arrival.format(tracking_info.barcode, tracking_info.operationIndex, DB_Operations.getDirectParcelExpireDate(tracking_info.barcode))         
                 vk.sendMes(mess = message, users = vk_id)
-                #tracking_info.setNotified(notified = 1)
-                DB_Operations.setParcelNotified(barcode = tracking_info.barcode)
+                DB_Operations.setDirectParcelNotified(barcode = tracking_info.barcode)
             # Посылка получена
             elif tracking_info.operationType in TrackingSelector.selectRecievedStatusesTypes(type = tracking_info.trackingType):
                 collectTopicInfo = DB_Operations.getCollectTopicComment(collect_id = tracking[0])

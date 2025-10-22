@@ -3,6 +3,7 @@ from APIs.webUtils import WebUtils
 from APIs.StoresApi.StoreSelectorParent import StoreSelectorParent
 from APIs.PosredApi.DaromApi import DaromApi
 from APIs.PosredApi.EasyShipApi import EasyShipApi
+from APIs.PosredApi.EglShipApi import EglShipApi
 import requests
 import json
 from pprint import pprint
@@ -14,9 +15,9 @@ class PosredApi:
     def pickRightPosredByOrderType(order_type: OrdersConsts.OrderTypes):
 
         if order_type == OrdersConsts.OrderTypes.jp:
-            return DaromApi()
+            return {PosrednikConsts.DaromJp: DaromApi()}
         elif order_type == OrdersConsts.OrderTypes.us:
-            return EasyShipApi()
+            return {PosrednikConsts.EasyShip : EasyShipApi(), PosrednikConsts.EglShip: EglShipApi()}
 
     @staticmethod
     def getPosredOrderByOrderId(order_id, formatted_order_id = ''):
@@ -25,13 +26,15 @@ class PosredApi:
             return PosrednikConsts.posredUrls[PosrednikConsts.DaromJp].format(formatted_order_id)
         elif PosredApi.getPosredByOrderId(order_id = order_id) == PosrednikConsts.EasyShip:
             return PosrednikConsts.posredUrls[PosrednikConsts.EasyShip]
+        elif PosredApi.getPosredByOrderId(order_id = order_id) == PosrednikConsts.EglShip:
+            return PosrednikConsts.posredUrls[PosrednikConsts.EglShip].format(order_id)
 
     @staticmethod
     def getPosredByOrderId(order_id):
         """Получить посреда по id заказа
 
         Args:
-            order_id (string): id заказа
+            order_id (string or int): id заказа
 
         Returns:
             string: посредник
@@ -41,14 +44,16 @@ class PosredApi:
             return PosrednikConsts.DaromJp
         elif re.fullmatch(r's\d{7,10}', order_id):
             return PosrednikConsts.EasyShip
+        elif isinstance(order_id, int):
+            return PosrednikConsts.EglShip
         return ''
     
     @staticmethod
     def getPosredByParcelId(parcel_id):
-        """Получить посреда по id заказа
+        """Получить посреда по id посылки
 
         Args:
-            order_id (string): id заказа
+            parcel_id (string or int): id заказа
 
         Returns:
             class: посредник
@@ -104,7 +109,7 @@ class PosredApi:
         page = requests.get(PosrednikConsts.CURRENCY_USD_API, headers=headers)
         js = json.loads(page.text)
 
-        return js['Valute']['USD']['Value'] + 7
+        return js['Valute']['USD']['Value'] + 10
     
     @staticmethod
     def getCurrentCurrencyRateByUrl(url):

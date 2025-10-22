@@ -321,7 +321,7 @@ def createTableTopic(post_url, site_url ='', spId=0, topic_id=0, items=0, img_ur
     #-- пытаемся найти заказ у посредника
     posred_info = PosredOrderInfoClass()
     if item.country == OrdersConsts.OrderTypes.jp: # на текущий момент нужно только для Яп заказов
-        posred_selector = PosredApi.pickRightPosredByOrderType(order_type = item.country)
+        posred_selector = PosredApi.pickRightPosredByOrderType(order_type = item.country)[PosrednikConsts.DaromJp]
         active_orders = posred_selector.get_active_orders()
 
         for active_order in active_orders.keys():
@@ -580,7 +580,7 @@ def storeCollectActivities(topicList):
 
         items_info = {info_key:items_info[info_key] for info_key in items_info.keys() if items_info[info_key]['users']}
 
-        index_number = int(re.findall(r"\n\d+. ", old_text)[-1].replace('\n', '').replace('. ', ''))
+        index_number = int(re.findall(r"\n\d+\. ", old_text)[-1].replace('\n', '').replace('. ', ''))
         participant_mes = old_text[participants_start_part:participants_end_part] + '\n' + Messages.formStoreCollectItemsList(items_info = items_info, index = index_number) + '\n'
 
         vk.edit_collects_activity_comment(topic_id = collectTopicInfo[0], comment_id = collectTopicInfo[1],
