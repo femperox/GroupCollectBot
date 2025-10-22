@@ -8,7 +8,7 @@ def get_access_token(client_id: int, scope: int) -> None:
     assert client_id > 0, 'clinet_id must be positive integer'
     url = """\
     https://oauth.vk.com/authorize?client_id={client_id}&\
-    group_ids=224638667,200887174?\
+    group_ids=[!ids!]?\
     redirect_uri=https://oauth.vk.com/blank.hmtl&\
     scope={scope}&\
     &response_type=token&\
