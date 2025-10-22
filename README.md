@@ -66,7 +66,8 @@
 
 ### Связка с посредниками: 
 🏭 [darom](https://www.darom.jp)  
-🏭 [easyship](https://easyship.ru)
+🏭 [easyship](https://easyship.ru)  
+🏭 [eglship](https://eglship.us) *(с 22.10.2025)* 
 
 ### Связка со вторичками и магазинами: 
 
