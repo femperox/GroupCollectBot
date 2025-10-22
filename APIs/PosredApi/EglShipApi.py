@@ -117,7 +117,7 @@ class EglShipApi:
                 continue
 
             order_info = {}
-            order_info['posred_id'] = order['id']
+            order_info['posred_id'] = str(order['id'])
             order_info['tracking_id'] = order['trackNumber']
             order_info['title'] = order['name']
             order_info['product_id'] = order['orderNumber']

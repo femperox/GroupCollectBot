@@ -34,7 +34,7 @@ class PosredApi:
         """Получить посреда по id заказа
 
         Args:
-            order_id (string or int): id заказа
+            order_id (string): id заказа
 
         Returns:
             string: посредник
@@ -44,7 +44,7 @@ class PosredApi:
             return PosrednikConsts.DaromJp
         elif re.fullmatch(r's\d{7,10}', order_id):
             return PosrednikConsts.EasyShip
-        elif isinstance(order_id, int):
+        elif order_id.isdigit():
             return PosrednikConsts.EglShip
         return ''
     
@@ -53,7 +53,7 @@ class PosredApi:
         """Получить посреда по id посылки
 
         Args:
-            parcel_id (string or int): id заказа
+            parcel_id (string): id заказа
 
         Returns:
             class: посредник
