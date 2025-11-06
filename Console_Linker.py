@@ -314,7 +314,7 @@ def createTableTopic(post_url, site_url ='', spId=0, topic_id=0, items=0, img_ur
     item = {}
     if site_url != '':
         store_selector = pickRightStoreSelector(url = site_url)
-        item = store_selector.selectStore(url = site_url)
+        item = store_selector.selectStore(url = site_url, isAdmin = True)
         if len(img_url) == 0:
             img_url = item.mainPhoto
     

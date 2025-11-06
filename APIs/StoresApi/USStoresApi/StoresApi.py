@@ -12,7 +12,7 @@ import re
 class StoresApi:
 
     @staticmethod
-    def setItemStatus(item_available, tags):
+    def setItemStatus(item_available, tags = []):
         """Простановка статуса для getInfo
 
         Args:
@@ -32,6 +32,72 @@ class StoresApi:
                 return OrdersConsts.StoreStatus.restock
             else:
                 return OrdersConsts.StoreStatus.sold
+            
+    @staticmethod
+    def getInfoOembed(curl, url, storeName, variant = None, priceForFreeShipment = None, shipmentPrice = None):
+        """Получить инфо из oembed запроса по шаблону
+
+        Args:
+            curl (string): ссылка на oembed-скрипт
+            url (string): ссылка на товар
+            storeName (string): название магазина
+            variant (string, optional): вариант товара. Defaults to None.
+            priceForFreeShipment (int, optional): цена заказа для бесплатной доставки. Defaults to None.
+            shipmentPrice (int, optional): цена доставки. Defaults to None.
+
+        Returns:
+            dict: словарь с информацией о товаре
+        """
+
+        headers = WebUtils.getHeader()
+        page = requests.get(curl, headers=headers)
+        
+        js = page.json()
+        item = {}
+        try:
+            if variant:
+                variant_item = [x for x in js['offers'] if x['offer_id'] == variant][0]
+                item['itemPrice'] = variant_item['price']
+                if 'featured_image' in variant_item:
+                    item['mainPhoto'] = variant_item['featured_image']['src']
+                else:
+                    item['mainPhoto'] = 'https:' + js['thumbnail_url']
+                item['name'] = variant_item['title']
+                item['status'] = StoresApi.setItemStatus(item_available = variant_item['in_stock'])
+
+            else:
+                if len(js['offers']) > 1:
+                    item['itemPrice'] = js['offers'][-1]['price']
+                else:
+                    item['itemPrice'] = js['price']
+                item['mainPhoto'] = 'https:' +  js['thumbnail_url']
+                item['name'] = js['title']
+                item['status'] = StoresApi.setItemStatus(item_available = js['in_stock'])
+            
+            item['id'] = js['product_id']
+
+            item['tax'] = 0
+            item['itemPriceWTax'] = 0
+            if priceForFreeShipment is None:
+                item['shipmentPrice'] = OrdersConsts.ShipmentPriceType.undefined if shipmentPrice is None else shipmentPrice
+            else:
+                item['priceForFreeShipment'] = priceForFreeShipment
+                item['shipmentPrice'] = OrdersConsts.ShipmentPriceType.undefined if shipmentPrice is None else shipmentPrice
+                item['shipmentPrice'] = OrdersConsts.ShipmentPriceType.free if item['itemPrice'] >= item['priceForFreeShipment'] else item['shipmentPrice']
+                        
+            item['page'] = url
+            item['siteName'] = storeName
+
+            commission = PosredApi.getСommissionForItemUSD()
+            format_string = item['itemPrice']
+            format_number = item['itemPrice']
+            item['posredCommission'] = commission['posredCommission'].format(format_string)
+            item['posredCommissionValue'] = commission['posredCommissionValue'](format_number)
+
+        except Exception as e:
+            pprint(e)
+        finally:
+            return item
 
     @staticmethod
     def getInfo(curl, url, storeName, variant = None, priceForFreeShipment = None, shipmentPrice = None):
@@ -52,13 +118,12 @@ class StoresApi:
         headers = WebUtils.getHeader()
         page = requests.get(curl, headers=headers)
         js = page.json()
-
         item = {}
         try:
             if variant:
                 variant_item = [x for x in js['variants'] if x['id'] == variant][0]
                 item['itemPrice'] = variant_item['price']
-                if 'featured_image' in variant_item:
+                if 'featured_image' in variant_item and variant_item['featured_image']:
                     item['mainPhoto'] = variant_item['featured_image']['src']
                 else:
                     item['mainPhoto'] = 'https:' + js['featured_image']
@@ -89,8 +154,6 @@ class StoresApi:
                 item['shipmentPrice'] = OrdersConsts.ShipmentPriceType.free if item['itemPrice'] >= item['priceForFreeShipment'] else item['shipmentPrice']
                         
             item['page'] = url
-
-            item['name'] = js['title']
             item['siteName'] = storeName
 
             commission = PosredApi.getСommissionForItemUSD()
@@ -101,7 +164,7 @@ class StoresApi:
             item['posredCommissionValue'] = commission['posredCommissionValue'](format_number)
 
         except Exception as e:
-            pprint(e)
+            print(e)
         finally:
             return item
     
@@ -179,6 +242,36 @@ class StoresApi:
                 item['status'] = OrdersConsts.StoreStatus.pre_order
 
         return item
+    
+    @staticmethod
+    def parseGloomyBearItem(url):
+        """Получение базовой информации о товаре с магазина gloomybear
+
+        Args:
+            url (string): ссылка на товар
+
+        Returns:
+            dict: словарь с информацией о товаре
+        """
+
+        curl = f'https://gloomybearstore.com/products/{url.split("products/")[-1]}.js'
+        item = StoresApi.getInfo(curl = curl, url = url, storeName = OrdersConsts.Stores.gloomybearstore)
+        return item
+    
+    @staticmethod
+    def parseGlitchproductionsItem(url):
+        """Получение базовой информации о товаре с магазина glitchproductions
+
+        Args:
+            url (string): ссылка на товар
+
+        Returns:
+            dict: словарь с информацией о товаре
+        """
+
+        curl = f'https://glitchproductions.store/products/{url.split("products/")[-1]}.js'
+        item = StoresApi.getInfo(curl = curl, url = url, storeName = OrdersConsts.Stores.gloomybearstore)
+        return item
 
     @staticmethod
     def parseBratzItem(url):
@@ -194,6 +287,27 @@ class StoresApi:
 
         curl = f'https://www.bratz.com/products/{url.split("products/")[-1]}.js'
         item = StoresApi.getInfo(curl = curl, url = url, priceForFreeShipment = 50, storeName = OrdersConsts.Stores.bratz)
+        return item
+    
+    @staticmethod
+    def parsePlushWonderlandItem(url):
+        """Получение базовой информации о товаре с магазина plushwonderland
+
+        Args:
+            url (string): ссылка на товар
+
+        Returns:
+            dict: словарь с информацией о товаре
+        """
+
+        variant = None
+        item_id = url.split("products/")[-1]
+        if item_id.find('?variant=') > -1:
+            curl = f'https://plushwonderland.com/products/{item_id.split("?variant=")[0]}.js'
+            variant = int(item_id.split("?variant=")[1])
+        else:
+            curl = f'https://plushwonderland.com/products/{item_id}.js'
+        item = StoresApi.getInfo(curl = curl, variant = variant, url = url, storeName = OrdersConsts.Stores.plushwonderland)
         return item
 
     @staticmethod
@@ -269,4 +383,34 @@ class StoresApi:
             curl = f'https://www.plushshop.com/collections/anime-meow/products/{item_id}.js'
         item = StoresApi.getInfo(curl = curl, variant = variant, url = url, 
                                  shipmentPrice = 20, storeName = OrdersConsts.Stores.plushshop)
+        return item
+    
+    @staticmethod
+    def parseJsonRandomStoreItem(url, storeName):
+        """Получение базовой информации о товаре с рандомного магазина, что позволит содрать инфо с помощью getInfo
+
+        Args:
+            url (string): ссылка на товар
+
+        Returns:
+            dict: словарь с информацией о товаре
+        """
+
+        item = {}
+        if url.find('/product') > -1:
+            product_string = 'products' if url.find('/products') > -1 else 'product'
+            variant = None
+            address = url.split(f"/{product_string}")[0]
+            item_id = url.split(f"{product_string}/")[-1]
+            
+            if item_id.find('?variant=') > -1:
+                curl = f'{address}/{product_string}/{item_id.split("?variant=")[0]}.js'
+                variant = int(item_id.split("?variant=")[1])
+            else:
+                curl = f'{address}/{product_string}/{item_id}.js'
+            try:
+                item = StoresApi.getInfo(curl = curl, variant = variant, url = url, storeName = storeName)
+            except Exception as e:
+                print(e)
+                return item
         return item

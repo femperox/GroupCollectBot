@@ -7,7 +7,7 @@ class ProductInfoClass:
                 shipmentPrice = OrdersConsts.ShipmentPriceType.undefined, page = '', mainPhoto = '',
                 name = '', endTime = None, siteName = '', posredCommission = 0, posredCommissionValue = 0,
                 isMembershipNeeded:bool = False, blitz = -1, seller = '', goodRate = -1, badRate = -1,
-                releaseDate = None, priceForFreeShipment = -1, country = OrdersConsts.OrderTypes.empty, 
+                releaseDate = None, priceForFreeShipment = None, country = OrdersConsts.OrderTypes.empty, 
                 status = OrdersConsts.StoreStatus.undefined, **kwargs):
         
         self.id = id

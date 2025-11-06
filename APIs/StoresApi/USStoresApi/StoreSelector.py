@@ -10,7 +10,7 @@ from APIs.StoresApi.ProductInfoClass import ProductInfoClass
 
 class StoreSelector(StoreSelectorParent):
 
-    def selectStore(self, url, isLiteCalculate = False):
+    def selectStore(self, url, isLiteCalculate = False, isAdmin = False):
         """Определение магазина по заданной ссылке
 
         Args:
@@ -30,7 +30,9 @@ class StoreSelector(StoreSelectorParent):
             item['page'] = url
 
             return ProductInfoClass(**item)
-        
+        if not isAdmin and site in OrdersConsts.Stores.bannedStoresUs:
+            return ProductInfoClass(**item)
+                
         if site == OrdersConsts.Stores.makeship:
             item = StoresApi.parseMakeshipItem(url = url)
         elif site == OrdersConsts.Stores.youtooz:
@@ -45,7 +47,16 @@ class StoreSelector(StoreSelectorParent):
             item = StoresApi.parseFangamerItem(url = url)
         elif site == OrdersConsts.Stores.mattel:
             item = StoresApi.parseMattelItem(url = url)
+        elif site == OrdersConsts.Stores.gloomybearstore:
+            item = StoresApi.parseGloomyBearItem(url = url)
+        elif site == OrdersConsts.Stores.plushwonderland:
+            item = StoresApi.parsePlushWonderlandItem(url = url)
+        else:
+            self.url = url
+            randmoStoreName = self.getStoreName()
+            item = StoresApi.parseJsonRandomStoreItem(url = url, storeName = randmoStoreName)
+        
 
         item = ProductInfoClass(**item)
-        item.set_country(country = OrdersConsts.OrderTypes.user if site in [OrdersConsts.Stores.makeship, OrdersConsts.Stores.plushshop] else OrdersConsts.OrderTypes.us)
+        item.set_country(country = OrdersConsts.OrderTypes.user if site in [OrdersConsts.Stores.makeship, OrdersConsts.Stores.plushshop, OrdersConsts.Stores.plushwonderland] else OrdersConsts.OrderTypes.us)
         return item

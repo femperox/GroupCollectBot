@@ -211,7 +211,6 @@ def updateCoverPhoto(daytime):
 def updateActivePosredCollects():
     """Обновить статусы лотов, что ещё находятся в "руках" посреда
     """
-
     all_collects = DB_Operations.getAllActivePosredCollects()
     darom = DaromApi()
     easyShipApi = EasyShipApi()
@@ -228,10 +227,16 @@ def updateActivePosredCollects():
         if collect[0] == OrdersConsts.CollectTypes.store:
             orders_list = collect[2].split(',')
             if orders_list:
+                pprint(orders_list)
                 posred = PosredApi.getPosredByOrderId(order_id = orders_list[0])
-                current_orders_list = es_orders if posred == PosrednikConsts.EasyShip else darom_orders
-                if len(set(item.status for item in current_orders_list)) == 1:
-                    order_info_status = current_orders_list[0].status
+                if posred == PosrednikConsts.DaromJp:
+                    current_orders_list = darom_orders
+                elif posred == PosrednikConsts.EasyShip:
+                    current_orders_list = es_orders
+                elif posred == PosrednikConsts.EglShip:
+                    current_orders_list = egl_orders
+                if len(set(current_orders_list[key].status for key in current_orders_list if key in orders_list)) == 1:
+                    order_info_status = current_orders_list[orders_list[0]].status
         elif collect[0] == OrdersConsts.CollectTypes.collect:
             if collect[2] not in all_posred_orders_keys:
                 continue
@@ -259,7 +264,8 @@ def addActivePosredCollects():
 
     easyShip = EasyShipApi()
     eglShipApi = EglShipApi()
-    active_orders = easyShip.get_active_orders()
+    active_orders = eglShipApi.get_active_orders()
+    active_orders.update(easyShip.get_active_orders())
     active_orders.update(eglShipApi.get_active_orders())
     new_orders = DB_Operations.GetNotSeenPosredCollects(posred_ids = list(active_orders.keys()))
     empty_posred_id_orders = DB_Operations.getEmptyPosredIdCollects()
@@ -310,7 +316,8 @@ def updateDirectTrackingStatuses():
     for tracking in active_direct_tracking:
         tracking_info = TrackingSelector.selectTracker(track = tracking[1], type = TrackingTypes.ids[RegexType.regex_track])
         if tracking_info:
-            
+            if tracking[2]:
+                tracking_info.setNotified(notified = 1)
             DB_Operations.updateInsertDirectCollectParcel(collect_id = tracking[0], parcel_info = tracking_info)
             # Посылка прибыла в отделение
             if not tracking[2] and tracking_info.operationAttr in TrackingSelector.selectArrivedStatuses(tracking_info.trackingType):

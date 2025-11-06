@@ -32,7 +32,7 @@ class StoreSelector(StoreSelectorParent):
         elif store_type == OrdersConsts.Stores.yahooAuctions:
             return f'https://page.auctions.yahoo.co.jp/jp/auction/{item_id}'
 
-    def selectStore(self, url, isLiteCalculate = False):
+    def selectStore(self, url, isLiteCalculate = False, isAdmin = False):
         """Определение магазина по заданной ссылке
 
         Args:
@@ -57,7 +57,10 @@ class StoreSelector(StoreSelectorParent):
                 item['endTime'] = yahooApi.getEndTime(item_id)
 
             return ProductInfoClass(**item)
-
+        
+        if not isAdmin and site in OrdersConsts.Stores.bannedStoresJp:
+            return ProductInfoClass(**item)
+        
         if site == OrdersConsts.Stores.mercari:
             if url.find('/shops/') > -1:
                 item = MercariApi.parseMercariShopsPage(url, item_id.split('?')[0])

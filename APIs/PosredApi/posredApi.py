@@ -11,6 +11,8 @@ import re
 
 class PosredApi:
 
+    bank_fee = 0.95
+
     @staticmethod
     def pickRightPosredByOrderType(order_type: OrdersConsts.OrderTypes):
 
@@ -109,7 +111,7 @@ class PosredApi:
         page = requests.get(PosrednikConsts.CURRENCY_USD_API, headers=headers)
         js = json.loads(page.text)
 
-        return js['Valute']['USD']['Value'] + 10
+        return js['Valute']['USD']['Value'] + 11
     
     @staticmethod
     def getCurrentCurrencyRateByUrl(url):
@@ -124,10 +126,8 @@ class PosredApi:
 
         if current_store_name in jpStores:
             return PosredApi.getCurrentCurrencyRate()
-        elif current_store_name in usStores:
-            return PosredApi.getCurrentUSDCurrencyRate()
         else:
-            return PosredApi.getCurrentCurrencyRate()     
+            return PosredApi.getCurrentUSDCurrencyRate()   
 
     @staticmethod
     def getCurrentCurrencyRateByOrderType(order_type):
@@ -184,11 +184,11 @@ class PosredApi:
         """
 
         def commission(price):
-            return 1.3 + price*0.02
+            return PosredApi.bank_fee + price*0.02
 
         return {'key': PosrednikConsts.CURRENCIES.mixed,
-                'value': '1.3$ + 2%',
-                'posredCommission': '1.3 + {}*0.02',
+                'value': f'{PosredApi.bank_fee}$ + 2%',
+                'posredCommission': str(PosredApi.bank_fee) + ' + {}*0.02',
                 'posredCommissionValue': commission}        
     
     @staticmethod
@@ -205,6 +205,6 @@ class PosredApi:
         if order_type == OrdersConsts.OrderTypes.ami:
             return '{}*0,1'
         elif order_type == OrdersConsts.OrderTypes.us:
-            return '{0}*0,1 + {0}*0,02 + 1,3/{1}'
+            return '{0}*0,1 + {0}*0,02 + ' + str(PosredApi.bank_fee) + '/{1}'
         elif order_type == OrdersConsts.OrderTypes.jp:
             return '{0}*0,1 + {0}*0,038'
