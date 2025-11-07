@@ -167,6 +167,81 @@ class StoresApi:
             print(e)
         finally:
             return item
+
+    @staticmethod
+    def getInfoVer2(curl, url, storeName, variant = None, priceForFreeShipment = None, shipmentPrice = None):
+        """Получить инфо из js запроса по шаблону
+
+        Args:
+            curl (string): ссылка на js-скрипт
+            url (string): ссылка на товар
+            storeName (string): название магазина
+            variant (string, optional): вариант товара. Defaults to None.
+            priceForFreeShipment (int, optional): цена заказа для бесплатной доставки. Defaults to None.
+            shipmentPrice (int, optional): цена доставки. Defaults to None.
+
+        Returns:
+            dict: словарь с информацией о товаре
+        """
+
+        headers = WebUtils.getHeader()
+        page = requests.get(curl, headers=headers)
+        js = page.json()
+        item = {}
+        try:
+            if variant:
+                variant_item = [x for x in js['options'] if x['id'] == variant][0]
+                item['itemPrice'] = variant_item['price']
+                if 'featured_image' in variant_item and variant_item['featured_image']:
+                    item['mainPhoto'] = variant_item['featured_image']['src']
+                else:
+                    item['mainPhoto'] = js['images'][0]['url']
+                item['name'] = variant_item['name']
+
+                item['status'] = StoresApi.setItemStatus(item_available = not variant_item['sold_out'])
+
+            else:
+                if len(js['options']) > 1 and js['options'][0]['sold_out'] == True:
+                    item['itemPrice'] = js['options'][-1]['price']
+                else:
+                    item['itemPrice'] = js['price']
+                item['mainPhoto'] = js['images'][0]['url']
+                item['name'] = js['name']
+
+                item['status'] = StoresApi.setItemStatus(item_available = js['status'] == 'active')
+            
+            item['itemPrice'] = float(item['itemPrice'])
+            item['id'] = js['id']
+
+            item['tax'] = 0
+            item['itemPriceWTax'] = 0
+            
+
+            if shipmentPrice is None:
+                if 'shipping' in js and js['shipping']:
+                    item['shipmentPrice'] = [item for item in js['shipping'] if ('country' in item.keys() and item['country']['code'].lower() == 'us')][0]['amount_alone']
+                else:
+                    item['shipmentPrice'] = OrdersConsts.ShipmentPriceType.undefined
+            else:
+                item['shipmentPrice'] = shipmentPrice
+            if priceForFreeShipment is not None:
+                item['priceForFreeShipment'] = priceForFreeShipment
+                item['shipmentPrice'] = OrdersConsts.ShipmentPriceType.free if item['itemPrice'] >= item['priceForFreeShipment'] else item['shipmentPrice']
+                    
+            item['page'] = url
+            item['siteName'] = storeName
+
+            commission = PosredApi.getСommissionForItemUSD()
+
+            format_string = item['itemPrice']
+            format_number = item['itemPrice']
+            item['posredCommission'] = commission['posredCommission'].format(format_string)
+            item['posredCommissionValue'] = commission['posredCommissionValue'](format_number)
+
+        except Exception as e:
+            print(e)
+        finally:
+            return item
     
     @staticmethod
     def parseMattelItem(url):
@@ -409,7 +484,13 @@ class StoresApi:
             else:
                 curl = f'{address}/{product_string}/{item_id}.js'
             try:
-                item = StoresApi.getInfo(curl = curl, variant = variant, url = url, storeName = storeName)
+                params = {
+                    'curl': curl,
+                    'variant': variant,
+                    'url': url,
+                    'storeName': storeName
+                }
+                item = StoresApi.getInfo(**params) if product_string == 'products' else StoresApi.getInfoVer2(**params)
             except Exception as e:
                 print(e)
                 return item
