@@ -1,6 +1,5 @@
-import httplib2
 from googleapiclient import discovery
-from oauth2client.service_account import ServiceAccountCredentials
+from google.oauth2 import service_account
 import APIs.GoogleSheetsApi.API.Cells_Editor as ce
 import json 
 from confings.Consts import PathsConsts
@@ -10,12 +9,14 @@ from traceback import print_exc
 class ParentSheetClass:
 
     def __init__(self):
-        # Service-объект, для работы с Google-таблицами
-        credentials = ServiceAccountCredentials.from_json_keyfile_name(PathsConsts.CREDENTIALS_FILE,
-                                                                       ['https://www.googleapis.com/auth/spreadsheets',
-                                                                        'https://www.googleapis.com/auth/drive'])
-        httpAuth = credentials.authorize(httplib2.Http())
-        self.service = discovery.build('sheets', 'v4', http=httpAuth)
+        credentials = service_account.Credentials.from_service_account_file(
+            PathsConsts.CREDENTIALS_FILE
+        ).with_scopes([
+            'https://www.googleapis.com/auth/spreadsheets',
+            'https://www.googleapis.com/auth/drive'
+        ])
+
+        self.service = discovery.build('sheets', 'v4', credentials=credentials)
         
 
     def renameSheetList(self, sheet_id, title):
@@ -27,6 +28,16 @@ class ParentSheetClass:
         """
 
         self.service.spreadsheets().batchUpdate(spreadsheetId=self.getSpreadsheetId(), body={'requests': ce.updateSheetProperties(spId = sheet_id, newTitle = title)}).execute()
+
+    def deleteNamedRange(self, namedRange):
+        '''
+   
+        :param spId: айди листа в таблице
+        :return:
+        '''
+
+        self.service.spreadsheets().batchUpdate(spreadsheetId=self.getSpreadsheetId(),
+                                                  body={"requests": [ce.deleteNamedRange(name = namedRange)]}).execute()
 
     def changeSheetListIndex(self, sheet_id, new_index):
         """Изменить расположение листа в документе
@@ -120,6 +131,16 @@ class ParentSheetClass:
             sheetInfo[info['properties']['sheetId']] = info['properties']['title']
         
         return sheetInfo
+    
+    def getAllNamedRanges(self):
+        """Получить список всех именованных диапозонов документа
+
+        Returns:
+            list: список строк - всех именованных диапозонов документа
+        """
+
+        result = self.service.spreadsheets().get(spreadsheetId = self.__spreadsheet_id, fields="namedRanges").execute()['namedRanges']
+        return [res['namedRangeId'] for res in result]
     
     def getJsonNamedRange(self, namedRange, typeCalling = 0, valueRenderOption ="FORMULA"):
         '''
