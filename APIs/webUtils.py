@@ -8,6 +8,7 @@ import time
 from pprint import pprint
 import random
 from selenium.common.exceptions import TimeoutException
+from sbvirtualdisplay import Display
 
 class WebUtils:
 
@@ -95,7 +96,11 @@ class WebUtils:
             return False
 
     @staticmethod
-    def getSelenium(isUC = False, proxy = '', wire = True, incognito = True):
+    def getDisplay():
+        return Display(visible=0, size=(1440, 1880))
+
+    @staticmethod
+    def getSelenium(isUC = False, proxy = '', wire = True, incognito = True, block_img = False):
         """получить веб-драйве
 
         Args:
@@ -105,9 +110,17 @@ class WebUtils:
             seleniumwire.webdriver.Chrome: веб-драйвер
         """
         if proxy:
-            return Driver(uc=True, incognito= incognito, proxy = proxy) if isUC else Driver(incognito= incognito, wire=wire, proxy  = proxy)
+            return Driver(uc = True, incognito= incognito, proxy = proxy) if isUC else Driver(incognito= incognito, wire=wire, proxy  = proxy, )
         else:
-            return Driver(uc=True, incognito= incognito) if isUC else Driver(incognito= incognito, wire=wire)
+            params = {
+                'incognito': incognito, 
+                'block_images': block_img, 
+            }
+            if isUC:
+                params['uc'] = True
+            else:
+                params['wire'] = wire
+            return Driver(**params)
     
     @staticmethod
     def getScraperSessoin(session):

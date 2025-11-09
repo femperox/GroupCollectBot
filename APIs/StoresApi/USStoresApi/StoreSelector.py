@@ -7,6 +7,7 @@ from APIs.StoresApi.USStoresApi.AmazonApi import AmazonApi
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from APIs.StoresApi.ProductInfoClass import ProductInfoClass
+from APIs.StoresApi.USStoresApi.EbayApi import EbayApi
 
 class StoreSelector(StoreSelectorParent):
 
@@ -47,10 +48,11 @@ class StoreSelector(StoreSelectorParent):
             item = StoresApi.parseFangamerItem(url = url)
         elif site == OrdersConsts.Stores.mattel:
             item = StoresApi.parseMattelItem(url = url)
-        elif site == OrdersConsts.Stores.gloomybearstore:
-            item = StoresApi.parseGloomyBearItem(url = url)
         elif site == OrdersConsts.Stores.plushwonderland:
             item = StoresApi.parsePlushWonderlandItem(url = url)
+        elif site == OrdersConsts.Stores.ebay:
+            print(url)
+            item = EbayApi.parseEbayItem(url = url)
         else:
             self.url = url
             randmoStoreName = self.getStoreName()

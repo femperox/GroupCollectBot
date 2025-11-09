@@ -8,6 +8,7 @@ from APIs.PosredApi.posredApi import PosredApi
 from _utils.dateUtils import DateUtils
 import requests
 import re
+from random import choice
 
 class StoresApi:
 
@@ -89,8 +90,12 @@ class StoresApi:
             item['siteName'] = storeName
 
             commission = PosredApi.getСommissionForItemUSD()
-            format_string = item['itemPrice']
-            format_number = item['itemPrice']
+            if item['shipmentPrice'] in [OrdersConsts.ShipmentPriceType.free, OrdersConsts.ShipmentPriceType.undefined]:
+                format_string = item['itemPrice']
+                format_number = item['itemPrice']
+            else:
+                format_string = f"( {item['itemPrice']} + {item['shipmentPrice']} )"
+                format_number = item['itemPrice'] + item['shipmentPrice']
             item['posredCommission'] = commission['posredCommission'].format(format_string)
             item['posredCommissionValue'] = commission['posredCommissionValue'](format_number)
 
@@ -157,9 +162,12 @@ class StoresApi:
             item['siteName'] = storeName
 
             commission = PosredApi.getСommissionForItemUSD()
-
-            format_string = item['itemPrice']
-            format_number = item['itemPrice']
+            if item['shipmentPrice'] in [OrdersConsts.ShipmentPriceType.free, OrdersConsts.ShipmentPriceType.undefined]:
+                format_string = item['itemPrice']
+                format_number = item['itemPrice']
+            else:
+                format_string = f"( {item['itemPrice']} + {item['shipmentPrice']} )"
+                format_number = item['itemPrice'] + item['shipmentPrice']
             item['posredCommission'] = commission['posredCommission'].format(format_string)
             item['posredCommissionValue'] = commission['posredCommissionValue'](format_number)
 
@@ -232,9 +240,12 @@ class StoresApi:
             item['siteName'] = storeName
 
             commission = PosredApi.getСommissionForItemUSD()
-
-            format_string = item['itemPrice']
-            format_number = item['itemPrice']
+            if item['shipmentPrice'] in [OrdersConsts.ShipmentPriceType.free, OrdersConsts.ShipmentPriceType.undefined]:
+                format_string = item['itemPrice']
+                format_number = item['itemPrice']
+            else:
+                format_string = f"( {item['itemPrice']} + {item['shipmentPrice']} )"
+                format_number = item['itemPrice'] + item['shipmentPrice']
             item['posredCommission'] = commission['posredCommission'].format(format_string)
             item['posredCommissionValue'] = commission['posredCommissionValue'](format_number)
 
@@ -317,37 +328,7 @@ class StoresApi:
                 item['status'] = OrdersConsts.StoreStatus.pre_order
 
         return item
-    
-    @staticmethod
-    def parseGloomyBearItem(url):
-        """Получение базовой информации о товаре с магазина gloomybear
-
-        Args:
-            url (string): ссылка на товар
-
-        Returns:
-            dict: словарь с информацией о товаре
-        """
-
-        curl = f'https://gloomybearstore.com/products/{url.split("products/")[-1]}.js'
-        item = StoresApi.getInfo(curl = curl, url = url, storeName = OrdersConsts.Stores.gloomybearstore)
-        return item
-    
-    @staticmethod
-    def parseGlitchproductionsItem(url):
-        """Получение базовой информации о товаре с магазина glitchproductions
-
-        Args:
-            url (string): ссылка на товар
-
-        Returns:
-            dict: словарь с информацией о товаре
-        """
-
-        curl = f'https://glitchproductions.store/products/{url.split("products/")[-1]}.js'
-        item = StoresApi.getInfo(curl = curl, url = url, storeName = OrdersConsts.Stores.gloomybearstore)
-        return item
-
+        
     @staticmethod
     def parseBratzItem(url):
         """Получение базовой информации о товаре с магазина bratz
@@ -495,3 +476,7 @@ class StoresApi:
                 print(e)
                 return item
         return item
+
+
+
+
