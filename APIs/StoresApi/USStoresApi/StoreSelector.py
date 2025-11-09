@@ -41,7 +41,7 @@ class StoreSelector(StoreSelectorParent):
         elif site == OrdersConsts.Stores.plushshop:
             item = StoresApi.parsePlushShopItem(url = url, item_id = item_id)
         elif site in [OrdersConsts.Stores.amazon, OrdersConsts.Stores.amazonShort]:
-            item = AmazonApi.parseAmazonItem(url = url, item_id = item_id)
+            item = AmazonApi.parseAmazonItemWProxy(url = url, item_id = item_id)
         elif site == OrdersConsts.Stores.bratz:
             item = StoresApi.parseBratzItem(url = url)
         elif site == OrdersConsts.Stores.fangamer:

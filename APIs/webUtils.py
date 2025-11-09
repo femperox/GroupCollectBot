@@ -9,22 +9,39 @@ from pprint import pprint
 import random
 from selenium.common.exceptions import TimeoutException
 from sbvirtualdisplay import Display
+from confings.Consts import Proxy
+import httpx
+from random import choice
 
 class WebUtils:
 
     @staticmethod
-    def getHeader():
+    def getHeader(isExtendedHeader = False):
         """Установка заголовков для запросов
 
         Returns:
             dict: основные настройки заголовков
         """
-
-        headers = {
-            'User-Agent': LINUX_USER_AGENT,
-            'Content-Type': 'application/json, text/plain, */*',
-            'x-platform': 'web',
-        }
+        if isExtendedHeader:
+            headers = {
+                'accept': 'application/json',
+                'access-control-allow-credentials': 'true',
+                'access-control-allow-origin': '*',
+                'content-type': 'application/json',
+                'priority': 'u=1, i',
+                'sec-ch-ua': '"Not)A;Brand";v="8", "Chromium";v="138"',
+                'sec-ch-ua-mobile': '?0',
+                'sec-fetch-dest': 'empty',
+                'sec-fetch-mode': 'cors',
+                'sec-fetch-site': 'same-site',
+                'user-agent': LINUX_USER_AGENT
+            }
+        else:
+            headers = {
+                'User-Agent': LINUX_USER_AGENT,
+                'Content-Type': 'application/json, text/plain, */*',
+                'x-platform': 'web',
+            }
 
         return headers
     
@@ -201,4 +218,34 @@ class WebUtils:
         if cleaned_url.find('/ref=') > -1:
             cleaned_url = cleaned_url.split('/ref=')[0]        
         return cleaned_url
+    
+    @staticmethod
+    def getRandomPrivateProxy() -> Proxy.ProxyItem:
+        """Получить случайный приватный прокси
+
+        Returns:
+            Proxy.ProxyItem: прокси
+        """
+        return choice(Proxy.proxies_list)
+    
+    @staticmethod
+    def getHttpxClient(isPrivateProxy = False, customHeaders = None, isExtendedHeader = False) -> httpx.Client:
+        """Получить httpx-клиент
+
+        Args:
+            isPrivateProxy (bool, optional): флаг приватного прокси. Defaults to False.
+            customHeaders (_type_, optional): кастомные заголовки. Defaults to None.
+
+        Returns:
+            httpx.Client: httpx-клиент
+        """
+
+        headers = customHeaders if customHeaders else WebUtils.getHeader(isExtendedHeader = isExtendedHeader)
+        proxy = WebUtils.getRandomPrivateProxy() if isPrivateProxy else None
+        if proxy:
+            proxy = proxy.http_url
+        client = httpx.Client(headers=headers, proxy = proxy, follow_redirects=True)
+        return client
+
+
     
