@@ -127,6 +127,36 @@ class EglShipApi:
 
         return orders_info
     
+    def get_parcel_orders(self, parcel_id):
+        """Получить заказы из посылки
+
+        Args:
+            parcel_id (string or int): id посылки
+
+        Returns:
+            list[string]: список id
+        """
+        if not self.session:
+            print('Сессия пуста')
+            return []
+        curl = f'https://eglship.us/api/pa/outgoing-item'
+
+        payload = {
+            "id": parcel_id,
+        }
+        response = self.session.get(curl, params=payload)
+        parcel = response.json()
+
+        if not parcel or 'items' not in parcel:
+            print('Информация по заказам отсуствует')
+            return []
+        
+        order_ids_list = []
+        for item in parcel['items']:
+            order_ids_list.append(item['id'])
+
+        return order_ids_list
+    
     def get_active_orders(self):
         """Получить все активные заказы
 

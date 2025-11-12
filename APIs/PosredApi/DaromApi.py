@@ -15,6 +15,7 @@ class DaromApi:
         procurement = 'закупка товаров'
         shipped = 'ожидание прихода на склад'
         shipping_soon = 'ожидание отправки продавцом'
+        waiting_for_accept_at_warehouse = 'приёмка на складе'
         at_warehouse = 'товар на складе'
         cancelled = 'заказ отменен'
 
@@ -31,7 +32,7 @@ class DaromApi:
 
             if status in [DaromApi.DaromOrderStatus.procurement, DaromApi.DaromOrderStatus.shipping_soon]:
                 return OrdersConsts.OrderStatus.procurement
-            elif status in [DaromApi.DaromOrderStatus.shipped]:
+            elif status in [DaromApi.DaromOrderStatus.shipped, DaromApi.DaromOrderStatus.waiting_for_accept_at_warehouse]:
                 return OrdersConsts.OrderStatus.shipped_JP
             elif status in [DaromApi.DaromOrderStatus.cancelled]:
                 return OrdersConsts.OrderStatus.cancelled

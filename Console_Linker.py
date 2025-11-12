@@ -317,7 +317,7 @@ def createTableTopic(post_url, site_url ='', spId=0, topic_id=0, items=0, img_ur
         item = store_selector.selectStore(url = site_url, isAdmin = True)
         if len(img_url) == 0:
             img_url = item.mainPhoto
-    
+
     #-- пытаемся найти заказ у посредника
     posred_info = PosredOrderInfoClass()
     if item.country == OrdersConsts.OrderTypes.jp: # на текущий момент нужно только для Яп заказов
@@ -351,12 +351,12 @@ def createTableTopic(post_url, site_url ='', spId=0, topic_id=0, items=0, img_ur
     collect_table.createTable(spId, namedRange, participants = items, image = topicInfo[1][0], item = item, posredInfo = posred_info)
 
     collect_table.updateTable(namedRange, transformToTableFormat(participantsList), topicInfo[0])
-
+    
     DB_Operations.updateCollectSelector(collectId = collect_id, sheet_or_range = namedRange,
                                         topic_id = topicInfo[2]['topic_id'], comment_id = topicInfo[2]['comment_id'],
                                         posred_id = posred_info.posred_id)
     updateParticipantDB(participantList = participantsList, collectId = namedRange.replace('D', '').replace('nd', '').replace('ollect', ''))
-
+    
 def ShipmentToRussiaEvent(orderList, toSpId = ''):
     """Активирует переброс лота с одного листа на другой
 

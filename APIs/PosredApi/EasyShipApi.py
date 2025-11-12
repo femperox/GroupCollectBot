@@ -61,7 +61,7 @@ class EasyShipApi:
             login_response = session.post(
                 auth_url,
                 json=payload,
-                verify=certifi.where() 
+                verify=False#certifi.where() 
             )
 
             if login_response.json()['status'] == 'donelogged':
@@ -100,7 +100,7 @@ class EasyShipApi:
             if payload:
                 payload_dict = {"inOutFilter": payload}
             if payload_dict:
-                response = self.session.post(url = url, json = payload_dict)
+                response = self.session.post(url = url, json = payload_dict, verify=False)#certifi.where() )
                 return response.json()
             else:
                 return {}
@@ -133,7 +133,7 @@ class EasyShipApi:
                                             "table": table,
                                             "value": {}}}
                 if payload_dict:
-                    response = self.session.post(url = url, json = payload_dict)
+                    response = self.session.post(url = url, json = payload_dict, verify=False)#certifi.where() )
                     return response.json()
                 else:
                     return {}

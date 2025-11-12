@@ -213,14 +213,14 @@ def updateActivePosredCollects():
     """
     all_collects = DB_Operations.getAllActivePosredCollects()
     darom = DaromApi()
-    easyShipApi = EasyShipApi()
+    #easyShipApi = EasyShipApi()
     eglShipApi = EglShipApi()
     darom_orders = darom.get_active_orders(pages = 650)
     egl_orders = eglShipApi.get_active_orders()
-    es_orders = easyShipApi.get_active_orders()
+    #es_orders = easyShipApi.get_active_orders()
 
     all_posred_orders_keys = list(darom_orders.keys())
-    all_posred_orders_keys.extend(list(es_orders.keys()))
+    #all_posred_orders_keys.extend(list(es_orders.keys()))
     all_posred_orders_keys.extend(list(egl_orders.keys()))
     
     for collect in all_collects:
@@ -232,7 +232,8 @@ def updateActivePosredCollects():
                 if posred == PosrednikConsts.DaromJp:
                     current_orders_list = darom_orders
                 elif posred == PosrednikConsts.EasyShip:
-                    current_orders_list = es_orders
+                    pass
+                    #current_orders_list = es_orders
                 elif posred == PosrednikConsts.EglShip:
                     current_orders_list = egl_orders
                 if len(set(current_orders_list[key].status for key in current_orders_list if key in orders_list)) == 1:
@@ -244,7 +245,8 @@ def updateActivePosredCollects():
             if posred == PosrednikConsts.DaromJp:
                 order_info = darom_orders[collect[2]]
             elif posred == PosrednikConsts.EasyShip:
-                order_info = es_orders[collect[2]]
+                pass
+                #order_info = es_orders[collect[2]]
             elif posred == PosrednikConsts.EglShip:
                 order_info = egl_orders[collect[2]]
             order_info_status = order_info.status
@@ -262,10 +264,10 @@ def addActivePosredCollects():
     """Добавить к заказам номер у посреда
     """
 
-    easyShip = EasyShipApi()
+    #easyShip = EasyShipApi()
     eglShipApi = EglShipApi()
     active_orders = eglShipApi.get_active_orders()
-    active_orders.update(easyShip.get_active_orders())
+    #active_orders.update(easyShip.get_active_orders())
     active_orders.update(eglShipApi.get_active_orders())
     new_orders = DB_Operations.GetNotSeenPosredCollects(posred_ids = list(active_orders.keys()))
     empty_posred_id_orders = DB_Operations.getEmptyPosredIdCollects()
