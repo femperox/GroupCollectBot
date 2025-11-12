@@ -121,7 +121,7 @@ class StoresApi:
         """
 
         headers = WebUtils.getHeader()
-        page = requests.get(curl, headers=headers)
+        page = requests.get(curl, headers=headers, verify = False)
         js = page.json()
         item = {}
         try:

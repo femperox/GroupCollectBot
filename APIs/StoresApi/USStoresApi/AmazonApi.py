@@ -192,7 +192,6 @@ class AmazonApi:
         Returns:
             float: цена-число
         """
-
         return float(price_string.replace('$', '').replace(',', '').strip())
 
     def loadDynamicList(url):
@@ -273,7 +272,8 @@ class AmazonApi:
                     item['itemPrice'] = AmazonApi.cleanPrice(price.text)
                 suposedShipment = soup.find('span', {'data-csa-c-delivery-benefit-program-id': 'paid_shipping'})
                 if suposedShipment:
-                    item['shipmentPrice'] = AmazonApi.cleanPrice(suposedShipment.get('data-csa-c-delivery-price'))
+                    price = suposedShipment.get('data-csa-c-delivery-price') 
+                    item['shipmentPrice'] = OrdersConsts.ShipmentPriceType.free if price == 'FREE' else AmazonApi.cleanPrice(suposedShipment.get('data-csa-c-delivery-price'))
                 else:
                     item['shipmentPrice'] = OrdersConsts.ShipmentPriceType.free if item['itemPrice'] >= AmazonApi.freeDeliveryPrice else OrdersConsts.ShipmentPriceType.undefined
             else:

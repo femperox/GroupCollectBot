@@ -220,13 +220,13 @@ class WebUtils:
         return cleaned_url
     
     @staticmethod
-    def getRandomPrivateProxy() -> Proxy.ProxyItem:
+    def getRandomPrivateProxy(country:Proxy.ProxyCountry = Proxy.ProxyCountry.us) -> Proxy.ProxyItem:
         """Получить случайный приватный прокси
 
         Returns:
             Proxy.ProxyItem: прокси
         """
-        return choice(Proxy.proxies_list)
+        return choice([proxie_item for proxie_item in Proxy.proxies_list if proxie_item.country == country])
     
     @staticmethod
     def getHttpxClient(isPrivateProxy = False, customHeaders = None, isExtendedHeader = False) -> httpx.Client:

@@ -14,8 +14,8 @@ class StoreSelectorParent:
         :return:
         '''
         name = re.findall(RegexType.regex_store_url, self.url)[0][2:-1]
-        name = name.replace('jp','').replace('com','').replace('www', '').replace('co', '').replace('order.', '').replace('.','').replace('net', '')
-        name = name.replace('us', '').replace('uk', '')
+        name = name.replace('.uk', '').replace('.us', '').replace('jp','').replace('com','').replace('www', '').replace('co', '')
+        name = name.replace('order.', '').replace('.','').replace('net', '')
         return name
     
     
