@@ -51,8 +51,9 @@ class StoreSelector(StoreSelectorParent):
         elif site == OrdersConsts.Stores.plushwonderland:
             item = StoresApi.parsePlushWonderlandItem(url = url)
         elif site == OrdersConsts.Stores.ebay:
-            print(url)
             item = EbayApi.parseEbayItem(url = url)
+        elif site == OrdersConsts.Stores.hottopic:
+            item = StoresApi.parseHotTopicItem(url = url)
         else:
             self.url = url
             randmoStoreName = self.getStoreName()

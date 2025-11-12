@@ -31,18 +31,15 @@ def pickRightStoreSelector(url, payloadCountry = None):
     store_selector.url = url
     current_store_name = store_selector.getStoreName()
 
-    jpStores = formShortList(OrdersConsts.Stores.availableStoreJp)
-    usStores = formShortList(OrdersConsts.Stores.availableStoreUS)
-
-    if current_store_name in jpStores:
-        return store_selector
-    elif current_store_name in usStores:
+    if payloadCountry == VkConsts.PayloadPriceCheckCountry.us:
         return store_selector_us
-    else: 
-        if payloadCountry == VkConsts.PayloadPriceCheckCountry.us:
-            return store_selector_us
-        else:
+    elif payloadCountry == VkConsts.PayloadPriceCheckCountry.jpy: 
+        return store_selector
+    else:
+        if current_store_name in OrdersConsts.Stores.JpStores:
             return store_selector
+        else:
+            return store_selector_us
 
 def getChar(char, step):
     """Получить след символ

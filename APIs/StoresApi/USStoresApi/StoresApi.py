@@ -476,6 +476,61 @@ class StoresApi:
                 print(e)
                 return item
         return item
+    
+    def parseHotTopicItem(url):
+        """Получение базовой информации о товаре с магазина hottopic
+
+        Args:
+            url (string): ссылка на товар
+
+        Returns:
+            dict: словарь с информацией о товаре
+        """
+
+        httpxClient = WebUtils.getHttpxClient(isPrivateProxy=True, isExtendedHeader=True) 
+        page = httpxClient.get(url)
+        item = {}
+        try:
+            soup = WebUtils.getSoup(rawText = page.text)
+            js = soup.find('script', type='application/ld+json').text
+            js = json.loads(js)[0]
+
+            if 'hasVariant' in js:
+                first_avail = None
+                for variant in js['hasVariant']:
+                    if 'OnlineOnly' in variant['offers']['availability']:
+                        first_avail = variant
+                        break
+                item['itemPrice'] = float(first_avail['offers']['price'])
+                item['mainPhoto'] = first_avail['image']
+                item['status'] = OrdersConsts.StoreStatus.in_stock if 'OnlineOnly' in first_avail['offers']['availability'] else OrdersConsts.StoreStatus.sold 
+                item['id'] = first_avail['sku']
+            else:
+                item['itemPrice'] = float(js['offers']['price'])
+                item['mainPhoto'] = js['image'][0]
+                item['status'] = OrdersConsts.StoreStatus.in_stock if 'OnlineOnly' in js['offers']['availability'] else OrdersConsts.StoreStatus.sold 
+                item['id'] = js['sku']
+            item['page'] = js['@id']
+            item['name'] = js['name']
+
+            item['priceForFreeShipment'] = 75
+            item['shipmentPrice'] = OrdersConsts.ShipmentPriceType.free if item['itemPrice'] >= item['priceForFreeShipment'] else 7.99
+            item['siteName'] = OrdersConsts.Stores.hottopic
+
+            commission = PosredApi.getСommissionForItemUSD()
+            if item['shipmentPrice'] in [OrdersConsts.ShipmentPriceType.free, OrdersConsts.ShipmentPriceType.undefined]:
+                format_string = item['itemPrice']
+                format_number = item['itemPrice']
+            else:
+                format_string = f"( {item['itemPrice']} + {item['shipmentPrice']} )"
+                format_number = item['itemPrice'] + item['shipmentPrice']
+            item['posredCommission'] = commission['posredCommission'].format(format_string)
+            item['posredCommissionValue'] = commission['posredCommissionValue'](format_number)
+
+        except Exception as e:
+            pprint(e)
+        finally:
+            return item
 
 
 
