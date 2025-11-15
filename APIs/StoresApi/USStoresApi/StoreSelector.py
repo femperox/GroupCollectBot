@@ -54,6 +54,8 @@ class StoreSelector(StoreSelectorParent):
             item = EbayApi.parseEbayItem(url = url)
         elif site == OrdersConsts.Stores.hottopic:
             item = StoresApi.parseHotTopicItem(url = url)
+        elif site == OrdersConsts.Stores.target:
+            item = StoresApi.parseTargetItem(item_id = item_id)
         else:
             self.url = url
             randmoStoreName = self.getStoreName()

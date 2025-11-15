@@ -3,12 +3,13 @@ from pprint import pprint
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 import json
-from confings.Consts import OrdersConsts
+from confings.Consts import OrdersConsts, PosrednikConsts
 from APIs.PosredApi.posredApi import PosredApi
 from _utils.dateUtils import DateUtils
 import requests
 import re
 from random import choice
+import time
 
 class StoresApi:
 
@@ -530,8 +531,93 @@ class StoresApi:
         except Exception as e:
             pprint(e)
         finally:
+            httpxClient.close()
             return item
+        
+    def parseTargetItem(item_id):
+        """Получение базовой информации о товаре с магазина target
 
+        Args:
+            item_id (string): id товара
+
+        Returns:
+            dict: словарь с информацией о товаре
+        """
+
+        shipping_curl = 'https://redsky.target.com/redsky_aggregations/v1/web/product_fulfillment_and_variation_hierarchy_v1'
+        product_curl = 'https://redsky.target.com/redsky_aggregations/v1/web/pdp_client_v1'
+        
+        variant = None
+        item_id_cleaned = item_id.split('#')[0].split('A-')[-1]
+        if '?preselect=' in item_id_cleaned:
+            item_id_cleaned, variant = item_id_cleaned.split('?preselect=')
+
+        payload = {
+            'is_bot': 'false',
+            'tcin': item_id_cleaned,
+            'key': '9f36aeafbe60771e321a7cc95a78140772ab3e96',
+            'pricing_store_id': 61
+        }
+
+        shipping_payload = payload.copy()
+        shipping_payload['zip'] = PosrednikConsts.USA_DELIVERY_INDEX
+        shipping_payload['state'] = PosrednikConsts.USA_DELIVERY_STATE    
+        httpxClient = WebUtils.getHttpxClient(isPrivateProxy=True, isExtendedHeader=True) 
+
+        item = {}
+        try:
+            time.sleep(1)
+            shipment_page = httpxClient.get(url = shipping_curl, params = payload)
+            shipment_js = shipment_page.json()
+
+            if not shipment_js:
+                return item
+            
+            shipment_js = shipment_js['data']['product']
+            if 'children' in shipment_js:
+                if variant is None:
+                    variant = [shipment_item['tcin'] for shipment_item in shipment_js['children'] if shipment_item['fulfillment']['shipping_options']['availability_status'] != 'OUT_OF_STOCK'][0]
+                    if not variant:
+                        return item
+                shipment_js = [shipment_item for shipment_item in shipment_js['children'] if variant == shipment_item['tcin']][0]
+            
+            if shipment_js['fulfillment']['shipping_options']['availability_status'] in ['PRE_ORDER_UNSELLABLE', 'OUT_OF_STOCK']:
+                return item
+            
+            page = httpxClient.get(url = product_curl, params = payload)
+            js = page.json()
+            if not js:
+                return item
+            js = js['data']['product']
+            if 'children' in js:
+                js = [js_item for js_item in js['children'] if variant == js_item['tcin']][0]
+            item['itemPrice'] = js['price']['current_retail']
+            item['id'] = js['tcin']
+            item['name'] = js['item']['product_description']['title']
+            item['mainPhoto'] = js['item']['enrichment']['image_info']['primary_image']['url'] +'?wid=600'
+            item['page'] = js['item']['enrichment']['buy_url']
+            
+            item['status'] = OrdersConsts.StoreStatus.pre_order if shipment_js['fulfillment']['shipping_options']['availability_status'] == 'PRE_ORDER_SELLABLE' else OrdersConsts.StoreStatus.in_stock
+
+            item['priceForFreeShipment'] = 35
+            item['shipmentPrice'] = shipment_js['pay_per_order_charges']['scheduled_delivery'] if shipment_js['pay_per_order_charges'] else OrdersConsts.ShipmentPriceType.undefined
+            item['shipmentPrice'] = OrdersConsts.ShipmentPriceType.free if item['itemPrice'] >= item['priceForFreeShipment'] else item['shipmentPrice']
+
+            commission = PosredApi.getСommissionForItemUSD()
+            if item['shipmentPrice'] in [OrdersConsts.ShipmentPriceType.free, OrdersConsts.ShipmentPriceType.undefined]:
+                format_string = item['itemPrice']
+                format_number = item['itemPrice']
+            else:
+                format_string = f"( {item['itemPrice']} + {item['shipmentPrice']} )"
+                format_number = item['itemPrice'] + item['shipmentPrice']
+            item['posredCommission'] = commission['posredCommission'].format(format_string)
+            item['posredCommissionValue'] = commission['posredCommissionValue'](format_number)
+        except Exception as e:
+            pprint(e)
+        finally:
+            httpxClient.close()
+            return item
+        
 
 
 
