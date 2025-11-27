@@ -20,6 +20,7 @@ from APIs.TrackingAPIs.TrackInfoClass import TrackInfoClass
 from APIs.StoresApi.JpStoresApi.StoreSelector import StoreSelector
 from APIs.VkApi.objects.VkButtons import VkButtons
 from APIs.VkApi.objects.VkParams import VkParams
+from APIs.webUtils import WebUtils
 import time
 
 class VkApi:
@@ -762,9 +763,9 @@ class VkApi:
 
                         url = event.obj.message['text']
                         try:
-                            url = re.findall(RegexType.regex_store_url_bot, url)[0]  
+                            url = WebUtils.cleanUrl(re.findall(RegexType.regex_store_url_bot, url)[0])
                             messText, pic = Messages.formPriceMes(url = url, country = selected_country)
-                            payload = event.obj.message['text'].split('/?')[0].split('/ref=')[0]
+                            payload = WebUtils.cleanUrl(event.obj.message['text'])
                             self.sendMes(mess = messText, users = chat, keyboard = VkButtons.form_menu_buttons(isAddButton = True, buttonPayloadText = payload), pic = [pic] if pic else [])
                             logger_utils.info(f"""[CHECK_PRICE] - Расчитана цена для пользователя {self.get_name(id = sender)} товара [{url}]""")
                         except Exception as e:
@@ -909,7 +910,7 @@ class VkApi:
         except Exception as e:
             print_exc()        
 
-    def edit_wall_post(self, mess, post_id):
+    def edit_wall_post(self, mess, post_id, signed = None, publish_date = None, attachments = None):
         """изменить запись на стене
 
         Args:
@@ -920,7 +921,10 @@ class VkApi:
         try:
             self.vk.wall.edit(**VkParams.getWallEditPostParams(owner_id = f'-{self.__group_id}',
                                                                post_id = post_id,
-                                                               message = mess))
+                                                               message = mess,
+                                                               signed = signed,
+                                                               publish_date = publish_date,
+                                                               attachments = attachments))
         except Exception as e:
             print_exc()
 
