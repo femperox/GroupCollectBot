@@ -79,10 +79,9 @@ class StoreApi:
         page = httpxClient.get(url)
         soup = WebUtils.getSoup(rawText = page.text, parser= WebUtils.Bs4Parsers.htmlParser)
         httpxClient.close()
-
         item = {}
         try:
-            js = soup.findAll('script', type='application/ld+json')[1]
+            js = soup.findAll('script', type='application/ld+json')[-1]
             js = json.loads(js.text) 
 
             item['id'] = js['sku']
@@ -93,7 +92,6 @@ class StoreApi:
             item['shipmentPrice'] = OrdersConsts.ShipmentPriceType.undefined
             item['page'] = js['offers']['url']
             item['siteName'] = OrdersConsts.Stores.toranoana
-
         except Exception as e:
             pprint(e)
         finally:

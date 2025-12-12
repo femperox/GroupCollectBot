@@ -83,7 +83,7 @@ class StoreSelector(StoreSelectorParent):
             item = ssa.parseSuruga(url = url)
         elif OrdersConsts.Stores.booth in site:
             item = sa.parseBooth(url = url)
-        elif site == OrdersConsts.Stores.toranoana:
+        elif OrdersConsts.Stores.toranoana in site:
             item = sa.parseToranoana(url = url)
         
         item = ProductInfoClass(**item)
