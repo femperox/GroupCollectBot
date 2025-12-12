@@ -8,6 +8,7 @@ from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from APIs.StoresApi.ProductInfoClass import ProductInfoClass
 from APIs.StoresApi.USStoresApi.EbayApi import EbayApi
+from APIs.StoresApi.USStoresApi.EtsyApi import EtsyApi
 
 class StoreSelector(StoreSelectorParent):
 
@@ -21,45 +22,47 @@ class StoreSelector(StoreSelectorParent):
             dict: информация о товаре по заданной ссылке
         """
         self.url = url
-        site = self.getStoreName()
+        self.site = self.getStoreName()
         item_id = self.getItemID()
         item = {}
         if isLiteCalculate:
-            item['siteName'] = site
+            item['siteName'] = self.site
             item['id'] = item_id
             item['page'] = url
 
             return ProductInfoClass(**item)
-        if not isAdmin and site in OrdersConsts.Stores.bannedStoresUs:
+        if not isAdmin and self.isBannedShop(shop_list = OrdersConsts.Stores.bannedStoresUs):
             return ProductInfoClass(**item)
         
-        if site == OrdersConsts.Stores.makeship:
+        if self.site == OrdersConsts.Stores.makeship:
             item = StoresApi.parseMakeshipItem(url = url)
-        elif site == OrdersConsts.Stores.youtooz:
+        elif self.site == OrdersConsts.Stores.youtooz:
             item = YoutoozApi.parseYoutoozItem(url = url)
-        elif site == OrdersConsts.Stores.plushshop:
+        elif self.site == OrdersConsts.Stores.plushshop:
             item = StoresApi.parsePlushShopItem(url = url, item_id = item_id)
-        elif site in [OrdersConsts.Stores.amazon, OrdersConsts.Stores.amazonShort]:
+        elif self.site in [OrdersConsts.Stores.amazon, OrdersConsts.Stores.amazonShort]:
             item = AmazonApi.parseAmazonItemWProxy(url = url, item_id = item_id)
-        elif site == OrdersConsts.Stores.bratz:
+        elif self.site == OrdersConsts.Stores.bratz:
             item = StoresApi.parseBratzItem(url = url)
-        elif site == OrdersConsts.Stores.fangamer:
+        elif self.site == OrdersConsts.Stores.fangamer:
             item = StoresApi.parseFangamerItem(url = url)
-        elif site == OrdersConsts.Stores.mattel:
+        elif self.site == OrdersConsts.Stores.mattel:
             item = StoresApi.parseMattelItem(url = url)
-        elif site == OrdersConsts.Stores.plushwonderland:
+        elif self.site == OrdersConsts.Stores.plushwonderland:
             item = StoresApi.parsePlushWonderlandItem(url = url)
-        elif site == OrdersConsts.Stores.ebay:
+        elif self.site == OrdersConsts.Stores.ebay:
             item = EbayApi.parseEbayItem(url = url)
-        elif site == OrdersConsts.Stores.hottopic:
+        elif self.site == OrdersConsts.Stores.hottopic:
             item = StoresApi.parseHotTopicItem(url = url)
-        elif site == OrdersConsts.Stores.target:
+        elif self.site == OrdersConsts.Stores.target:
             item = StoresApi.parseTargetItem(item_id = item_id)
+        elif self.site == OrdersConsts.Stores.etsy:
+            item = EtsyApi.parseEtsy(url = url)
         else:
             self.url = url
             randmoStoreName = self.getStoreName()
             item = StoresApi.parseJsonRandomStoreItem(url = url, storeName = randmoStoreName)
         
         item = ProductInfoClass(**item)
-        item.set_country(country = OrdersConsts.OrderTypes.user if site in OrdersConsts.Stores.ship_to_russia else OrdersConsts.OrderTypes.us)
+        item.set_country(country = OrdersConsts.OrderTypes.user if self.site in OrdersConsts.Stores.ship_to_russia else OrdersConsts.OrderTypes.us)
         return item

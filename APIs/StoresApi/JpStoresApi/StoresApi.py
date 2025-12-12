@@ -67,6 +67,10 @@ class StoreApi:
             item['shipmentPrice'] = OrdersConsts.ShipmentPriceType.undefined
             item['page'] = js['url']
             item['siteName'] = OrdersConsts.Stores.booth
+                    
+            commission = PosredApi.getСommissionForItem(item['page'])
+            item['posredCommission'] = commission['posredCommission'].format(item['itemPrice'])
+            item['posredCommissionValue'] = commission['posredCommissionValue'](item['itemPrice'])
 
         except Exception as e:
             pprint(e)
@@ -92,6 +96,11 @@ class StoreApi:
             item['shipmentPrice'] = OrdersConsts.ShipmentPriceType.undefined
             item['page'] = js['offers']['url']
             item['siteName'] = OrdersConsts.Stores.toranoana
+
+            commission = PosredApi.getСommissionForItem(item['page'])
+            item['posredCommission'] = commission['posredCommission'].format(item['itemPrice'])
+            item['posredCommissionValue'] = commission['posredCommissionValue'](item['itemPrice'])
+            
         except Exception as e:
             pprint(e)
         finally:

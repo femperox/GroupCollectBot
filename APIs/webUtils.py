@@ -148,7 +148,7 @@ class WebUtils:
             seleniumwire.webdriver.Chrome: веб-драйвер
         """
         if proxy:
-            return Driver(uc = True, incognito= incognito, proxy = proxy) if isUC else Driver(incognito= incognito, wire=wire, proxy  = proxy, )
+            return Driver(uc = True, incognito = incognito, proxy = proxy) if isUC else Driver(incognito = incognito, wire = wire, proxy  = proxy, )
         else:
             params = {
                 'incognito': incognito, 
@@ -233,17 +233,25 @@ class WebUtils:
             stirng: очищенная ссылка
         """
 
+        def is_variation(url):
+
+            return not '?variant=' in url and not '?preselect=' in url and not '?scode=' in url and not '?gcode=' in url and not '?variation0' in url
+
         cleaned_url = url
-        if cleaned_url.find('/?') > -1 and not '?variant=' in cleaned_url and not '?preselect=' in cleaned_url and not '?scode=' in cleaned_url and not '?gcode=' in cleaned_url:
+        if cleaned_url.find('/?') > -1 and is_variation(url):
             cleaned_url = cleaned_url.split('/?')[0]
         if cleaned_url.find('/ref=') > -1:
-            cleaned_url = cleaned_url.split('/ref=')[0]     
+            cleaned_url = cleaned_url.split('/ref=')[0]
+        if cleaned_url.find('?ref=') > -1:
+            cleaned_url = cleaned_url.split('?ref=')[0]       
         if cleaned_url.find('#lnk=') > -1:
             cleaned_url = cleaned_url.split('#lnk=')[0]     
         if cleaned_url.find('?_trkparms') > -1:
             cleaned_url = cleaned_url.split('?_trkparms')[0]
         if cleaned_url.find('?_ul') > -1:
             cleaned_url = cleaned_url.split('?_ul')[0]
+        if cleaned_url.find('?ls') > -1:
+            cleaned_url = cleaned_url.split('?ls')[0]
         return cleaned_url
     
     @staticmethod

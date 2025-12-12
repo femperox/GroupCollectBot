@@ -5,6 +5,7 @@ from APIs.StoresApi.ProductInfoClass import ProductInfoClass
 class StoreSelectorParent:
 
     url = ''
+    site = ''
 
     def getStoreName(self):
         '''
@@ -18,6 +19,18 @@ class StoreSelectorParent:
         name = name.replace('order.', '').replace('.','').replace('net', '')
         return name
     
+    def isBannedShop(self, shop_list) -> bool:
+        """Проверка доступности магазина
+
+        Args:
+            shop_list (List[str]): список запрещённых магазиноы
+
+        Returns:
+            bool: результат проверки
+        """
+
+
+        return any(shop in self.site for shop in shop_list)
     
     def getItemID(self):
         """Получить id товара в магазине

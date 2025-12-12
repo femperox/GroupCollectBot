@@ -616,8 +616,7 @@ class StoresApi:
             pprint(e)
         finally:
             httpxClient.close()
-            return item
-        
+            return item       
 
 
 

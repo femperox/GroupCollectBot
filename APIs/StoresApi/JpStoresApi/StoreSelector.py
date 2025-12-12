@@ -44,46 +44,46 @@ class StoreSelector(StoreSelectorParent):
         yahooApi = ya()
 
         self.url = url
-        site = self.getStoreName()
+        self.site = self.getStoreName()
         item_id = self.getItemID()
         item = {}
 
         if isLiteCalculate:
-            item['siteName'] = site
+            item['siteName'] = self.site
             item['id'] = item_id
             item['page'] = url
 
-            if site in [OrdersConsts.Stores.yahooAuctions, OrdersConsts.Stores.yahooAuctionsShort]:
+            if self.site in [OrdersConsts.Stores.yahooAuctions, OrdersConsts.Stores.yahooAuctionsShort]:
                 item['endTime'] = yahooApi.getEndTime(item_id)
 
             return ProductInfoClass(**item)
         
-        if not isAdmin and site in OrdersConsts.Stores.bannedStoresJp:
+        if not isAdmin and self.isBannedShop(shop_list = OrdersConsts.Stores.bannedStoresJp):
             return ProductInfoClass(**item)
         
-        if site == OrdersConsts.Stores.mercari:
+        if self.site == OrdersConsts.Stores.mercari:
             if url.find('/shops/') > -1:
                 item = MercariApi.parseMercariShopsPage(url, item_id.split('?')[0])
             else:
                 item = MercariApi.parseMercariPage(url, item_id)
-        elif site == OrdersConsts.Stores.payPay:
+        elif self.site == OrdersConsts.Stores.payPay:
             item = ssa.parsePayPay(url, item_id)
-        elif site in [OrdersConsts.Stores.yahooAuctions, OrdersConsts.Stores.yahooAuctionsShort]:  
+        elif self.site in [OrdersConsts.Stores.yahooAuctions, OrdersConsts.Stores.yahooAuctionsShort]:  
             item = yahooApi.getAucInfo(id = item_id)
-        elif site == OrdersConsts.Stores.amiAmi:
+        elif self.site == OrdersConsts.Stores.amiAmi:
             if url.find('/eng/')>0:
                 item = AmiAmiApi.parseAmiAmiEng(url, item_id)
             else:
                 item = AmiAmiApi.parseAmiAmiJp(url, item_id)  
-        elif site == OrdersConsts.Stores.mandarake:
+        elif self.site == OrdersConsts.Stores.mandarake:
             item = ssa.parseMandarake(url, item_id)
-        elif site == OrdersConsts.Stores.animate:
+        elif self.site == OrdersConsts.Stores.animate:
             item = sa.parseAnimate(item_id)
-        elif site == OrdersConsts.Stores.suruga:
+        elif self.site == OrdersConsts.Stores.suruga:
             item = ssa.parseSuruga(url = url)
-        elif OrdersConsts.Stores.booth in site:
+        elif OrdersConsts.Stores.booth in self.site:
             item = sa.parseBooth(url = url)
-        elif OrdersConsts.Stores.toranoana in site:
+        elif OrdersConsts.Stores.toranoana in self.site:
             item = sa.parseToranoana(url = url)
         
         item = ProductInfoClass(**item)
