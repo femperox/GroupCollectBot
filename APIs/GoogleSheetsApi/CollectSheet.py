@@ -142,7 +142,7 @@ class CollectSheet(ParentSheetClass):
             data.append(ce.insertValue(spId, ran, collect_picture_url))
  
             # Ссылка на сообщество
-            collect_url = f'''=HYPERLINK("https://vk.com/club{collect['groupId']}"; "{collect['groupName']}")'''
+            collect_url = f'''=HYPERLINK("https://vk.com/club{collect['groupId']}"; "{collect['groupName'].replace('"', "'")}")'''
             ran = ran.replace("!A", "!B")
             data.append(ce.insertValue(spId, ran, collect_url))
 

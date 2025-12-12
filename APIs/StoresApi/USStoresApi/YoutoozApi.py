@@ -61,9 +61,8 @@ class YoutoozApi:
             int | ShipmentPriceType: цена доставки
         """
         shipment_prices = YoutoozApi.getShipmentRates()
-
         url_lower = url.lower()
-        item_type = 'vinyl'
+        item_type = 'vinyl&brickset'
 
         if url_lower.find('plush') > -1:
             item_type = 'plush'
@@ -76,24 +75,21 @@ class YoutoozApi:
             else:
                 return shipment_prices[item_type]['4"/6"/9"/1ft/16"']
         elif url_lower.find('slippers') > -1:
-            return shipment_prices['slippers']['slippers']
+            return shipment_prices['slippers']['slipper pair']
         elif url_lower.find('jenga') > -1:
-            return shipment_prices['jenga']['jenga']
+            return shipment_prices['jenga']['set']
         elif url_lower.find('monopoly') > -1:
-            return shipment_prices['monopoly']['monopoly']
+            return shipment_prices['monopoly']['set']
         elif url_lower.find('print') > -1:
             return shipment_prices['prints']['unframed']
-        elif url_lower.find('unframed') > -1:
+        elif url_lower.find('mugs') > -1:
             return shipment_prices['mugs']['mug']
         elif url_lower.find('pin') > -1:
             return shipment_prices['pins']['set']
         elif url_lower.find('gummies') > -1:
             return shipment_prices['gummies']['pack']
         else:
-            if url_lower.find('1ft') > -1:
-                return shipment_prices[item_type]['1ft']
-            else:
-                return shipment_prices[item_type]['5"']
+            return shipment_prices[item_type]['5" vinyl / set']
 
     @staticmethod
     def parseYoutoozItem(url):

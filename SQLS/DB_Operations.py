@@ -760,7 +760,34 @@ def isStoreCollectIxists(collect_title):
     cursor.close()
     conn.close()
     
-    return result    
+    return result
+
+def getSentNamedRanges():
+    """Получить список именованных диапозонов всех коллектов/инд, что были полностью разоланы. Глубина 2 месяца от текущей даты
+
+    Returns:
+        list: список именованных диапозонов
+    """
+
+    conn = getConnection(DbNames.collectDatabase)
+    cursor = conn.cursor()  
+    
+    sel = f'''with sent_collects as (
+                select collect_id from participants_collects
+                group by 1
+                HAVING BOOL_AND(is_sent) = TRUE) 
+            select named_range from collects c
+            right join sent_collects sc on c.collect_id = sc.collect_id
+            where expiry_date > now() - INTERVAL '2' MONTH
+            order by named_range;
+           '''
+    cursor.execute(sel)
+    result = cursor.fetchall()
+        
+    cursor.close()
+    conn.close()
+    
+    return [res[0] for res in result]        
 
 def getMaxStoreCollectId(collect_title):
     """ Получить максимальное айди закупки, в зависимости от её названия
@@ -1011,8 +1038,8 @@ def getAllDirectCollectParcel():
     conn = getConnection(DbNames.collectDatabase)
     cursor = conn.cursor()  
     
-    sel = f'''SELECT collect_id, barcode FROM collect_direct_recipient 
-              where rcpn_got = false and notified = false
+    sel = f'''SELECT collect_id, barcode, notified FROM collect_direct_recipient 
+              where rcpn_got = false
               ORDER BY collect_id
            '''
     cursor.execute(sel)
@@ -1022,6 +1049,24 @@ def getAllDirectCollectParcel():
     conn.close()
     
     return result
+
+def setDirectParcelNotified(barcode):
+    """Установить флажок получения оповещения
+
+    Args:
+        barcode (string): трек-номер отправления
+    """    
+
+    conn = getConnection(DbNames.collectDatabase)
+    cursor = conn.cursor() 
+
+    cursor.execute(f"""UPDATE collect_direct_recipient
+                         SET notified = TRUE
+                       WHERE BARCODE ='{barcode}';""")
+   
+    conn.commit() 
+    cursor.close()
+    conn.close()
 
 def updateInsertCollectParcel(parcel_id, status = '', topic_id = 0, comment_id = 0):
     """Обновить таблицу с посылками коллектов

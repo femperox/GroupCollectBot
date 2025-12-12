@@ -16,12 +16,33 @@ from random import choice
 class WebUtils:
 
     @staticmethod
-    def getHeader(isExtendedHeader = False):
+    def getHeader(isExtendedHeader = False, isAmazon = False, isAmiAmi = False):
         """Установка заголовков для запросов
 
         Returns:
             dict: основные настройки заголовков
         """
+        if isAmiAmi:
+            headers = {
+                "User-Agent": LINUX_USER_AGENT,
+                "x-user-key": 'amiami_dev'
+            }
+            return headers
+        if isAmazon:
+            headers = {
+                "User-Agent": LINUX_USER_AGENT,
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+                "Accept-Language": "en-US,en;q=0.5",
+                "Accept-Encoding": "gzip, deflate, br",
+                "Connection": "keep-alive",
+                "Upgrade-Insecure-Requests": "1",
+                "Sec-Fetch-Dest": "document",
+                "Sec-Fetch-Mode": "navigate",
+                "Sec-Fetch-Site": "none",
+                "Pragma": "no-cache",
+                "Cache-Control": "no-cache",
+            }
+            return headers
         if isExtendedHeader:
             headers = {
                 'accept': 'application/json',
@@ -213,10 +234,16 @@ class WebUtils:
         """
 
         cleaned_url = url
-        if cleaned_url.find('/?') > -1:
+        if cleaned_url.find('/?') > -1 and not '?variant=' in cleaned_url and not '?preselect=' in cleaned_url and not '?scode=' in cleaned_url and not '?gcode=' in cleaned_url:
             cleaned_url = cleaned_url.split('/?')[0]
         if cleaned_url.find('/ref=') > -1:
-            cleaned_url = cleaned_url.split('/ref=')[0]        
+            cleaned_url = cleaned_url.split('/ref=')[0]     
+        if cleaned_url.find('#lnk=') > -1:
+            cleaned_url = cleaned_url.split('#lnk=')[0]     
+        if cleaned_url.find('?_trkparms') > -1:
+            cleaned_url = cleaned_url.split('?_trkparms')[0]
+        if cleaned_url.find('?_ul') > -1:
+            cleaned_url = cleaned_url.split('?_ul')[0]
         return cleaned_url
     
     @staticmethod
@@ -244,6 +271,7 @@ class WebUtils:
         proxy = WebUtils.getRandomPrivateProxy() if isPrivateProxy else None
         if proxy:
             proxy = proxy.http_url
+            pprint(proxy)
         client = httpx.Client(headers=headers, proxy = proxy, follow_redirects=True)
         return client
 

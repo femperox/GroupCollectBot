@@ -99,7 +99,7 @@ class AmiAmiApi():
         for i in range(0, length):
             time.sleep(3)
             try:
-                js_raw = requests.get(curl, headers = WebUtils.getHeader(isAmiAmi = True), impersonate="chrome110").json()
+                js_raw = requests.get(curl.format(i), headers = WebUtils.getHeader(isAmiAmi = True), impersonate="chrome110").json()
                 pprint(js_raw)
                 if i == 0:
                     js = js_raw
@@ -124,7 +124,10 @@ class AmiAmiApi():
             dict: словарь с информацией о лоте
         """
 
-        curl = AmiAmiApi.AMI_API_ITEM_INFO.format(item_id)
+        if 'scode' in url:
+            curl = AmiAmiApi.AMI_API_ITEM_INFO2.format(item_id)
+        else:
+            curl = AmiAmiApi.AMI_API_ITEM_INFO.format(item_id)
 
         js = requests.get(curl, headers = WebUtils.getHeader(isAmiAmi = True), impersonate="chrome110",).json()
         

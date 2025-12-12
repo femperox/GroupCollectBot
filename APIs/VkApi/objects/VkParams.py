@@ -430,7 +430,7 @@ class VkParams:
         return params
     
     @staticmethod
-    def getWallGetParams(owner_id, filter = 'postponed'):
+    def getWallGetParams(owner_id, filter = 'postponed', extended = 0):
         """Подготовить параметры для получения записей со стены
 
         Args:
@@ -443,7 +443,8 @@ class VkParams:
 
         params = {
                 'owner_id': owner_id,
-                'filter': filter
+                'filter': filter,
+                'extended':extended,
         }
         
         return params
@@ -479,7 +480,7 @@ class VkParams:
         return params
 
     @staticmethod
-    def getWallEditPostParams(owner_id, post_id, message):
+    def getWallEditPostParams(owner_id, post_id, message, signed = None, publish_date = None, attachments = None):
         """Подготовить параметры для изменения записи на стене
 
         Args:
@@ -494,8 +495,15 @@ class VkParams:
         params = {
                 'owner_id': owner_id,
                 'post_id': post_id,
-                'message': message
+                'message': message,
         }   
+
+        if signed:
+            params['signed'] = signed
+        if publish_date:
+            params['publish_date'] = publish_date
+        if attachments:
+            params['attachments'] = attachments
 
         return params
     

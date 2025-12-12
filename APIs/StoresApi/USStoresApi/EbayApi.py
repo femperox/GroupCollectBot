@@ -82,12 +82,21 @@ class EbayApi:
         Returns:
             dict: словарь с информацией о товаре
         """
-
         item = {}
+
         try:
             driver = WebUtils.getSelenium(isUC = True, block_img = True)
             driver.get(url)
             js = EbayApi.getItemInfo(rawText = driver.page_source)
+            if not js:
+                driver.quit()
+                display = WebUtils.getDisplay()
+                display.start()
+                proxy = WebUtils.getRandomPrivateProxy()
+                driver = WebUtils.getSelenium(isUC=True, proxy = proxy.selenium)
+                driver.uc_open_with_reconnect(url, reconnect_time=10)
+                js = EbayApi.getItemInfo(rawText = driver.page_source)
+                display.stop()
             if js:
                 js = json.loads(js[1].text) 
                 item['status'] = OrdersConsts.StoreStatus.in_stock if 'InStock' in js['offers']['availability'] else OrdersConsts.StoreStatus.sold
@@ -112,6 +121,7 @@ class EbayApi:
 
                 if 'shippingDetails' in js['offers'] and js['offers']['shippingDetails']:
                     item['shipmentPrice'] = float(js['offers']['shippingDetails'][0]['shippingRate']['value'])
+                    item['shipmentPrice'] = OrdersConsts.ShipmentPriceType.free if item['shipmentPrice'] == 0 else item['shipmentPrice']
                 else:
                     item['shipmentPrice'] = OrdersConsts.ShipmentPriceType.undefined
                 item['id'] = item['page'].split('/')[-1]

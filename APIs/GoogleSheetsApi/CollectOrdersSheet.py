@@ -7,6 +7,10 @@ from APIs.GoogleSheetsApi.API.Styles.Colors import Colors as c
 from APIs.utils import concatList
 from APIs.StoresApi.ProductInfoClass import ProductInfoClass
 from APIs.PosredApi.PosredOrderInfoClass import PosredOrderInfoClass
+from _utils.dateUtils import DateUtils
+import json
+from confings.Consts import PathsConsts
+from time import sleep
 
 class CollectOrdersSheet(ParentSheetClass):
 
@@ -169,20 +173,22 @@ class CollectOrdersSheet(ParentSheetClass):
         self.service.spreadsheets().values().batchUpdate(spreadsheetId=self.getSpreadsheetId(),
                                                            body=self.sp.updateBaseValues(self.getJsonNamedRange(namedRange),request["participantList"], topicUrl)).execute()
 
-    def moveTable(self, sheetTo, namedRange):
+    def moveTable(self, sheetTo, namedRange, isArchive = 0):
         '''
         Перемещает таблицу на другое место
 
         :param sheetTo: айди листа, на который нужно переместить таблицу
         :param namedRange: имя Именованного диапозона
+        :param isArchive: флаг архивации
         :return:
         '''
 
         self.service.spreadsheets().batchUpdate(spreadsheetId=self.getSpreadsheetId(),
                                                   body={ "requests": self.sp.changeList(self.getSheetListProperties(), sheetTo, namedRange, self.getJsonNamedRange(namedRange))}).execute()
 
-        self.service.spreadsheets().values().batchUpdate(spreadsheetId=self.getSpreadsheetId(),
-                                                           body=self.sp.setDateOfShipment(sheetTo, self.getJsonNamedRange(namedRange))).execute()
+        if not isArchive:
+            self.service.spreadsheets().values().batchUpdate(spreadsheetId=self.getSpreadsheetId(),
+                                                            body=self.sp.setDateOfShipment(sheetTo, self.getJsonNamedRange(namedRange))).execute()
 
     def addRows(self, spId):
         '''
@@ -193,17 +199,6 @@ class CollectOrdersSheet(ParentSheetClass):
 
         self.service.spreadsheets().batchUpdate(spreadsheetId=self.getSpreadsheetId(),
                                                   body={"requests": [ce.updateSheetProperties(spId, 650)]}).execute()
-        
-    def deleteNamedRange(self, namedRange):
-        '''
-   
-        :param spId: айди листа в таблице
-        :return:
-        '''
-
-        self.service.spreadsheets().batchUpdate(spreadsheetId=self.getSpreadsheetId(),
-                                                  body={"requests": [ce.deleteNamedRange(name = namedRange)]}).execute()
-
 
     def makeItemString(self, items):
         '''
@@ -384,13 +379,65 @@ class CollectOrdersSheet(ParentSheetClass):
         
         return self.sp.checkDeliveryToParticipant(rowInfo = rowInfo,
                                                   participantList = participantList)
-        '''
-        list_title = self.getSheetListName(sheet_id = list_id)
+    
+    def getPresentNamedRanges(self, namedRangeList = []):
+        """Сопоставить список именованных диапозонов с актуальным списком в документе
 
-        ranges = f'{list_title}!A{self.current_list.endRow +1 }:B{self.current_list.endRow + 3 + len(participantList)}'
+        Args:
+            namedRangeList (list, optional): список заявленных именованных диапозонов. Defaults to [].
 
-        rowInfo = self.getSheetListPropertiesById(listId=list_id, includeGridData=True, ranges=[ranges])
+        Returns:
+            list: список сопоставленных именованных диапозонов
+        """
 
-        return self.current_list.checkDeliveryToParticipant(rowInfo = rowInfo['data'][0]['rowData'],
-                                                            participantList = participantList)
-        '''
+        if namedRangeList:
+            presentNamedRangesInDoc = self.getAllNamedRanges()
+            return [namedRange for namedRange in namedRangeList if namedRange in presentNamedRangesInDoc]
+        else:
+            return []
+
+    def archiveCollects(self, namedRangeList = []):
+        """Финальная архивация отправленных коллектов. Перенос в документ-архив
+
+        Args:
+            namedRangeList (list, optional): Список именованных диапозонов к удалению. Defaults to [].
+        """
+        if namedRangeList:
+            namedRangedToFullyArchive = self.getPresentNamedRanges(namedRangeList = namedRangeList)
+            if namedRangedToFullyArchive:
+                archive_title = f'_{DateUtils.getCurrentDate()}'
+                archive_source_id = self.createSheetList(title = archive_title)
+                self.sp.updateSpreadsheetsIds(self.getSheetListProperties())
+                archive_sp = ParentSheetClass()
+                archive_sp.setSpreadsheetId('collectsCollectArchiveList')
+
+                for namedRange in namedRangedToFullyArchive:
+                    print(f'==== {namedRange}')
+                    self.moveTable(sheetTo = archive_source_id, namedRange = namedRange, isArchive = 1)
+                    self.deleteNamedRange(namedRange = namedRange)
+                    sleep(2)
+
+                archive_target_id = self.copySheetListTo(sheet_id = archive_source_id, new_spreadsheet_id = archive_sp.getSpreadsheetId())['sheetId']
+                archive_sp.renameSheetList(sheet_id = archive_target_id, title = archive_title)
+
+                self.deleteSheetList(sheet_id = archive_source_id)
+    
+    def deleteCanceledCollects(self, namedRangeList = []):
+
+        if namedRangeList:
+            namedRangedToDelete = self.getPresentNamedRanges(namedRangeList = namedRangeList)
+            if namedRangedToDelete:
+                canceled_title = f'canceled_{DateUtils.getCurrentDate()}'
+                canceled_source_id = self.createSheetList(title = canceled_title)
+                self.sp.updateSpreadsheetsIds(self.getSheetListProperties())
+                for namedRange in namedRangedToDelete:
+                    print(f'==== {namedRange}')
+                    self.moveTable(sheetTo = canceled_source_id, namedRange = namedRange, isArchive = 1)
+                    self.deleteNamedRange(namedRange = namedRange)
+                    sleep(2)
+
+                self.deleteSheetList(sheet_id = canceled_source_id)
+
+
+
+

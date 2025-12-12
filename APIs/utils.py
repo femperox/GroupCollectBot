@@ -7,6 +7,7 @@ from itertools import chain
 from pprint import pprint
 from APIs.StoresApi.JpStoresApi.StoreSelector import StoreSelector as StoreSelectorJp
 from APIs.StoresApi.USStoresApi.StoreSelector import StoreSelector as StoreSelectorUs
+from APIs.webUtils import WebUtils
 from random import randint
 import requests
 from traceback import print_exc
@@ -289,6 +290,10 @@ def local_image_upload(url: str, tag:str, isFullPathNeeded = False) -> str:
         if extention != '':
             filename = f'new_image{randint(0,15000)}_{tag}' + extention
             response = requests.get(url)
+            if response.status_code == 403:
+                httpxClient = WebUtils.getHttpxClient(isPrivateProxy = True, isExtendedHeader = True)
+                response = httpxClient.get(url = url)
+                httpxClient.close()
             image = open(PathsConsts.TEMP_PHOTO_PATH + filename, 'wb')
             image.write(response.content)
             image.close()

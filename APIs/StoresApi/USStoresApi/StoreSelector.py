@@ -24,7 +24,6 @@ class StoreSelector(StoreSelectorParent):
         site = self.getStoreName()
         item_id = self.getItemID()
         item = {}
-
         if isLiteCalculate:
             item['siteName'] = site
             item['id'] = item_id
@@ -33,7 +32,7 @@ class StoreSelector(StoreSelectorParent):
             return ProductInfoClass(**item)
         if not isAdmin and site in OrdersConsts.Stores.bannedStoresUs:
             return ProductInfoClass(**item)
-                
+        
         if site == OrdersConsts.Stores.makeship:
             item = StoresApi.parseMakeshipItem(url = url)
         elif site == OrdersConsts.Stores.youtooz:
@@ -61,7 +60,6 @@ class StoreSelector(StoreSelectorParent):
             randmoStoreName = self.getStoreName()
             item = StoresApi.parseJsonRandomStoreItem(url = url, storeName = randmoStoreName)
         
-
         item = ProductInfoClass(**item)
-        item.set_country(country = OrdersConsts.OrderTypes.user if site in [OrdersConsts.Stores.makeship, OrdersConsts.Stores.plushshop, OrdersConsts.Stores.plushwonderland] else OrdersConsts.OrderTypes.us)
+        item.set_country(country = OrdersConsts.OrderTypes.user if site in OrdersConsts.Stores.ship_to_russia else OrdersConsts.OrderTypes.us)
         return item

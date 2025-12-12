@@ -10,18 +10,16 @@ from SQLS.DB_Operations import insertNewSeenProducts
 import json
 from APIs.utils import createItemPairs
 
-maxProxyTick = 10
 
 def monitorAmiProduct(rcpns, typeRRS, start_sleep = 0):
     """Мониторинг разделов typeRRS на АмиАми
 
        Args:
-           typeRRS (string): категория мониторинга
-           newProxyTick (int): значение счётчика вызова прокси    
+           typeRRS (string): категория мониторинга  
     """
 
     seen_ids = []
-    
+    sleep(start_sleep)
     while True:
         try:
             
@@ -47,14 +45,11 @@ def monitorAmiProduct(rcpns, typeRRS, start_sleep = 0):
                     seen_ids = [x.id for x in part]
                     logger_stores.info(f"[MESSAGE-{typeRRS}] Отправлено сообщение {seen_ids}")
                     insertNewSeenProducts(items_id=seen_ids, type_id= typeRRS)
-
-            newProxyTick += 1
             
         except Exception as e:
             logger_stores.info(f"\n[ERROR-{typeRRS}] {e} - {print_exc()}\n Последние айтемы теперь: {seen_ids}\n")
             print(e)
             print(print_exc())
-            newProxyTick += 1 
             sleep(360)   
             continue
         sleep(360)
@@ -75,8 +70,6 @@ if __name__ == "__main__":
             threads.append(threading.Thread(target=monitorAmiProduct, args=( conf["rcpns"], OrdersConsts.MonitorStoresType.amiAmiEngSale, 60)))
             #threads.append(threading.Thread(target=monitorAmiProduct, args=( conf["rcpns"], OrdersConsts.MonitorStoresType.amiAmiEngPreOrder)))
             #threads.append(threading.Thread(target=monitorAmiProduct, args=( conf["rcpns"], OrdersConsts.MonitorStoresType.amiAmiEngInStock)))
-
-
 
     for thread in threads:
         thread.start()

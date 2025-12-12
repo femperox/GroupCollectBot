@@ -224,6 +224,7 @@ def updateActivePosredCollects():
     all_posred_orders_keys.extend(list(egl_orders.keys()))
     
     for collect in all_collects:
+        order_info_status = OrdersConsts.OrderStatus.procurement
         if collect[0] == OrdersConsts.CollectTypes.store:
             orders_list = collect[2].split(',')
             if orders_list:
@@ -238,6 +239,8 @@ def updateActivePosredCollects():
                     current_orders_list = egl_orders
                 if len(set(current_orders_list[key].status for key in current_orders_list if key in orders_list)) == 1:
                     order_info_status = current_orders_list[orders_list[0]].status
+                else:
+                    continue
         elif collect[0] == OrdersConsts.CollectTypes.collect:
             if collect[2] not in all_posred_orders_keys:
                 continue

@@ -399,7 +399,7 @@ class StoresApi:
             item['shipmentPrice'] = 14.99
         elif 'figure' in item['name']:
             item['shipmentPrice'] = 5.99
-        elif 'keychain' in item['name'] or 'cap' in item['name'] or 'p-chain' in item['name']:
+        elif ('keychain' in item['name'] or 'cap' in item['name'] or 'p-chain' in item['name']) and not '-plushie' in item['name']:
             item['shipmentPrice'] = 6.99
         elif 'sweatpants' in item['name']:
             item['shipmentPrice'] = 10.99
@@ -569,7 +569,6 @@ class StoresApi:
             time.sleep(1)
             shipment_page = httpxClient.get(url = shipping_curl, params = payload)
             shipment_js = shipment_page.json()
-
             if not shipment_js:
                 return item
             
@@ -612,6 +611,7 @@ class StoresApi:
                 format_number = item['itemPrice'] + item['shipmentPrice']
             item['posredCommission'] = commission['posredCommission'].format(format_string)
             item['posredCommissionValue'] = commission['posredCommissionValue'](format_number)
+            item['siteName'] = OrdersConsts.Stores.target
         except Exception as e:
             pprint(e)
         finally:

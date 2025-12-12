@@ -251,11 +251,11 @@ class AmazonApi:
             dict: словарь с информацией о товаре
         """
 
-        httpx_client = WebUtils.getHttpxClient(isPrivateProxy = True, isExtendedHeader = True)
+        httpx_client = WebUtils.getHttpxClient(isPrivateProxy = True, customHeaders = WebUtils.getHeader(isAmazon = True))
         response = httpx_client.get(url = url)
         if 'a.co' in url:
             time.sleep(2)
-            httpx_client.get(url = WebUtils.cleanUrl(url = str(response.url)))
+            response = httpx_client.get(url = WebUtils.cleanUrl(url = str(response.url)))
         httpx_client.close()
 
         item = {}

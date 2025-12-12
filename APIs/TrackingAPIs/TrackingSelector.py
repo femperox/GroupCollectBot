@@ -4,6 +4,7 @@ from APIs.TrackingAPIs.cdekApi import CdekApi
 from APIs.TrackingAPIs.TrackInfoClass import TrackingTypes
 from APIs.TrackingAPIs.TrackInfoClass import TrackInfoClass
 from confings.Consts import RegexType
+import re
 
 
 class TrackingSelector():
@@ -38,6 +39,16 @@ class TrackingSelector():
         if type == TrackingTypes.ids[RegexType.regex_track]:
             return [PochtaApi.recieved_status_type]
         
+    def getTrackingTypeByTrack(track = ''):
+
+        if track:
+            if re.match(RegexType.regex_track, track) or re.match(RegexType.regex_track_worldwide, track):
+                return TrackingTypes.ids[RegexType.regex_track]
+            elif re.match(RegexType.regex_track_cdek, track):
+                return TrackingTypes.ids[RegexType.regex_track_cdek]
+            elif re.match(RegexType.regex_track_yandex, track):
+                return TrackingTypes.ids[RegexType.regex_track_yandex]
+        
 
     def selectTracker(track, type):
             
@@ -63,6 +74,7 @@ class TrackingSelector():
                  cdek = CdekApi()
                  cdek.startDriver()
                  item = cdek.getTracking(track)
+                 item['trackingType'] = TrackingTypes.ids[RegexType.regex_track_cdek]
                  cdek.stopDriver()
   
             return TrackInfoClass(**item)

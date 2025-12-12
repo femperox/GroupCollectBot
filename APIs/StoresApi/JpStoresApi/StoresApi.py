@@ -46,6 +46,32 @@ class StoreApi:
         item['id'] = item_id           
 
         return item
+    
+    @staticmethod
+    def parseBooth(url):
+
+        curl = url.replace('/en/', '/ja/') +'.json'
+
+        headers = WebUtils.getHeader()
+        page = requests.get(curl, headers=headers)
+
+        js = page.json()
+        item = {}
+        try:
+            pprint(js)
+            item['id'] = js['id']
+            item['mainPhoto'] = js['images'][0]['original']
+            item['status'] = OrdersConsts.StoreStatus.sold if js['is_sold_out'] else OrdersConsts.StoreStatus.in_stock
+            item['itemPrice'] = float(js['variations'][0]['price'])
+            item['name'] = js['variations'][0]['name']
+            item['shipmentPrice'] = OrdersConsts.ShipmentPriceType.undefined
+            item['page'] = js['url']
+            item['siteName'] = OrdersConsts.Stores.booth
+
+        except Exception as e:
+            pprint(e)
+        finally:
+            return item
         
 
 

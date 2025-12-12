@@ -752,7 +752,8 @@ def console():
             vk.delete_photos(album_id = album['id'], end_date = date)
 
         elif choise == 8:
-            posred_id = input('id посылки у посредника: ')
+            posred_ids = input('id посылки у посредника (можно через "," тогда нескок посылок будут в одной): ')
+            posred_ids = posred_ids.split(",")
             status = flattenList(DB_Operations.getCollectStatuses())
             topicIdParcels = [topic['id'] for topic in topicList 
                               if topic['title'].lower().find('посылки') > -1][0]
@@ -766,18 +767,26 @@ def console():
             img = input('\nEnter the image url using comma(, ) (might be empty): ')
             img = img.split(', ')
 
-            posred = PosredApi.getPosredByParcelId(parcel_id = posred_id)
-            orders = posred.get_parcel_orders(parcel_id = posred_id)
+            first_time = True
+            present_collects = []
+            for posred_id in posred_ids:
+                print(f'looking for {posred_id} parcel')
+                if first_time:
+                    posred = PosredApi.getPosredByParcelId(parcel_id = posred_id)
+                    first_time = False
+                orders = posred.get_parcel_orders(parcel_id = posred_id)
 
-            present_collects = DB_Operations.getCollectsByPosredId(posred_ids = orders)
+                present_collects.extend(DB_Operations.getCollectsByPosredId(posred_ids = orders))
 
-            present_posred_ids = [present_collect[2] for present_collect in present_collects]
-            unpresent_orders = [order for order in orders if order not in present_posred_ids]
+                present_posred_ids = [present_collect[2] for present_collect in present_collects]
+                unpresent_orders = [order for order in orders if order not in present_posred_ids]
 
-            print(f'Неиспользованные лоты: {unpresent_orders}')
+                print(f'Неиспользованные лоты: {unpresent_orders}')
 
+            
             DB_Operations.updateInsertCollectParcel(parcel_id = parcel_id, status = stat)
-
+            present_collects = list(set(present_collects))
+            present_collects.sort()
             changeStatus(stat, present_collects)
             collectListUrl = []
             indListUrl = []

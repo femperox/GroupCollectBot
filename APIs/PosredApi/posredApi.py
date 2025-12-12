@@ -65,7 +65,7 @@ class PosredApi:
         elif re.fullmatch(r'o\d{6,10}', parcel_id):
             return EasyShipApi()
         elif parcel_id.isdigit():
-            return PosrednikConsts.EglShip
+            return EglShipApi()
         return None
     
     @staticmethod

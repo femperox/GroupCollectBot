@@ -27,10 +27,20 @@ class CollectOrdersSpreadsheetClass():
 
     def __init__(self, sheetList):
 
-        for i in range(len(sheetList)):
-            self.spreadsheetsIds[sheetList[i]['properties']['title']] = (sheetList[i]['properties']['sheetId'], sheetList[i]['properties']['index'], sheetList[i]['properties']['title'])
+        self.updateSpreadsheetsIds(sheetList = sheetList)
         
         pprint(self.spreadsheetsIds)
+
+    def updateSpreadsheetsIds(self, sheetList):
+        """Обновить список инфы о листах
+
+        Args:
+            sheetList (list): список id листов
+        """
+
+        for i in range(len(sheetList)):
+            self.spreadsheetsIds[sheetList[i]['properties']['title']] = (sheetList[i]['properties']['sheetId'], sheetList[i]['properties']['index'], sheetList[i]['properties']['title'])
+                
 
     def findRowCount(self, sheetList, spId):
         '''
@@ -359,7 +369,6 @@ class CollectOrdersSpreadsheetClass():
 
         index = re.findall('(\d+)', oldRange)
 
-
         try:
             oldSheetTitle = re.findall("'(.+)'", oldSheetTitle)[0]
         except:
@@ -680,6 +689,15 @@ class CollectOrdersSpreadsheetClass():
                     
 
         return delivery_status_list
+    
+    def archiveCollects(self, namedRangeList = []):
+
+        if namedRangeList:
+
+            return
+
+
+
 
 
 

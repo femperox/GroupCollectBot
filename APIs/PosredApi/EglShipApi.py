@@ -12,6 +12,7 @@ class EglShipApi:
         draft = 'draft'
         procurement = 'expecting'
         at_warehouse = 'toSend'
+        packing = 'packing'
 
         @staticmethod
         def getCollectStatus(status: str):
@@ -28,6 +29,8 @@ class EglShipApi:
                 return OrdersConsts.OrderStatus.procurement
             elif status in [EglShipApi.EglShipOrderStatus.at_warehouse]:
                 return OrdersConsts.OrderStatus.at_warehouse_US
+            elif status in [EglShipApi.EglShipOrderStatus.packing]:
+                return OrdersConsts.OrderStatus.packing
             else:
                 return OrdersConsts.OrderStatus.empty
 
@@ -153,7 +156,7 @@ class EglShipApi:
         
         order_ids_list = []
         for item in parcel['items']:
-            order_ids_list.append(item['id'])
+            order_ids_list.append(str(item['id']))
 
         return order_ids_list
     
