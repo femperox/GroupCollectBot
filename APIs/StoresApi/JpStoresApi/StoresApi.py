@@ -6,6 +6,7 @@ from dateutil.relativedelta import relativedelta
 from time import sleep
 from pprint import pprint
 from APIs.PosredApi.posredApi import PosredApi
+import json 
 
 class StoreApi:
 
@@ -58,7 +59,6 @@ class StoreApi:
         js = page.json()
         item = {}
         try:
-            pprint(js)
             item['id'] = js['id']
             item['mainPhoto'] = js['images'][0]['original']
             item['status'] = OrdersConsts.StoreStatus.sold if js['is_sold_out'] else OrdersConsts.StoreStatus.in_stock
@@ -67,6 +67,32 @@ class StoreApi:
             item['shipmentPrice'] = OrdersConsts.ShipmentPriceType.undefined
             item['page'] = js['url']
             item['siteName'] = OrdersConsts.Stores.booth
+
+        except Exception as e:
+            pprint(e)
+        finally:
+            return item
+        
+    def parseToranoana(url):
+
+        httpxClient = WebUtils.getHttpxClient(isPrivateProxy=True, isExtendedHeader=True) 
+        page = httpxClient.get(url)
+        soup = WebUtils.getSoup(rawText = page.text, parser= WebUtils.Bs4Parsers.htmlParser)
+        httpxClient.close()
+
+        item = {}
+        try:
+            js = soup.findAll('script', type='application/ld+json')[1]
+            js = json.loads(js.text) 
+
+            item['id'] = js['sku']
+            item['mainPhoto'] = js['image'][0]
+            item['status'] = OrdersConsts.StoreStatus.in_stock if 'InStock' in js['offers']['availability'] or 'LimitedAvailability' in js['offers']['availability'] else OrdersConsts.StoreStatus.sold
+            item['itemPrice'] = float(js['offers']['price'])
+            item['name'] = js['name']
+            item['shipmentPrice'] = OrdersConsts.ShipmentPriceType.undefined
+            item['page'] = js['offers']['url']
+            item['siteName'] = OrdersConsts.Stores.toranoana
 
         except Exception as e:
             pprint(e)

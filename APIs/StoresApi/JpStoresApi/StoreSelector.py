@@ -83,6 +83,8 @@ class StoreSelector(StoreSelectorParent):
             item = ssa.parseSuruga(url = url)
         elif OrdersConsts.Stores.booth in site:
             item = sa.parseBooth(url = url)
+        elif site == OrdersConsts.Stores.toranoana:
+            item = sa.parseToranoana(url = url)
         
         item = ProductInfoClass(**item)
         item.set_country(country = OrdersConsts.OrderTypes.jp)

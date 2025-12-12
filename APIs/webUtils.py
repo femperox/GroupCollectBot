@@ -271,7 +271,6 @@ class WebUtils:
         proxy = WebUtils.getRandomPrivateProxy() if isPrivateProxy else None
         if proxy:
             proxy = proxy.http_url
-            pprint(proxy)
         client = httpx.Client(headers=headers, proxy = proxy, follow_redirects=True)
         return client
 
